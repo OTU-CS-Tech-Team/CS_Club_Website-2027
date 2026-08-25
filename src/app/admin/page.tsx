@@ -1,4 +1,4 @@
-function AdminPage() {
+export default function AdminPage() {
   return (
     <div className="page">
       <h1>Admin Dashboard</h1>
@@ -9,5 +9,3 @@ function AdminPage() {
     </div>
   );
 }
-
-export default AdminPage;

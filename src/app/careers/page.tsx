@@ -1,4 +1,4 @@
-function CareersPage() {
+export default function CareersPage() {
   return (
     <div className="page">
       <h1>Careers / Join as a Member</h1>
@@ -9,5 +9,3 @@ function CareersPage() {
     </div>
   );
 }
-
-export default CareersPage;
