@@ -1,4 +1,4 @@
-function HomePage() {
+export default function HomePage() {
   return (
     <div className="page">
       <h1>CS Club</h1>
@@ -8,5 +8,3 @@ function HomePage() {
     </div>
   );
 }
-
-export default HomePage;

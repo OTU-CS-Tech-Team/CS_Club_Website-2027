@@ -1,4 +1,4 @@
-function HackHivePage() {
+export default function HackHivePage() {
   return (
     <div className="page">
       <h1>HackHive Winners</h1>
@@ -9,5 +9,3 @@ function HackHivePage() {
     </div>
   );
 }
-
-export default HackHivePage;

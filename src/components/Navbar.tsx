@@ -1,21 +1,19 @@
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
-function Navbar() {
+export default function Navbar() {
   return (
     <nav className="nav">
-      <Link to="/" className="nav-brand">
+      <Link href="/" className="nav-brand">
         CS Club
       </Link>
-      <Link to="/">Home</Link>
-      <Link to="/team">Team</Link>
-      <Link to="/hackhive">HackHive</Link>
-      <Link to="/events">Events</Link>
-      <Link to="/careers">Careers</Link>
-      <Link to="/login">Log in</Link>
-      <Link to="/passport">Passport</Link>
-      <Link to="/admin">Admin</Link>
+      <Link href="/">Home</Link>
+      <Link href="/team">Team</Link>
+      <Link href="/hackhive">HackHive</Link>
+      <Link href="/events">Events</Link>
+      <Link href="/careers">Careers</Link>
+      <Link href="/login">Log in</Link>
+      <Link href="/passport">Passport</Link>
+      <Link href="/admin">Admin</Link>
     </nav>
   );
 }
-
-export default Navbar;

@@ -1,4 +1,4 @@
-function PassportPage() {
+export default function PassportPage() {
   return (
     <div className="page">
       <h1>Member Passport</h1>
@@ -9,5 +9,3 @@ function PassportPage() {
     </div>
   );
 }
-
-export default PassportPage;

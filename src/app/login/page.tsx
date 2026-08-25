@@ -1,4 +1,4 @@
-function LoginPage() {
+export default function LoginPage() {
   return (
     <div className="page">
       <h1>Log in</h1>
@@ -9,5 +9,3 @@ function LoginPage() {
     </div>
   );
 }
-
-export default LoginPage;
