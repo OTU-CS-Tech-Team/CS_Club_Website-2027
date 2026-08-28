@@ -150,6 +150,15 @@
   padding: 3.75rem 0;
 }
 
+.pageHeader {
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid var(--ink);
+}
+
+.pageHeader .headline {
+  margin-bottom: 0;
+}
+
 .section + .section {
   border-top: 1px solid var(--ink);
 }
@@ -190,6 +199,19 @@
   grid-template-columns: 1.22fr 1fr 1fr;
   gap: 1rem;
   align-items: stretch;
+}
+
+.eventGridFill {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.emptyCopy {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .exhibitionIntro {
@@ -511,7 +533,8 @@
 }
 
 @media (max-width: 1100px) {
-  .eventGrid {
+  .eventGrid,
+  .eventGridFill {
     grid-template-columns: 1fr 1fr;
   }
 
@@ -523,6 +546,7 @@
 @media (max-width: 860px) {
   .hero,
   .eventGrid,
+  .eventGridFill,
   .activity,
   .form {
     grid-template-columns: 1fr;

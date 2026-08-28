@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef } from 'react';
 import type { ClubEvent } from '@/types/landing';
+import { isEventUpcoming } from '@/lib/eventSchedule';
 import EventSignupForm from './EventSignupForm';
 import styles from './landing.module.css';
 
@@ -104,7 +105,7 @@ export default function EventModal({ event, onClose }: EventModalProps) {
             ))}
           </div>
         ) : null}
-        <EventSignupForm eventTitle={event.title} />
+        {isEventUpcoming(event) ? <EventSignupForm eventTitle={event.title} /> : null}
       </div>
     </div>
   );

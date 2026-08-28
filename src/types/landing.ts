@@ -6,7 +6,6 @@ export type ClubEvent = {
   time: string;
   location: string;
   images: string[];
-  isUpcoming: boolean;
 };
 
 export type NewsItem = {

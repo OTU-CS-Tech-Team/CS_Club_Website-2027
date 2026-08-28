@@ -1,5 +1,7 @@
 import type { ClubEvent, NewsItem } from '@/types/landing';
 
+export { getPastEvents, getUpcomingEvents } from '@/lib/eventSchedule';
+
 export const events: ClubEvent[] = [
   {
     id: 'leetcode-workshop',
@@ -10,7 +12,6 @@ export const events: ClubEvent[] = [
     time: '6:00 PM – 8:00 PM',
     location: 'SIRC 2020',
     images: ['/events/workshop.svg', '/events/hacknight.svg'],
-    isUpcoming: true,
   },
   {
     id: 'hackhive-info',
@@ -21,7 +22,6 @@ export const events: ClubEvent[] = [
     time: '5:30 PM – 7:00 PM',
     location: 'UB 2050',
     images: ['/events/hacknight.svg'],
-    isUpcoming: true,
   },
   {
     id: 'resume-roast',
@@ -32,7 +32,6 @@ export const events: ClubEvent[] = [
     time: '6:30 PM – 8:00 PM',
     location: 'ERC 1058',
     images: ['/events/career.svg'],
-    isUpcoming: true,
   },
   {
     id: 'git-workshop',
@@ -43,7 +42,6 @@ export const events: ClubEvent[] = [
     time: '6:00 PM – 7:30 PM',
     location: 'SIRC 3110',
     images: ['/events/workshop.svg'],
-    isUpcoming: true,
   },
   {
     id: 'club-fair',
@@ -54,7 +52,6 @@ export const events: ClubEvent[] = [
     time: '11:00 AM – 3:00 PM',
     location: 'Founders Walk',
     images: ['/events/career.svg'],
-    isUpcoming: false,
   },
 ];
 
@@ -69,10 +66,3 @@ export const news: NewsItem[] = [
 
 // Last year's recap (unlisted YouTube). Plays on the homepage when scrolled into view.
 export const recapYoutubeId = 'jjOVJi_N3zg';
-
-export function getUpcomingEvents(all: ClubEvent[], max = 3): ClubEvent[] {
-  return all
-    .filter((event) => event.isUpcoming)
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, max);
-}

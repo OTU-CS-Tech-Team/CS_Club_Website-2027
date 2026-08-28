@@ -19,6 +19,8 @@ const caveat = Caveat({
   display: 'swap',
 });
 
+export const dynamic = 'force-dynamic';
+
 export default function HomePage() {
   const upcoming = getUpcomingEvents(events, 3);
   const projects = getFeaturedProjects();
