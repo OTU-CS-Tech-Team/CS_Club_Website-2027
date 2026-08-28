@@ -16,7 +16,11 @@ export type HackHiveProject = {
   thumbnail: string;
   mediaType: 'image' | 'video';
   videoSrc?: string;
+  youtubeId?: string;
   demoUrl?: string;
+  award?: string;
+  githubUrl?: string;
+  devpostUrl?: string;
   featured?: boolean;
   rotation: number;
   attachment: 'pin' | 'tape';

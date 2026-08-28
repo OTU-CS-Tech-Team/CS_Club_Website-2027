@@ -1,17 +1,17 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import styles from './landing.module.css';
+import styles from './projectDetail.module.css';
 
 type YTPlayer = {
   playVideo: () => void;
-  pauseVideo: () => void;
   mute: () => void;
   destroy: () => void;
 };
 
-type RecapVideoProps = {
+type ProjectYoutubeProps = {
   videoId: string;
+  title: string;
 };
 
 function loadYouTubeApi(): Promise<void> {
@@ -43,13 +43,11 @@ function loadYouTubeApi(): Promise<void> {
   });
 }
 
-export default function RecapVideo({ videoId }: RecapVideoProps) {
-  const wrapRef = useRef<HTMLDivElement>(null);
+export default function ProjectYoutube({ videoId, title }: ProjectYoutubeProps) {
   const hostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
-    let observer: IntersectionObserver | undefined;
     let player: YTPlayer | undefined;
 
     void loadYouTubeApi().then(() => {
@@ -69,28 +67,16 @@ export default function RecapVideo({ videoId }: RecapVideoProps) {
         width: '100%',
         height: '100%',
         playerVars: {
+          autoplay: 1,
+          mute: 1,
           rel: 0,
           modestbranding: 1,
           playsinline: 1,
-          mute: 1,
         },
         events: {
           onReady: ({ target }: { target: YTPlayer }) => {
             target.mute();
-            if (!wrapRef.current) {
-              return;
-            }
-            observer = new IntersectionObserver(
-              ([entry]) => {
-                if (entry.isIntersecting) {
-                  target.playVideo();
-                } else {
-                  target.pauseVideo();
-                }
-              },
-              { threshold: 0.4 },
-            );
-            observer.observe(wrapRef.current);
+            target.playVideo();
           },
         },
       });
@@ -98,16 +84,13 @@ export default function RecapVideo({ videoId }: RecapVideoProps) {
 
     return () => {
       cancelled = true;
-      observer?.disconnect();
       player?.destroy();
     };
   }, [videoId]);
 
   return (
-    <div ref={wrapRef} className={styles.recapFrame}>
-      <div className={styles.recapEmbed}>
-        <div ref={hostRef} title="2025–2026 recap" />
-      </div>
+    <div className={styles.heroEmbed}>
+      <div ref={hostRef} title={title} />
     </div>
   );
 }

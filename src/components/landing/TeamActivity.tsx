@@ -7,7 +7,7 @@ import styles from './landing.module.css';
 
 type TeamActivityProps = {
   news: NewsItem[];
-  recapSrc: string;
+  recapVideoId: string;
 };
 
 function formatPosted(iso: string) {
@@ -18,7 +18,7 @@ function formatPosted(iso: string) {
   }).format(new Date(`${iso}T12:00:00`));
 }
 
-export default function TeamActivity({ news, recapSrc }: TeamActivityProps) {
+export default function TeamActivity({ news, recapVideoId }: TeamActivityProps) {
   const [mailing, setMailing] = useState(false);
 
   return (
@@ -58,7 +58,7 @@ export default function TeamActivity({ news, recapSrc }: TeamActivityProps) {
         </div>
         <div className={styles.activityCol}>
           <p className={styles.kicker}>2025–2026 recap</p>
-          <RecapVideo src={recapSrc} />
+          <RecapVideo videoId={recapVideoId} />
         </div>
       </div>
     </section>

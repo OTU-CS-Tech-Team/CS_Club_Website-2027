@@ -4,7 +4,7 @@ import HackHiveExhibition from '@/components/landing/HackHiveExhibition';
 import TeamActivity from '@/components/landing/TeamActivity';
 import UpcomingEvents from '@/components/landing/UpcomingEvents';
 import { getFeaturedProjects } from '@/data/hackhive';
-import { events, getUpcomingEvents, news, recapVideoSrc } from '@/data/landing';
+import { events, getUpcomingEvents, news, recapYoutubeId } from '@/data/landing';
 import styles from '@/components/landing/landing.module.css';
 
 const plex = IBM_Plex_Sans({
@@ -28,7 +28,7 @@ export default function HomePage() {
       <div className={styles.shell}>
         <Hero />
         <UpcomingEvents events={upcoming} />
-        <TeamActivity news={news} recapSrc={recapVideoSrc} />
+        <TeamActivity news={news} recapVideoId={recapYoutubeId} />
         <HackHiveExhibition
           projects={projects}
           handwrittenClass={caveat.className}

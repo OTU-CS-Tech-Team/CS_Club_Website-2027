@@ -1,15 +1,18 @@
 .landing {
   --canvas: #e6e6fa;
   --ink: #1b003f;
+  width: 100%;
   background: var(--canvas);
   color: var(--ink);
-  min-height: calc(100vh - 3.5rem);
-  padding: 3.25rem 1.5rem 5.5rem;
+  min-height: calc(100dvh - 3.5rem);
+  padding: clamp(2rem, 5vw, 4.5rem) clamp(1.25rem, 5vw, 5rem)
+    clamp(3rem, 7vw, 6rem);
 }
 
 .shell {
-  max-width: 1120px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
 }
 
 .landing a {
@@ -34,13 +37,14 @@
   flex-direction: column;
   align-items: center;
   gap: 1.25rem;
-  max-width: 20rem;
+  width: 100%;
+  max-width: min(22rem, 100%);
 }
 
 .lockup {
   display: block;
   width: 100%;
-  max-width: 16rem;
+  max-width: min(20rem, 100%);
 }
 
 .logo {
@@ -94,7 +98,7 @@
 
 .headline {
   margin: 0 0 0.7rem;
-  font-size: clamp(1.65rem, 2.8vw, 2.45rem);
+  font-size: clamp(1.65rem, 3.2vw, 3.15rem);
   font-weight: 600;
   line-height: 1.18;
   letter-spacing: -0.03em;
@@ -323,28 +327,20 @@
   background: var(--canvas);
 }
 
-.recapVideo {
-  display: block;
+.recapEmbed {
+  position: relative;
   width: 100%;
-  height: auto;
-  vertical-align: top;
-  background: var(--canvas);
+  height: 0;
+  padding-bottom: 56.25%;
 }
 
-.recapMissing {
-  padding: 1.4rem 1.45rem;
-  border: 1px dashed var(--ink);
-  border-radius: 12px;
-}
-
-.recapMissing p {
-  margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.recapMissing code {
-  font-size: 0.85em;
+.recapEmbed iframe,
+.recapEmbed > div {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 
 .overlay {
@@ -514,12 +510,26 @@
   line-height: 1.5;
 }
 
+@media (max-width: 1100px) {
+  .eventGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .eventCardFeatured {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 860px) {
   .hero,
   .eventGrid,
   .activity,
   .form {
     grid-template-columns: 1fr;
+  }
+
+  .eventCardFeatured {
+    grid-column: auto;
   }
 
   .eventCard,
@@ -530,11 +540,16 @@
 
 @media (max-width: 560px) {
   .landing {
-    padding: 2.25rem 1.1rem 3.5rem;
+    padding: 1.75rem 1rem 3rem;
   }
 
   .hero {
     gap: 2rem;
     padding-bottom: 2.75rem;
+  }
+
+  .sectionHead {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

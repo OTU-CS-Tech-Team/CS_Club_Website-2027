@@ -4,8 +4,32 @@
   box-sizing: border-box;
 }
 
+@layer theme, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+  --animate-trophy-tilt: trophy-tilt 2.6s ease-in-out infinite;
+}
+
+@keyframes trophy-tilt {
+  0%,
+  100% {
+    transform: rotate(-12deg);
+  }
+  50% {
+    transform: rotate(12deg);
+  }
+}
+
+html,
 body {
   margin: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
   font-family: system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   color: #111;
@@ -17,9 +41,17 @@ a {
 }
 
 main {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 2rem 1.25rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.page {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 2rem clamp(1.25rem, 5vw, 4.5rem);
 }
 
 .page h1 {
@@ -34,7 +66,8 @@ main {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem 1.25rem;
-  padding: 1rem 1.25rem;
+  width: 100%;
+  padding: 1rem clamp(1.25rem, 5vw, 4.5rem);
   border-bottom: 1px solid #e5e5e5;
 }
 

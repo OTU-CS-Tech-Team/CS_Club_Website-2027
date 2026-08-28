@@ -67,8 +67,8 @@ export const news: NewsItem[] = [
   },
 ];
 
-// Last year's recap. File is gitignored (large). Path is URL-safe (no spaces).
-export const recapVideoSrc = '/social/2025-26-year-recap.mp4';
+// Last year's recap (unlisted YouTube). Plays on the homepage when scrolled into view.
+export const recapYoutubeId = 'jjOVJi_N3zg';
 
 export function getUpcomingEvents(all: ClubEvent[], max = 3): ClubEvent[] {
   return all
