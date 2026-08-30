@@ -1,8 +1,35 @@
+import { IBM_Plex_Sans } from 'next/font/google';
+import EventsBoard from '@/components/events/EventsBoard';
+import { events } from '@/data/landing';
+import { getPastEvents, getUpcomingEvents } from '@/lib/eventSchedule';
+import styles from '@/components/landing/landing.module.css';
+
+const plex = IBM_Plex_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+});
+
+export const metadata = {
+  title: 'Events — CS Club',
+  description: 'Upcoming and past Computer Science Club events.',
+};
+
+export const dynamic = 'force-dynamic';
+
 export default function EventsPage() {
+  const upcoming = getUpcomingEvents(events);
+  const past = getPastEvents(events);
+
   return (
-    <div className="page">
-      <h1>Upcoming Events</h1>
-      <p>Skeleton for event listings and registration.</p>
+    <div className={`${styles.landing} ${plex.className}`}>
+      <div className={styles.shell}>
+        <header className={styles.pageHeader}>
+          <p className={styles.kicker}>CS Club</p>
+          <h1 className={styles.headline}>Events</h1>
+        </header>
+        <EventsBoard upcoming={upcoming} past={past} />
+      </div>
     </div>
   );
 }
