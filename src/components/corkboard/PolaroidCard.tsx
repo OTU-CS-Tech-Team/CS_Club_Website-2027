@@ -23,7 +23,7 @@ export default function PolaroidCard({
     <Link
       href={getProjectHref(project.id)}
       className={`${styles.polaroid} ${compact ? styles.polaroidCompact : ''}`}
-      style={{ '--tilt': `${project.rotation}deg` } as CSSProperties}
+      style={{ '--tilt': `${project.rotation ?? 0}deg` } as CSSProperties}
       aria-label={`View ${project.title}`}
     >
       {project.attachment === 'pin' && (
@@ -34,7 +34,7 @@ export default function PolaroidCard({
       )}
       <div className={styles.polaroidPhoto}>
         <Image
-          src={project.thumbnail}
+          src={project.thumbnail ?? '/events/workshop.svg'}
           alt={project.title}
           width={400}
           height={400}
@@ -45,7 +45,9 @@ export default function PolaroidCard({
         <h3 className={`${styles.polaroidTitle} ${handwrittenClass ?? ''}`}>
           {project.title}
         </h3>
-        <p className={styles.polaroidCategory}>{project.category}</p>
+        {project.category ? (
+          <p className={styles.polaroidCategory}>{project.category}</p>
+        ) : null}
       </div>
     </Link>
   );

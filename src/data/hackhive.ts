@@ -1,77 +1,21 @@
 import type { HackHiveProject } from '@/types/hackhive';
 
+export const ARCHIVE_YEARS = [2026, 2025, 2024] as const;
+
 export const hackhiveProjects: HackHiveProject[] = [
-  {
-    id: 'doug-the-poker-bot',
-    title: 'Doug the Poker Bot',
-    description:
-      'A robot to be the dealer at your next home poker match. Doug will deal cards, listen for player actions, and stream the game live with interesting stats for spectators to view.',
-    category: 'poker robot',
-    tag: 'HackHive 2026',
-    year: 2026,
-    team: 'Adrian Shkumbov, David Frieri, Jason Wang, Matthew Frieri',
-    techStack: ['ESP32', 'Flask', 'OpenAI', 'React', 'YOLO'],
-    thumbnail: '/projects/doug-the-poker-bot.png',
-    mediaType: 'video',
-    youtubeId: 'NdvToF_4Yp4',
-    demoUrl: 'https://www.youtube.com/watch?v=NdvToF_4Yp4',
-    award: 'Second place overall winner',
-    githubUrl: 'https://github.com/MatthewFrieri/HackHive',
-    devpostUrl: 'https://devpost.com/software/doug-the-poker-bot',
-    featured: true,
-    rotation: -4.5,
-    attachment: 'pin',
-    pinColor: 'red',
-    annotation: {
-      text: 'second place winner!',
-      placement: 'bottom',
-      ink: 'navy',
-    },
-  },
-  {
-    id: 'lockblock',
-    title: 'lockblock',
-    description:
-      'Smart security that works while you sleep. Your door locks automatically when it sees a stranger. Unlock from your phone. Get instant alerts. Peace of mind, no strings attached.',
-    category: 'smart lock',
-    tag: 'Best Use of Solana',
-    year: 2026,
-    team: 'Ethan Yang, Ryan Gao, Jeremy Liu',
-    techStack: ['Python', 'Flask', 'OpenCV', 'Solana', 'JavaScript', 'SQLite', 'HTML'],
-    thumbnail: '/projects/lockblock.png',
-    mediaType: 'video',
-    youtubeId: '1hwgS66tB9k',
-    demoUrl: 'https://www.youtube.com/watch?v=1hwgS66tB9k',
-    award: 'Best use of Solana',
-    githubUrl: 'https://github.com/e-yang6/lockblock',
-    devpostUrl: 'https://devpost.com/software/lockblock-9ct281',
-    featured: true,
-    rotation: 3,
-    attachment: 'tape',
-    annotation: {
-      text: 'best use of solana',
-      placement: 'top',
-      ink: 'red',
-    },
-  },
   {
     id: 'neuro-detect',
     title: 'Neuro Detect',
     description:
-      'Neuro Detect is an AI-powered assistant that helps radiologists analyze brain MRI scans faster with clear, explainable insights.',
-    category: 'Medical diagnostics',
-    tag: 'HackHive 2026',
+      'An AI assistant that helps radiologists read brain MRIs faster, with clear and explainable insights.',
     year: 2026,
+    category: 'Medical diagnostics',
     team: 'Logan Yee, Krishna Mallick, Ali Hakkani, Kiran Sakthivel',
     techStack: ['TensorFlow', 'FastAPI', 'Python', 'JavaScript', 'Gemini API', 'Render', 'CSS'],
     thumbnail: '/projects/neuro-detect.png',
-    mediaType: 'video',
     youtubeId: 'TcK3JO73CKs',
-    demoUrl: 'https://www.youtube.com/watch?v=TcK3JO73CKs',
-    award: 'First place overall winner',
     githubUrl: 'https://github.com/KrishnaKMA/hackathon-app',
     devpostUrl: 'https://devpost.com/software/neurodetect-rst574',
-    featured: true,
     rotation: -2,
     attachment: 'pin',
     pinColor: 'green',
@@ -82,23 +26,69 @@ export const hackhiveProjects: HackHiveProject[] = [
     },
   },
   {
+    id: 'doug-the-poker-bot',
+    title: 'Doug the Poker Bot',
+    description:
+      'A robot dealer for home poker — deals cards, tracks player actions, and streams the game with live stats.',
+    year: 2026,
+    category: 'poker robot',
+    team: 'Adrian Shkumbov, David Frieri, Jason Wang, Matthew Frieri',
+    techStack: ['ESP32', 'Flask', 'OpenAI', 'React', 'YOLO'],
+    thumbnail: '/projects/doug-the-poker-bot.png',
+    youtubeId: 'NdvToF_4Yp4',
+    githubUrl: 'https://github.com/MatthewFrieri/HackHive',
+    devpostUrl: 'https://devpost.com/software/doug-the-poker-bot',
+    rotation: -4.5,
+    attachment: 'pin',
+    pinColor: 'red',
+    annotation: {
+      text: 'second place winner!',
+      placement: 'bottom',
+      ink: 'navy',
+    },
+  },
+  {
+    id: 'rosetta',
+    title: 'Rosetta',
+    description:
+      'Removes language barriers from lectures so everyone in the room can follow along.',
+    year: 2026,
+    youtubeId: 'lfkztHWLoCs',
+  },
+  {
+    id: 'lockblock',
+    title: 'lockblock',
+    description:
+      'A smart lock that spots strangers, locks the door, and pings your phone — no extra hardware mess.',
+    year: 2026,
+    category: 'smart lock',
+    team: 'Ethan Yang, Ryan Gao, Jeremy Liu',
+    techStack: ['Python', 'Flask', 'OpenCV', 'Solana', 'JavaScript', 'SQLite', 'HTML'],
+    thumbnail: '/projects/lockblock.png',
+    youtubeId: '1hwgS66tB9k',
+    githubUrl: 'https://github.com/e-yang6/lockblock',
+    devpostUrl: 'https://devpost.com/software/lockblock-9ct281',
+    rotation: 3,
+    attachment: 'tape',
+    annotation: {
+      text: 'best use of solana',
+      placement: 'top',
+      ink: 'red',
+    },
+  },
+  {
     id: 'cutos',
     title: 'cutOS',
     description:
-      'AI-powered video editor. Edit with natural language and just tell it what you want. Automatic dubbing, voice isolation, and semantic smart search. Professional results, zero learning curve.',
-    category: 'AI Editing software',
-    tag: 'HackHive 2026',
+      'Edit video in plain English — auto-dubbing, voice isolation, and smart search with almost no learning curve.',
     year: 2026,
+    category: 'AI Editing software',
     team: 'Shams Haroon, Jonathan David McKesey, Julian Cruzet, Vincent Wong',
     techStack: ['Next.js', 'OpenAI', 'ElevenLabs', 'TwelveLabs', 'Supabase', 'WebGL', 'FFmpeg'],
     thumbnail: '/projects/cutos.png',
-    mediaType: 'video',
     youtubeId: 't0zHzwyXm_Q',
-    demoUrl: 'https://www.youtube.com/watch?v=t0zHzwyXm_Q',
-    award: 'Best use of ElevenLabs',
     githubUrl: 'https://github.com/shamsharoon/CutOS',
     devpostUrl: 'https://devpost.com/software/cutos',
-    featured: true,
     rotation: 5,
     attachment: 'tape',
     annotation: {
@@ -107,18 +97,153 @@ export const hackhiveProjects: HackHiveProject[] = [
       ink: 'ink',
     },
   },
+  {
+    id: 'brailliant',
+    title: 'Brailliant',
+    description:
+      'Hardware that helps you grow a brailliant mind — built to make learning tactile.',
+    year: 2026,
+    youtubeId: 'oT1tkPZwlYM',
+  },
+  {
+    id: 'turtletalk',
+    title: 'TurtleTalk',
+    description:
+      'An AI platform that helps Indigenous communities keep endangered languages alive through lessons and conversation.',
+    year: 2026,
+    youtubeId: 'PSC9BD6eRjs',
+  },
+  {
+    id: 'katilix',
+    title: 'Katilix',
+    description:
+      'AI support that helps people with ADHD, dyslexia, and visual impairment stay focused and productive online.',
+    year: 2026,
+    youtubeId: '9WKjWZtJUrg',
+  },
+  {
+    id: 'beeprepared',
+    title: 'BeePrepared',
+    description:
+      'Turns a two-hour lecture into notes, cards, and mock exams in minutes — with bee agents on a study canvas.',
+    year: 2026,
+    youtubeId: 'VUVFwkcULzk',
+  },
+  {
+    id: 'flash-ai',
+    title: 'Flash.AI',
+    description: 'Upload. Quiz. Master. Ace your exams with Flash.AI.',
+    year: 2025,
+    thumbnail: '/projects/flash-ai.png',
+  },
+  {
+    id: 'nexus-ai',
+    title: 'Nexus AI',
+    description: 'Your very own personal assistant and centralized productivity hub.',
+    year: 2025,
+    youtubeId: '3SEqVufuHK0',
+  },
+  {
+    id: 'rotify',
+    title: 'Rotify',
+    description:
+      'Save time by brain-rotting your mind — Rotify blends studying with satisfying Gen Z content.',
+    year: 2025,
+    youtubeId: 'PjXUOong-DI',
+  },
+  {
+    id: 'elva',
+    title: 'ELVA',
+    description:
+      'AI for Alzheimer’s care: facial recognition, object detection, and safer navigation in one app.',
+    year: 2025,
+    youtubeId: 'khcMJSWu-os',
+  },
+  {
+    id: 'nutriai',
+    title: 'NutriAI',
+    description:
+      'An AI meal planner that builds plans, grocery lists, and insights around your goals.',
+    year: 2025,
+    youtubeId: 'xUl2urnbG64',
+  },
+  {
+    id: 'cairs-group-39',
+    title: 'Cairs Group 39',
+    description:
+      'The Epic Coders — software that makes everyday life easier and more accessible.',
+    year: 2025,
+    youtubeId: 'sdE-lb0fNBk',
+  },
+  {
+    id: 'pantrypal',
+    title: 'PantryPal',
+    description:
+      'Give it your ingredients and it cooks up recipes — then walks you through the meal so nothing burns.',
+    year: 2024,
+    youtubeId: 'dlSGcCcY6I4',
+  },
+  {
+    id: 'ecosort',
+    title: 'EcoSort',
+    description:
+      'Canada sent most of its waste to landfills in 2020. EcoSort is a recycling companion that helps you sort it right.',
+    year: 2024,
+    youtubeId: 'KU4ODvx5_ao',
+  },
+  {
+    id: 'trash-it',
+    title: 'Trash It',
+    description:
+      'Snap, sort, save the planet — a smart recycling app that turns every toss into a better choice.',
+    year: 2024,
+    youtubeId: 'cxQMLCtoi_w',
+  },
+  {
+    id: 'biodiversity-monitoring',
+    title: 'AI-Powered Biodiversity Monitoring System',
+    description:
+      'Azure-powered robots, AI, and data insights for tracking biodiversity and a more sustainable future.',
+    year: 2024,
+    youtubeId: 'nVXslFZauaU',
+  },
+  {
+    id: 'goodsole',
+    title: 'GoodSole',
+    description: 'Robust inventory management built for a first trip into the cloud.',
+    year: 2024,
+    youtubeId: 'QGGDmRhm7Cc',
+  },
+  {
+    id: 'levelup',
+    title: 'LevelUp',
+    description:
+      'A public forum for health and self-improvement questions that favours useful advice over engagement bait.',
+    year: 2024,
+    youtubeId: '__M-AkYt00s',
+  },
 ];
 
-export function getProjectById(id: string): HackHiveProject | undefined {
-  return hackhiveProjects.find((p) => p.id === id);
+export type ArchiveCollection = {
+  year: number;
+  title: string;
+  projects: HackHiveProject[];
+};
+
+export function getArchiveCollections(): ArchiveCollection[] {
+  return ARCHIVE_YEARS.map((year) => ({
+    year,
+    title: `${year} HackHive Winners`,
+    projects: hackhiveProjects.filter((project) => project.year === year),
+  }));
 }
 
-export function getRelatedProjects(id: string, limit = 3): HackHiveProject[] {
-  return hackhiveProjects.filter((p) => p.id !== id).slice(0, limit);
+export function getProjectById(id: string): HackHiveProject | undefined {
+  return hackhiveProjects.find((project) => project.id === id);
 }
 
 export function getFeaturedProjects(): HackHiveProject[] {
-  return hackhiveProjects.filter((p) => p.featured !== false);
+  return hackhiveProjects.filter((project) => project.attachment);
 }
 
 export function getProjectHref(id: string): string {

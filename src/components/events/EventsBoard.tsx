@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import type { ClubEvent } from '@/types/landing';
 import EventCard from '@/components/landing/EventCard';
 import EventModal from '@/components/landing/EventModal';
@@ -17,6 +18,9 @@ export default function EventsBoard({ upcoming, past }: EventsBoardProps) {
   return (
     <>
       <section className={styles.section} aria-labelledby="all-upcoming-heading">
+        <Link href="/" className={styles.backLink}>
+          Back to homepage
+        </Link>
         <div className={styles.sectionHead}>
           <h2 id="all-upcoming-heading" className={styles.sectionTitle}>
             Upcoming events

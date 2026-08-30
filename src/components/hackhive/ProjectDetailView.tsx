@@ -147,7 +147,7 @@ export default function ProjectDetailView({
         </div>
 
         <div className={styles.techStack}>
-          {project.techStack.map((tech, i) => (
+          {(project.techStack ?? []).map((tech, i) => (
             <span
               key={tech}
               className={styles.techLabel}

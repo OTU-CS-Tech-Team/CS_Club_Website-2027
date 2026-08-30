@@ -1,26 +1,22 @@
-import { Caveat } from 'next/font/google';
-import CorkboardWall from '@/components/corkboard/CorkboardWall';
-import { hackhiveProjects } from '@/data/hackhive';
+import { IBM_Plex_Sans } from 'next/font/google';
+import HackHiveMuseum from '@/components/museum/HackHiveMuseum';
+import { getArchiveCollections } from '@/data/hackhive';
 
-const caveat = Caveat({
+const plex = IBM_Plex_Sans({
   subsets: ['latin'],
-  weight: ['400', '600', '700'],
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
 });
 
 export const metadata = {
-  title: 'HackHive Archive — Corkboard',
-  description: 'Museum-style archive of past HackHive projects.',
+  title: 'HackHive Archive',
+  description: 'Museum archive of HackHive projects, year by year.',
 };
 
 export default function HackHivePage() {
   return (
-    <div style={{ padding: '2.5rem 1.5rem 4rem' }}>
-      <CorkboardWall
-        projects={hackhiveProjects}
-        showStickyNote
-        handwrittenClass={caveat.className}
-      />
+    <div className={plex.className}>
+      <HackHiveMuseum collections={getArchiveCollections()} />
     </div>
   );
 }
