@@ -12,8 +12,7 @@ export default function TeamMemberCard(props: TeamMemberProps) {
       <h3>{props.name}</h3>
       <span>{props.role}</span>
       <a href={props.link} target="_blank" rel="noopener noreferrer">
-        View Profile
-        <img src="LinkedinLogo.png" alt="LinkedIn Logo" />
+        <img src="Images/LinkedinLogo.png" alt="LinkedIn Logo" />
       </a>
     </div>
   );
