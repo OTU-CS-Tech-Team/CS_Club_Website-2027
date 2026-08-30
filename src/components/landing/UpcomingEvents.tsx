@@ -24,16 +24,20 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
           View all events
         </Link>
       </div>
-      <div className={styles.eventGrid}>
-        {events.map((event, index) => (
-          <EventCard
-            key={event.id}
-            event={event}
-            featured={index === 0}
-            onSelect={setSelected}
-          />
-        ))}
-      </div>
+      {events.length === 0 ? (
+        <p className={styles.emptyCopy}>Stay tuned for upcoming events!</p>
+      ) : (
+        <div className={styles.eventGrid}>
+          {events.map((event, index) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              featured={index === 0}
+              onSelect={setSelected}
+            />
+          ))}
+        </div>
+      )}
       {selected ? <EventModal event={selected} onClose={() => setSelected(null)} /> : null}
     </section>
   );

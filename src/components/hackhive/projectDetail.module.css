@@ -3,7 +3,7 @@
   height: calc(100dvh - 3.5rem);
   min-height: calc(100dvh - 3.5rem);
   padding: 0.85rem 1.25rem 1rem;
-  overflow: hidden;
+  overflow: auto;
   background-color: #b8894a;
   background-image:
     radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
