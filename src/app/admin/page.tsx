@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/admin';
+import CreateEventCodeForm from './CreateEventCodeForm';
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -15,10 +16,8 @@ export default async function AdminPage() {
   return (
     <div className="page">
       <h1>Admin Dashboard</h1>
-      <p>
-        Whitelisted admins can create, edit, and delete events here.
-        CRUD UI to be added later.
-      </p>
+      <p>Create a QR code for an event — members scan it to claim a passport stamp.</p>
+      <CreateEventCodeForm />
     </div>
   );
 }

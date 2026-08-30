@@ -34,7 +34,7 @@ export default function LoginPage() {
         return;
       }
       if (data.session) {
-        router.push('/passport');
+        router.push(nextPath());
         return;
       }
       setStatus('Check your inbox to confirm your account, then sign in.');
@@ -48,7 +48,12 @@ export default function LoginPage() {
       setStatus(error.message);
       return;
     }
-    router.push('/passport');
+    router.push(nextPath());
+  }
+
+  function nextPath() {
+    const next = new URLSearchParams(window.location.search).get('next');
+    return next ? decodeURIComponent(next) : '/passport';
   }
 
   return (
