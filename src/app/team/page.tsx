@@ -122,13 +122,13 @@ export default function TeamPage() {
             link="https://www.linkedin.com/in/hemanti-badam-9b6986396/"
           />
           <TeamMemberCard
-            image="/images/Qudsia.png"
+            image="/images/Qudsia.jpg"
             name="Qudsia"
             role="Marketing Coordinator"
             link="" /* Waiting for linkdln */
           />
           <TeamMemberCard
-            image="/images/Atifa.png"
+            image="/images/Atifa Baz photo.jpg"
             name="Atifa"
             role="Marketing Coordinator"
             link="" /* Waiting for linkdln */
@@ -184,7 +184,7 @@ export default function TeamPage() {
             link="https://www.linkedin.com/in/bach-nguyen-vu/"
           />
           <TeamMemberCard
-            image="/images/Zoha.png"
+            image="/images/placeholder.jpg"
             name="Zoha"
             role="Events Officer"
             link="" /* Waiting for linkdln */
