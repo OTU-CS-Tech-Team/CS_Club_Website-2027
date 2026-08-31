@@ -1,9 +1,9 @@
 /* Container & Base Page Layout */
 .page {
   width: 100%;
-  max-width: 1600px;
+  max-width: 1700px;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: 2rem 1rem;
   text-align: center;
   box-sizing: border-box;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -23,10 +23,9 @@
   color: #1f2937;
 }
 
-/* Tier Rows (Presidents, Vice-Presidents, Advisors) */
+/* Tier Rows (Presidents, Vice-Presidents) */
 .Presidents,
-.Vice-Presidents,
-.Advisors {
+.Vice-Presidents {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -38,14 +37,11 @@
 /* Department Columns Container */
 .department-grid {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1.5rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 3rem;
   width: 100%;
   margin-top: 2.5rem;
-  overflow-x: auto;
-  padding-bottom: 1rem;
 }
 
 /* Department Specific Headings */
@@ -57,7 +53,18 @@
   white-space: nowrap;
 }
 
-/* Individual Department Column */
+/* Row that holds a set of department columns side by side */
+.dept-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 1.5rem 1.5rem;
+  width: 100%;
+}
+
+/* Individual Department Column (director + officer grid) */
 .Tech-Team,
 .Marketing-Team,
 .Logistics-Team,
@@ -67,8 +74,33 @@
   flex-direction: column;
   align-items: center;
   gap: 1.25rem;
-  flex: 1;
-  min-width: 210px;
+  flex: 1 1 300px;
+  max-width: 340px;
+}
+
+/* Officer/Coordinator grid — 2 columns under the director */
+.dept-officers-coordinators {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  width: 100%;
+  justify-items: center;
+}
+
+/* Center a lone odd-one-out officer under a 2-col grid */
+.dept-officers-coordinators > *:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  justify-self: center;
+}
+
+.Advisors {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
 }
 
 /* Team Member Card Styling */
@@ -92,12 +124,24 @@
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* Cards inside the 2-col officer grid run a touch smaller so 2 fit cleanly */
+.dept-officers-coordinators .teamCard {
+  max-width: 150px;
+  padding: 0.75rem 0.5rem;
+}
+
+.dept-officers-coordinators .teamCard > img:first-of-type {
+  width: 60px;
+  height: 60px;
+}
+
 /* Card Avatar Image */
 .teamCard > img:first-of-type {
   width: 90px;
   height: 90px;
   border-radius: 50%;
   object-fit: cover;
+  object-position: center 20%; /* biases crop toward the top third so faces aren't chopped */
   margin-bottom: 0.75rem;
   border: 2px solid #f3f4f6;
 }
@@ -110,6 +154,10 @@
   color: #1f2937;
 }
 
+.dept-officers-coordinators .teamCard h3 {
+  font-size: 1rem;
+}
+
 /* Role Label */
 .teamCard span {
   font-size: 0.875rem;
@@ -117,6 +165,9 @@
   margin-bottom: 0.75rem;
 }
 
+.dept-officers-coordinators .teamCard span {
+  font-size: 0.8rem;
+}
 
 .teamCard a:hover {
   text-decoration: underline;
@@ -124,22 +175,34 @@
 
 /* LinkedIn Icon */
 .teamCard a img {
-  width: 22px;              
+  width: 22px;
   height: 22px;
   object-fit: contain;
   flex-shrink: 0;
-  
+
   /* Prevents blurriness when images scale */
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
 }
 
-/*css skeleton design for departments*/
-@media (max-width: 1100px) {
+/* If using the inline SVG LinkedIn icon instead of an <img>, size it directly */
+.teamCard a svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+/* Responsive: stack department columns on narrower screens */
+@media (max-width: 900px) {
   .department-grid {
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
+  }
+
+  .dept-row {
+    flex-direction: column;
+    align-items: center;
   }
 
   .Tech-Team,
@@ -147,7 +210,17 @@
   .Logistics-Team,
   .Events-Team,
   .Sponsors-Team {
-    width: 100%;
-    margin-bottom: 2rem;
+    flex: 1 1 300px;
+    max-width: 340px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dept-officers-coordinators {
+    grid-template-columns: 1fr;
+  }
+
+  .dept-officers-coordinators > *:last-child:nth-child(odd) {
+    grid-column: auto;
   }
 }
