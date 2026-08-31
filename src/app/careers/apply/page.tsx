@@ -32,7 +32,7 @@ export default function CareerApplicationPage() {
   }
 
   return <div className="careers-page careers-apply-page"><section className="careers-application-panel">
-    <div className="careers-application-heading"><div><div className="careers-eyebrow">CS Club General Member</div><h1>Join the conversation.</h1><p>Tell us a little about yourself and how you would like to contribute to the club.</p></div></div>
+    <div className="careers-application-heading"><div><div className="careers-eyebrow">CS Club General Member</div><h1>Apply now.</h1><p>Tell us a little about yourself and how you would like to contribute to the club.</p></div></div>
     {submitted ? <div className="careers-success"><span>✓</span><h3>Application received.</h3><p>Thanks for putting yourself forward. The CS Club team will be in touch through your Ontario Tech email.</p></div> : <form onSubmit={handleSubmit}><div className="careers-form-grid">
       <label>First name<input name="firstName" required /></label><label>Last name<input name="lastName" required /></label>
       <label className="careers-full-width">Ontario Tech email<input type="email" name="email" placeholder="you@ontariotechu.net" pattern="^[^\s@]+@ontariotechu\.net$" title="Use your @ontariotechu.net email address." required /></label>
