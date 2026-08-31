@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { mintCheckinToken } from './actions';
+import PassportQr from './PassportQr';
 
 export default async function PassportPage() {
   const supabase = await createClient();
@@ -24,12 +26,15 @@ export default async function PassportPage() {
     .order('awarded_at', { ascending: false });
 
   const totalPoints = stamps?.reduce((sum, stamp) => sum + stamp.points, 0) ?? 0;
+  const { qrDataUrl } = await mintCheckinToken();
 
   return (
     <div className="page">
       <h1>Member Passport</h1>
       <p>{profile?.full_name || profile?.email}</p>
       <p>{totalPoints} points</p>
+
+      <PassportQr initialQrDataUrl={qrDataUrl} />
 
       {stamps && stamps.length > 0 ? (
         <ul className="stamp-list">

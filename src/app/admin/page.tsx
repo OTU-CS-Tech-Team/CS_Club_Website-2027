@@ -1,7 +1,8 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/admin';
-import CreateEventCodeForm from './CreateEventCodeForm';
+import CreateEventForm from './CreateEventForm';
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -16,8 +17,11 @@ export default async function AdminPage() {
   return (
     <div className="page">
       <h1>Admin Dashboard</h1>
-      <p>Create a QR code for an event — members scan it to claim a passport stamp.</p>
-      <CreateEventCodeForm />
+      <p>
+        Create an event, then use <Link href="/admin/checkin">Event Check-in</Link> to scan
+        members' passport QR codes as they arrive.
+      </p>
+      <CreateEventForm />
     </div>
   );
 }

@@ -1,4 +1,3 @@
-import { randomBytes } from 'crypto';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -15,19 +14,28 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
-  const label = typeof body?.label === 'string' ? body.label.trim() : '';
+  const title = typeof body?.title === 'string' ? body.title.trim() : '';
+  const description = typeof body?.description === 'string' ? body.description.trim() : null;
+  const location = typeof body?.location === 'string' ? body.location.trim() : null;
+  const startsAt = typeof body?.startsAt === 'string' && body.startsAt ? body.startsAt : null;
   const points = Number(body?.points);
 
-  if (!label || !Number.isFinite(points) || points < 0) {
+  if (!title || !Number.isFinite(points) || points < 0) {
     return NextResponse.json({ error: 'Bad request' }, { status: 400 });
   }
 
   try {
-    const code = randomBytes(6).toString('hex');
     const admin = createAdminClient();
     const { data, error } = await admin
-      .from('event_codes')
-      .insert({ code, label, points, created_by: user!.id })
+      .from('events')
+      .insert({
+        title,
+        description,
+        location,
+        starts_at: startsAt,
+        points,
+        created_by: user!.id,
+      })
       .select()
       .single();
 
