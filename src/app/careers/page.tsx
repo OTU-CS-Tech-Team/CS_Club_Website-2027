@@ -1,6 +1,10 @@
 import Link from 'next/link';
+import { getActiveJobs } from '@/lib/content';
 
-export default function CareersPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function CareersPage() {
+  const jobs = await getActiveJobs();
   return (
     <div className="careers-page">
       <section className="careers-hero">
@@ -12,10 +16,10 @@ export default function CareersPage() {
         <div className="careers-section-heading">
           <div><div className="careers-eyebrow">Open roles</div><h2>Find your place on the team.</h2></div>
         </div>
-        <article className="careers-job-card careers-job-row">
-          <div className="careers-job-title">CS Club General Member <span>Community</span></div>
-          <Link className="careers-primary-button" href="/careers/apply">Apply now <span>↗</span></Link>
-        </article>
+        {jobs.length ? jobs.map((job) => <article className="careers-job-card careers-job-row" key={job.id}>
+          <div className="careers-job-title">{job.title} <span>{job.category}</span></div>
+          <Link className="careers-primary-button" href={`/careers/${job.id}/apply`}>Apply now <span>↗</span></Link>
+        </article>) : <p>There are no open roles right now. Check back soon.</p>}
       </section>
     </div>
   );
