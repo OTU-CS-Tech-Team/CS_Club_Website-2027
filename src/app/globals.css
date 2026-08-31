@@ -109,6 +109,7 @@ main {
 .careers-job-row .careers-primary-button { align-self: center; }
 .careers-apply-page { padding: clamp(2rem, 6vw, 5rem) clamp(1.25rem, 10vw, 10rem); }
 .careers-apply-page .careers-application-panel { max-width: 900px; margin: 0 auto; }
+.careers-apply-page .careers-application-heading { align-items: flex-start; justify-content: flex-start; margin: 0 0 2rem; padding: .5rem 0 0; }
 .careers-apply-page h1 { margin: .45rem 0 .65rem; font: 700 clamp(2.5rem, 5vw, 4.5rem)/1 Georgia, serif; letter-spacing: -.05em; }
 .careers-apply-page .careers-application-heading p { max-width: 520px; margin: 0; color: var(--career-purple); }
 @media (max-width: 640px) { .careers-job-row { align-items: flex-start; gap: 1rem; }.careers-job-title { max-width: 65%; }.careers-job-title span { display: block; margin: .25rem 0 0; } }
