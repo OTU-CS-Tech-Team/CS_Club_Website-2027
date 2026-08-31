@@ -1,6 +1,40 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, KeyboardEvent as ReactKeyboardEvent, useEffect, useRef, useState } from 'react';
+
+const studyYears = ['First year', 'Second year', 'Third year', 'Fourth year', 'Graduate'];
+
+function YearSelect() {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState('');
+  const selectRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function closeOnOutsideClick(event: MouseEvent) {
+      if (selectRef.current && !selectRef.current.contains(event.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    return () => document.removeEventListener('mousedown', closeOnOutsideClick);
+  }, []);
+
+  function handleKeyDown(event: ReactKeyboardEvent<HTMLButtonElement>) {
+    const currentIndex = studyYears.indexOf(value);
+    if (event.key === 'Escape') setOpen(false);
+    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setOpen((isOpen) => !isOpen); }
+    if (event.key === 'ArrowDown') { event.preventDefault(); setValue(studyYears[Math.min(currentIndex + 1, studyYears.length - 1)]); setOpen(true); }
+    if (event.key === 'ArrowUp') { event.preventDefault(); setValue(studyYears[Math.max(currentIndex - 1, 0)]); setOpen(true); }
+  }
+
+  return <div className="careers-year-select" ref={selectRef}>
+    <input type="hidden" name="year" value={value} />
+    <button className="careers-year-select-button" type="button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((isOpen) => !isOpen)} onKeyDown={handleKeyDown}>
+      {value || 'Select year'} <span aria-hidden="true">⌄</span>
+    </button>
+    {open && <div className="careers-year-options" role="listbox" aria-label="Year of study">
+      {studyYears.map((year) => <button className={`careers-year-option${value === year ? ' is-selected' : ''}`} key={year} type="button" role="option" aria-selected={value === year} onClick={() => { setValue(year); setOpen(false); }}>{year}</button>)}
+    </div>}
+  </div>;
+}
 
 export default function CareerApplicationPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -35,8 +69,8 @@ export default function CareerApplicationPage() {
     <div className="careers-application-heading"><div><div className="careers-eyebrow">CS Club General Member</div><p>Tell us a little about yourself and how you would like to contribute to the club.</p></div></div>
     {submitted ? <div className="careers-success"><span>✓</span><h3>Application received.</h3><p>Thanks for putting yourself forward. The CS Club team will be in touch through your Ontario Tech email.</p></div> : <form onSubmit={handleSubmit}><div className="careers-form-grid">
       <label>First name<input name="firstName" required /></label><label>Last name<input name="lastName" required /></label>
-      <label className="careers-full-width">Ontario Tech email<input type="email" name="email" placeholder="you@ontariotechu.net" pattern="^[^\s@]+@ontariotechu\.net$" title="Use your @ontariotechu.net email address." required /></label>
-      <label>Student ID<input name="studentId" inputMode="numeric" placeholder="100123456" pattern="^1\d{8}$" title="Enter your 9-digit student ID beginning with 1." required /></label><label>Year of study<select name="year" defaultValue="" required><option value="" disabled>Select year</option><option>First year</option><option>Second year</option><option>Third year</option><option>Fourth year</option><option>Graduate</option></select></label>
+      <label className="careers-full-width">Ontario Tech email<input type="email" name="email" placeholder="first.last@ontariotechu.net" pattern="^[^\s@]+@ontariotechu\.net$" title="Use your @ontariotechu.net email address." required /></label>
+      <label>Student ID<input name="studentId" inputMode="numeric" placeholder="100123456" pattern="^1\d{8}$" title="Enter your 9-digit student ID beginning with 1." required /></label><label>Year of study<YearSelect /></label>
       <label className="careers-full-width">Program of study<input name="program" placeholder="e.g. Computer Science" required /></label><label className="careers-full-width">Got ideas for us?<textarea name="ideas" rows={4} placeholder="Tell us what you would love to see from the club..." /></label>
     </div>{error && <p className="careers-form-error" role="alert">{error}</p>}<button className="careers-primary-button careers-submit-button" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Sending application...' : 'Submit application'} <span>→</span></button></form>}
   </section></div>;
