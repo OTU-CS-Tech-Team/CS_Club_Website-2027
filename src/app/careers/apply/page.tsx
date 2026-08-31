@@ -67,12 +67,14 @@ export default function CareerApplicationPage() {
   }
 
   return <div className="careers-page careers-apply-page"><section className="careers-application-panel">
-    <div className="careers-application-heading"><div><div className="careers-eyebrow">CS Club General Member</div><p>Tell us a little about yourself and how you would like to contribute to the club.</p></div></div>
-    {submitted ? <div className="careers-success"><span>✓</span><h3>Application received.</h3><p>Thanks for putting yourself forward. The CS Club team will be in touch through your Ontario Tech email.</p></div> : <form onSubmit={handleSubmit}><div className="careers-form-grid">
+    {submitted ? <div className="careers-success"><span>✓</span><h3>Application received.</h3><p>Thanks for putting yourself forward. The CS Club team will be in touch through your Ontario Tech email.</p></div> : <>
+      <div className="careers-application-heading"><div><div className="careers-eyebrow">CS Club General Member</div><p>Tell us a little about yourself and how you would like to contribute to the club.</p></div></div>
+      <form onSubmit={handleSubmit}><div className="careers-form-grid">
       <label>First name<input name="firstName" required /></label><label>Last name<input name="lastName" required /></label>
       <label className="careers-full-width">Ontario Tech email<input type="email" name="email" placeholder="first.last@ontariotechu.net" pattern="^[^\s@]+@ontariotechu\.net$" title="Use your @ontariotechu.net email address." required /></label>
       <label>Student ID<input name="studentId" inputMode="numeric" placeholder="100123456" pattern="^1\d{8}$" title="Enter your 9-digit student ID beginning with 1." required /></label><label>Year of study<YearSelect /></label>
       <label className="careers-full-width">Program of study<input name="program" placeholder="e.g. Computer Science" required /></label><label className="careers-full-width">Got ideas for us?<textarea name="ideas" rows={4} placeholder="Tell us what you would love to see from the club..." /></label>
-    </div>{error && <p className="careers-form-error" role="alert">{error}</p>}<button className="careers-primary-button careers-submit-button" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Sending application...' : 'Submit application'} <span>→</span></button></form>}
+      </div>{error && <p className="careers-form-error" role="alert">{error}</p>}<button className="careers-primary-button careers-submit-button" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Sending application...' : 'Submit application'} <span>→</span></button></form>
+    </>}
   </section></div>;
 }
