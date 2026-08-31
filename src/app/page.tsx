@@ -5,6 +5,7 @@ import TeamActivity from '@/components/landing/TeamActivity';
 import UpcomingEvents from '@/components/landing/UpcomingEvents';
 import { getFeaturedProjects } from '@/data/hackhive';
 import { events, getUpcomingEvents, news, recapYoutubeId } from '@/data/landing';
+import { getDbEvents } from '@/lib/dbEvents';
 import styles from '@/components/landing/landing.module.css';
 
 const plex = IBM_Plex_Sans({
@@ -21,8 +22,9 @@ const caveat = Caveat({
 
 export const dynamic = 'force-dynamic';
 
-export default function HomePage() {
-  const upcoming = getUpcomingEvents(events, 3);
+export default async function HomePage() {
+  const dbEvents = await getDbEvents();
+  const upcoming = getUpcomingEvents([...events, ...dbEvents], 3);
   const projects = getFeaturedProjects();
 
   return (
