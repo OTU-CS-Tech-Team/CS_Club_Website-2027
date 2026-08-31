@@ -7,6 +7,7 @@ const studyYears = ['First year', 'Second year', 'Third year', 'Fourth year', 'G
 function YearSelect() {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
+  const [highlighted, setHighlighted] = useState('');
   const selectRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -20,18 +21,18 @@ function YearSelect() {
   function handleKeyDown(event: ReactKeyboardEvent<HTMLButtonElement>) {
     const currentIndex = studyYears.indexOf(value);
     if (event.key === 'Escape') setOpen(false);
-    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setOpen((isOpen) => !isOpen); }
-    if (event.key === 'ArrowDown') { event.preventDefault(); setValue(studyYears[Math.min(currentIndex + 1, studyYears.length - 1)]); setOpen(true); }
-    if (event.key === 'ArrowUp') { event.preventDefault(); setValue(studyYears[Math.max(currentIndex - 1, 0)]); setOpen(true); }
+    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setOpen((isOpen) => { if (!isOpen) setHighlighted(value || studyYears[0]); return !isOpen; }); }
+    if (event.key === 'ArrowDown') { event.preventDefault(); setHighlighted(studyYears[Math.min(currentIndex + 1, studyYears.length - 1)]); setOpen(true); }
+    if (event.key === 'ArrowUp') { event.preventDefault(); setHighlighted(studyYears[Math.max(currentIndex - 1, 0)]); setOpen(true); }
   }
 
   return <div className="careers-year-select" ref={selectRef}>
     <input type="hidden" name="year" value={value} />
-    <button className="careers-year-select-button" type="button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((isOpen) => !isOpen)} onKeyDown={handleKeyDown}>
+    <button className="careers-year-select-button" type="button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((isOpen) => { if (!isOpen) setHighlighted(value || studyYears[0]); return !isOpen; })} onKeyDown={handleKeyDown}>
       {value || 'Select year'} <span aria-hidden="true">⌄</span>
     </button>
     {open && <div className="careers-year-options" role="listbox" aria-label="Year of study">
-      {studyYears.map((year) => <button className={`careers-year-option${value === year ? ' is-selected' : ''}`} key={year} type="button" role="option" aria-selected={value === year} onClick={() => { setValue(year); setOpen(false); }}>{year}</button>)}
+      {studyYears.map((year) => <button className={`careers-year-option${value === year ? ' is-selected' : ''}${highlighted === year ? ' is-highlighted' : ''}`} key={year} type="button" role="option" aria-selected={value === year} onMouseEnter={() => setHighlighted(year)} onFocus={() => setHighlighted(year)} onClick={() => { setValue(year); setHighlighted(year); setOpen(false); }}>{year}</button>)}
     </div>}
   </div>;
 }
