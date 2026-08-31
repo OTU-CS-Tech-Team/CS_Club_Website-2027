@@ -57,7 +57,7 @@ function timeZoneOffsetMs(instant: Date, timeZone: string): number {
   return asUtc - instant.getTime();
 }
 
-function torontoWallTime(isoDate: string, hours: number, minutes: number): Date {
+export function torontoWallTime(isoDate: string, hours: number, minutes: number): Date {
   const [year, month, day] = isoDate.split('-').map(Number);
   const utcGuess = Date.UTC(year, month - 1, day, hours, minutes, 0);
   const first = utcGuess - timeZoneOffsetMs(new Date(utcGuess), CLUB_TZ);
