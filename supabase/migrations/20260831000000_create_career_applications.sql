@@ -12,7 +12,7 @@ create table if not exists public.career_applications (
 
 alter table public.career_applications
   add constraint career_applications_email_check
-  check (ontario_tech_email ~ '^[^[:space:]@]+@ontariotechu[.]net$'),
+  check (ontario_tech_email ~* '^[^[:space:]@]+@ontariotechu[.]net$'),
   add constraint career_applications_student_id_check
   check (student_id ~ '^1[0-9]{8}$'),
   add constraint career_applications_ideas_length_check
