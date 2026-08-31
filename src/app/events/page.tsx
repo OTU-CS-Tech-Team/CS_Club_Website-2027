@@ -1,52 +1,35 @@
-import { createClient } from '@/lib/supabase/server';
-import RsvpButton from './RsvpButton';
+import { IBM_Plex_Sans } from 'next/font/google';
+import EventsBoard from '@/components/events/EventsBoard';
+import { events } from '@/data/landing';
+import { getPastEvents, getUpcomingEvents } from '@/lib/eventSchedule';
+import styles from '@/components/landing/landing.module.css';
 
-export default async function EventsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+const plex = IBM_Plex_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+});
 
-  const { data: events } = await supabase
-    .from('events')
-    .select('id, title, description, location, starts_at, points')
-    .order('starts_at', { ascending: true });
+export const metadata = {
+  title: 'Events — CS Club',
+  description: 'Upcoming and past Computer Science Club events.',
+};
 
-  let myRsvps = new Set<string>();
-  if (user) {
-    const { data: rsvps } = await supabase
-      .from('event_rsvps')
-      .select('event_id')
-      .eq('user_id', user.id);
-    myRsvps = new Set((rsvps ?? []).map((r) => r.event_id));
-  }
+export const dynamic = 'force-dynamic';
+
+export default function EventsPage() {
+  const upcoming = getUpcomingEvents(events);
+  const past = getPastEvents(events);
 
   return (
-    <div className="page">
-      <h1>Upcoming Events</h1>
-
-      {events && events.length > 0 ? (
-        <ul className="event-list">
-          {events.map((event) => (
-            <li key={event.id}>
-              <h3>{event.title}</h3>
-              {event.starts_at && <p>{new Date(event.starts_at).toLocaleString()}</p>}
-              {event.location && <p>{event.location}</p>}
-              {event.description && <p>{event.description}</p>}
-              <p>{event.points} points</p>
-              {user ? (
-                <RsvpButton eventId={event.id} initialRsvped={myRsvps.has(event.id)} />
-              ) : (
-                <p>
-                  <a href="/login">Log in</a> to RSVP.
-                </p>
-              )}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No events yet — check back soon.</p>
-      )}
+    <div className={`${styles.landing} ${plex.className}`}>
+      <div className={styles.shell}>
+        <header className={styles.pageHeader}>
+          <p className={styles.kicker}>CS Club</p>
+          <h1 className={styles.headline}>Events</h1>
+        </header>
+        <EventsBoard upcoming={upcoming} past={past} />
+      </div>
     </div>
   );
 }
