@@ -128,18 +128,26 @@ export async function saveEvent(
   return { ok: true, message: originalId ? 'Event updated.' : 'Event created.' };
 }
 
-export async function deleteEvent(id: string) {
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) return;
+export async function deleteEvent(
+  _previousState: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const id = text(formData, 'id');
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) return initialError('The event identifier is invalid.');
   try {
     const { supabase } = await requireAdmin();
     const { error } = await supabase.from('events').delete().eq('id', id);
-    if (error) console.error('Unable to delete event', { code: error.code, message: error.message });
-  } catch {
-    return;
+    if (error) {
+      console.error('Unable to delete event', { code: error.code, message: error.message });
+      return initialError('Unable to delete the event.');
+    }
+  } catch (error) {
+    return initialError(authorizationError(error) ?? 'Unable to delete the event.');
   }
   revalidatePath('/');
   revalidatePath('/events');
   revalidatePath('/admin');
+  return { ok: true, message: 'Event deleted.' };
 }
 
 export async function saveJob(
@@ -186,17 +194,25 @@ export async function saveJob(
   return { ok: true, message: originalId ? 'Job updated.' : 'Job created.' };
 }
 
-export async function deleteJob(id: string) {
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) return;
+export async function deleteJob(
+  _previousState: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const id = text(formData, 'id');
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) return initialError('The job identifier is invalid.');
   try {
     const { supabase } = await requireAdmin();
     const { error } = await supabase.from('jobs').delete().eq('id', id);
-    if (error) console.error('Unable to delete job', { code: error.code, message: error.message });
-  } catch {
-    return;
+    if (error) {
+      console.error('Unable to delete job', { code: error.code, message: error.message });
+      return initialError('Unable to delete the job.');
+    }
+  } catch (error) {
+    return initialError(authorizationError(error) ?? 'Unable to delete the job.');
   }
   revalidatePath('/careers');
   revalidatePath('/admin');
+  return { ok: true, message: 'Job deleted.' };
 }
 
 export async function signOut() {

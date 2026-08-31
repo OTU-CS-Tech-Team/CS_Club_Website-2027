@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
 import LoginForm from './LoginForm';
 import styles from './login.module.css';
 
@@ -6,7 +8,22 @@ export const metadata = {
   description: 'Secure CS Club executive dashboard login.',
 };
 
-export default function LoginPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function LoginPage() {
+  const supabase = await createClient();
+  const { data: userData } = await supabase.auth.getUser();
+
+  if (userData.user) {
+    const { data: admin } = await supabase
+      .from('admin_users')
+      .select('user_id')
+      .eq('user_id', userData.user.id)
+      .maybeSingle();
+
+    if (admin) redirect('/admin');
+  }
+
   return (
     <div className={styles.page}>
       <section className={styles.panel}>
