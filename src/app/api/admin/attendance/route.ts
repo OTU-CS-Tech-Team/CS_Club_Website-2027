@@ -25,21 +25,23 @@ export async function POST(request: Request) {
   try {
     const admin = createAdminClient();
     let userId: string;
+    let tokenRow: { user_id: string; expires_at: string } | null = null;
 
     if (token) {
-      // scanned path: resolve via the member's short-lived passport QR token
-      const { data: tokenRow } = await admin
+      // scanned path: resolve via the member's short-lived passport QR
+      // token — NOT consumed yet. If the stamp insert below fails for a
+      // transient reason, the token needs to still be valid so the same
+      // scan can just be retried instead of the member needing a new QR.
+      const { data } = await admin
         .from('checkin_tokens')
         .select('user_id, expires_at')
         .eq('token', token)
         .single();
+      tokenRow = data;
 
       if (!tokenRow || new Date(tokenRow.expires_at) < new Date()) {
         return NextResponse.json({ error: 'Invalid or expired code' }, { status: 400 });
       }
-
-      // consume it immediately so the same scan can't be replayed
-      await admin.from('checkin_tokens').delete().eq('token', token);
       userId = tokenRow.user_id;
     } else {
       // manual fallback: resolve by email for members who didn't scan
@@ -73,14 +75,22 @@ export async function POST(request: Request) {
       event_id: eventId,
     });
 
-    if (insertError) {
-      if (insertError.code === '23505') {
-        return NextResponse.json(
-          { error: `${displayName} already checked in to this event` },
-          { status: 409 }
-        );
-      }
+    if (insertError && insertError.code !== '23505') {
+      // real failure, not a duplicate — leave the token alone so this
+      // exact scan can be retried instead of the code being burned
       throw insertError;
+    }
+
+    // stamp saved (or already existed) — the token's job is done either way
+    if (token) {
+      await admin.from('checkin_tokens').delete().eq('token', token);
+    }
+
+    if (insertError) {
+      return NextResponse.json(
+        { error: `${displayName} already checked in to this event` },
+        { status: 409 }
+      );
     }
 
     return NextResponse.json({ name: displayName, points: eventRow.points });
