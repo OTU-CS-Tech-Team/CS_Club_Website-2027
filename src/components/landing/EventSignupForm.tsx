@@ -3,7 +3,7 @@
 import { FormEvent, useState } from 'react';
 import styles from './landing.module.css';
 
-const YEARS = ['1st year', '2nd year', '3rd year', '4th year', 'Graduate'];
+export const YEARS = ['1st year', '2nd year', '3rd year', '4th year', 'Graduate'];
 const EMAIL_PATTERN = /@ontariotechu\.(net|ca)$/i;
 
 type EventSignupFormProps = {

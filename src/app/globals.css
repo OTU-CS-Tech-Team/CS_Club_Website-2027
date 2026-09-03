@@ -85,6 +85,130 @@ main {
   margin-right: auto;
 }
 
+.link-button {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 320px;
+  margin: 1.5rem 0;
+}
+
+.auth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.auth-form input,
+.auth-form select {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.auth-form button {
+  margin-top: 0.5rem;
+  padding: 0.6rem;
+  border: none;
+  border-radius: 4px;
+  background: #111;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.auth-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.stamp-list {
+  padding-left: 1.25rem;
+}
+
+.stamp-list li {
+  margin-bottom: 0.4rem;
+}
+
+.checkin-qr {
+  margin: 1.5rem 0;
+  max-width: 220px;
+}
+
+.scanner-video {
+  width: 100%;
+  max-width: 400px;
+  margin-top: 1rem;
+  border-radius: 8px;
+  background: #000;
+}
+
+.scan-feedback {
+  margin-top: 0.75rem;
+  font-weight: 600;
+}
+
+.scan-confirm {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.scan-confirm button[type='button']:not(.link-button) {
+  margin-top: 0.5rem;
+  margin-right: 0.75rem;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background: #111;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.scan-confirm button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.rsvp-list {
+  padding-left: 1.25rem;
+}
+
+.rsvp-list li {
+  margin-bottom: 0.4rem;
+}
+
+.event-list {
+  list-style: none;
+  padding: 0;
+}
+
+.event-list li {
+  padding: 1rem 0;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.event-list h3 {
+  margin: 0 0 0.25rem;
+}
+
 .careers-page { --career-canvas: #e6e6fa; --career-ink: #1b003f; --career-purple: #564f89; --career-yellow: #fff29c; --career-blue: #6495ed; min-height: calc(100dvh - 3.5rem); background: var(--career-canvas); color: var(--career-ink); }
 .careers-hero { padding: clamp(4rem, 10vw, 8rem) clamp(1.25rem, 10vw, 10rem); position: relative; overflow: hidden; }
 .careers-hero::after { content: ''; position: absolute; width: 280px; height: 280px; border-radius: 50%; background: var(--career-yellow); right: 8%; top: -110px; opacity: .8; }

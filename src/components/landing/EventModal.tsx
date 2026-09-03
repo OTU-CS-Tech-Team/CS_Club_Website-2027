@@ -4,7 +4,12 @@ import { useEffect, useId, useRef } from 'react';
 import type { ClubEvent } from '@/types/landing';
 import { isEventUpcoming } from '@/lib/eventSchedule';
 import EventSignupForm from './EventSignupForm';
+import DbEventRsvp from './DbEventRsvp';
 import styles from './landing.module.css';
+
+// Real DB events have a uuid id; the hardcoded sample events use plain
+// slugs like "leetcode-workshop" — that's how we tell them apart here.
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type EventModalProps = {
   event: ClubEvent;
@@ -105,7 +110,13 @@ export default function EventModal({ event, onClose }: EventModalProps) {
             ))}
           </div>
         ) : null}
-        {isEventUpcoming(event) ? <EventSignupForm eventTitle={event.title} /> : null}
+        {isEventUpcoming(event) ? (
+          UUID_PATTERN.test(event.id) ? (
+            <DbEventRsvp eventId={event.id} />
+          ) : (
+            <EventSignupForm eventTitle={event.title} />
+          )
+        ) : null}
       </div>
     </div>
   );

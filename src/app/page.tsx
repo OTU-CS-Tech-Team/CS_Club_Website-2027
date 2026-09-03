@@ -4,7 +4,7 @@ import HackHiveExhibition from '@/components/landing/HackHiveExhibition';
 import TeamActivity from '@/components/landing/TeamActivity';
 import UpcomingEvents from '@/components/landing/UpcomingEvents';
 import { getFeaturedProjects } from '@/data/hackhive';
-import { getUpcomingEvents, news, recapYoutubeId } from '@/data/landing';
+import { events, getUpcomingEvents, news, recapYoutubeId } from '@/data/landing';
 import { getPublishedEvents } from '@/lib/content';
 import styles from '@/components/landing/landing.module.css';
 
@@ -23,7 +23,8 @@ const caveat = Caveat({
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const upcoming = getUpcomingEvents(await getPublishedEvents(), 3);
+  const dbEvents = await getPublishedEvents();
+  const upcoming = getUpcomingEvents([...events, ...dbEvents], 3);
   const projects = getFeaturedProjects();
 
   return (

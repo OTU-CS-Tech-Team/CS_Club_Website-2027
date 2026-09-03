@@ -1,37 +1,111 @@
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import LoginForm from './LoginForm';
-import styles from './login.module.css';
+'use client';
 
-export const metadata = {
-  title: 'Executive login — CS Club',
-  description: 'Secure CS Club executive dashboard login.',
-};
+import { useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
-export const dynamic = 'force-dynamic';
+type Mode = 'signin' | 'signup';
 
-export default async function LoginPage() {
-  const supabase = await createClient();
-  const { data: userData } = await supabase.auth.getUser();
+export default function LoginPage() {
+  const router = useRouter();
+  const supabase = createClient();
+  const [mode, setMode] = useState<Mode>('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [status, setStatus] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  if (userData.user) {
-    const { data: admin } = await supabase
-      .from('admin_users')
-      .select('user_id')
-      .eq('user_id', userData.user.id)
-      .maybeSingle();
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setStatus('');
+    setLoading(true);
 
-    if (admin) redirect('/admin');
+    if (mode === 'signup') {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/confirm?next=/passport`,
+        },
+      });
+      setLoading(false);
+      if (error) {
+        setStatus(error.message);
+        return;
+      }
+      if (data.session) {
+        router.push(nextPath());
+        return;
+      }
+      setStatus('Check your inbox to confirm your account, then sign in.');
+      setMode('signin');
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    if (error) {
+      setStatus(error.message);
+      return;
+    }
+    router.push(nextPath());
+  }
+
+  function nextPath() {
+    const next = new URLSearchParams(window.location.search).get('next');
+    return next ? decodeURIComponent(next) : '/passport';
   }
 
   return (
-    <div className={styles.page}>
-      <section className={styles.panel}>
-        <p className={styles.kicker}>Executive access</p>
-        <h1>Welcome back.</h1>
-        <p className={styles.copy}>Sign in with your whitelisted executive account.</p>
-        <LoginForm />
-      </section>
+    <div className="page">
+      <h1>Log in</h1>
+      <p>
+        {mode === 'signup'
+          ? 'Create your account to start your member passport.'
+          : 'Sign in to see your member passport.'}
+      </p>
+
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <label>
+          Email
+          <input
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+          />
+        </label>
+        <label>
+          Password
+          <input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            minLength={6}
+          />
+        </label>
+        <button type="submit" disabled={loading}>
+          {mode === 'signup' ? 'Create account' : 'Sign in'}
+        </button>
+      </form>
+
+      <button
+        type="button"
+        className="link-button"
+        onClick={() => {
+          setMode(mode === 'signup' ? 'signin' : 'signup');
+          setStatus('');
+        }}
+      >
+        {mode === 'signup' ? 'Already have an account? Sign in' : 'New here? Create an account'}
+      </button>
+
+      {status && (
+        <p role="status" aria-live="polite">
+          {status}
+        </p>
+      )}
     </div>
   );
 }
