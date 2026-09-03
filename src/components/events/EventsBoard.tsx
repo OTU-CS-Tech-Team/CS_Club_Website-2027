@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { ClubEvent } from '@/types/landing';
 import EventCard from '@/components/landing/EventCard';
@@ -13,7 +14,12 @@ type EventsBoardProps = {
 };
 
 export default function EventsBoard({ upcoming, past }: EventsBoardProps) {
+  const router = useRouter();
   const [selected, setSelected] = useState<ClubEvent | null>(null);
+
+  useEffect(() => {
+    router.refresh();
+  }, [router]);
 
   return (
     <>

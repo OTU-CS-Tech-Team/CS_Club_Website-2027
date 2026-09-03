@@ -1,6 +1,7 @@
-import { createClient } from '@/lib/supabase/server';
-import type { ClubEvent } from '@/types/landing';
-
+// Shared Toronto-time formatting for events — used by the RSVP
+// confirmation/reminder emails. The listing pages themselves now fetch
+// real events via lib/content.ts's getPublishedEvents() instead of this
+// file's old getDbEvents(), which is why this file is just formatters now.
 const CLUB_TZ = 'America/Toronto';
 
 export function toDateString(iso: string) {
@@ -27,28 +28,4 @@ export function toTimeString(iso: string) {
   }).format(new Date(iso));
 
   return formatted.split(NARROW_NBSP).join(' ');
-}
-
-// Real events created in /admin, mapped onto the same ClubEvent shape the
-// hardcoded landing-page events use, so they can sit in the same list.
-// Events with no date set are skipped — nothing to place on the
-// upcoming/past calendar without one.
-export async function getDbEvents(): Promise<ClubEvent[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('events')
-    .select('id, title, description, location, starts_at')
-    .not('starts_at', 'is', null);
-
-  return (data ?? [])
-    .filter((row): row is typeof row & { starts_at: string } => row.starts_at !== null)
-    .map((row) => ({
-      id: row.id,
-      title: row.title,
-      description: row.description ?? '',
-      date: toDateString(row.starts_at),
-      time: toTimeString(row.starts_at),
-      location: row.location ?? 'TBD',
-      images: [],
-    }));
 }

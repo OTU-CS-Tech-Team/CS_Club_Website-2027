@@ -35,7 +35,9 @@ export default function Navbar() {
       <Link href="/">Home</Link>
       <Link href="/team">Team</Link>
       <Link href="/hackhive">HackHive</Link>
-      <Link href="/events">Events</Link>
+      <Link href="/events" prefetch={false}>
+        Events
+      </Link>
       <Link href="/careers">Careers</Link>
       <Link href="/admin">Admin</Link>
       {user ? (

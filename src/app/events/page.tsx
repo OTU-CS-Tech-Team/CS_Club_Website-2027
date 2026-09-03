@@ -1,8 +1,8 @@
 import { IBM_Plex_Sans } from 'next/font/google';
 import EventsBoard from '@/components/events/EventsBoard';
 import { events } from '@/data/landing';
+import { getPublishedEvents } from '@/lib/content';
 import { getPastEvents, getUpcomingEvents } from '@/lib/eventSchedule';
-import { getDbEvents } from '@/lib/dbEvents';
 import styles from '@/components/landing/landing.module.css';
 
 const plex = IBM_Plex_Sans({
@@ -19,7 +19,7 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function EventsPage() {
-  const dbEvents = await getDbEvents();
+  const dbEvents = await getPublishedEvents();
   const allEvents = [...events, ...dbEvents];
   const upcoming = getUpcomingEvents(allEvents);
   const past = getPastEvents(allEvents);

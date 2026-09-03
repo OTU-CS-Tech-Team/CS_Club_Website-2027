@@ -25,8 +25,9 @@ export async function POST(request: Request) {
   const year = getText(body.year);
   const program = getText(body.program);
   const ideas = getText(body.ideas);
+  const jobId = getText(body.jobId);
 
-  if (!firstName || !lastName || !email || !studentId || !year || !program) {
+  if (!firstName || !lastName || !email || !studentId || !year || !program || !jobId) {
     return NextResponse.json({ error: 'Please complete all required fields.' }, { status: 400 });
   }
   if (Object.entries({ firstName, lastName, email, studentId, program, ideas }).some(([field, value]) => value.length > fieldLimits[field as keyof typeof fieldLimits])) {
@@ -46,7 +47,20 @@ export async function POST(request: Request) {
   }
 
   const supabase = createClient(url, key);
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(jobId)) {
+    return NextResponse.json({ error: 'This job posting is not available.' }, { status: 400 });
+  }
+  const { data: job } = await supabase
+    .from('jobs')
+    .select('id')
+    .eq('id', jobId)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (!job) {
+    return NextResponse.json({ error: 'This job posting is no longer available.' }, { status: 400 });
+  }
   const { error } = await supabase.from('career_applications').insert({
+    job_id: jobId,
     first_name: firstName,
     last_name: lastName,
     ontario_tech_email: email,

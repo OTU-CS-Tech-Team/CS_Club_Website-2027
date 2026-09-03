@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { isAdminEmail } from '@/lib/admin';
+import { isAdmin } from '@/lib/admin';
 import CheckinScanner from './CheckinScanner';
 
 export default async function CheckinPage() {
@@ -10,7 +10,7 @@ export default async function CheckinPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!isAdminEmail(user?.email)) {
+  if (!(await isAdmin(supabase, user?.id))) {
     redirect('/');
   }
 

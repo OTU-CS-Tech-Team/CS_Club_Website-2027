@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { isAdminEmail } from '@/lib/admin';
+import { isAdmin } from '@/lib/admin';
 import { torontoWallTime } from '@/lib/eventSchedule';
 
 // The admin form's <input type="datetime-local"> sends a plain
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!isAdminEmail(user?.email)) {
+  if (!(await isAdmin(supabase, user?.id))) {
     return new Response(null, { status: 401 });
   }
 
