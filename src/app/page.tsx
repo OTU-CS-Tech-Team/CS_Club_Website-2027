@@ -4,7 +4,8 @@ import HackHiveExhibition from '@/components/landing/HackHiveExhibition';
 import TeamActivity from '@/components/landing/TeamActivity';
 import UpcomingEvents from '@/components/landing/UpcomingEvents';
 import { getFeaturedProjects } from '@/data/hackhive';
-import { events, getUpcomingEvents, news, recapYoutubeId } from '@/data/landing';
+import { getUpcomingEvents, news, recapYoutubeId } from '@/data/landing';
+import { getPublishedEvents } from '@/lib/content';
 import styles from '@/components/landing/landing.module.css';
 
 const plex = IBM_Plex_Sans({
@@ -21,8 +22,8 @@ const caveat = Caveat({
 
 export const dynamic = 'force-dynamic';
 
-export default function HomePage() {
-  const upcoming = getUpcomingEvents(events, 3);
+export default async function HomePage() {
+  const upcoming = getUpcomingEvents(await getPublishedEvents(), 3);
   const projects = getFeaturedProjects();
 
   return (

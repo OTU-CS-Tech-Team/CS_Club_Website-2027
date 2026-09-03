@@ -1,6 +1,6 @@
 import { IBM_Plex_Sans } from 'next/font/google';
 import EventsBoard from '@/components/events/EventsBoard';
-import { events } from '@/data/landing';
+import { getPublishedEvents } from '@/lib/content';
 import { getPastEvents, getUpcomingEvents } from '@/lib/eventSchedule';
 import styles from '@/components/landing/landing.module.css';
 
@@ -17,7 +17,8 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic';
 
-export default function EventsPage() {
+export default async function EventsPage() {
+  const events = await getPublishedEvents();
   const upcoming = getUpcomingEvents(events);
   const past = getPastEvents(events);
 

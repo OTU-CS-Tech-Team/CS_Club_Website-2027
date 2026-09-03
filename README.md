@@ -41,3 +41,23 @@ Folders under `src/app/` **are** the router. Shared chrome lives in `src/app/lay
 ## Git notes
 
 `node_modules/` and `.next/` are gitignored. Commit `package.json` and `package-lock.json`.
+
+## Executive dashboard setup
+
+The executive dashboard uses Supabase Auth and database row-level security. There is no public sign-up route.
+
+1. Apply the SQL files in `supabase/migrations/` in timestamp order.
+2. In Supabase Authentication, create each executive user with their email and a temporary password.
+3. Add each Auth user to the whitelist from the Supabase SQL Editor:
+
+```sql
+insert into public.admin_users (user_id)
+select id
+from auth.users
+where lower(email) = lower('executive@ontariotechu.net')
+on conflict (user_id) do nothing;
+```
+
+4. Copy `.env.example` to `.env.local` and add the project URL and publishable key.
+
+Whitelisted users can sign in at `/login` and manage events and job postings at `/admin`.
