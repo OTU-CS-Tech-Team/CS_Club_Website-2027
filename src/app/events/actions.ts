@@ -1,8 +1,15 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { sendEventEmail } from '@/lib/email';
+import { toDateString, toTimeString } from '@/lib/dbEvents';
 
-export async function toggleRsvp(eventId: string, wantRsvp: boolean) {
+export async function toggleRsvp(
+  eventId: string,
+  wantRsvp: boolean,
+  yearOfStudy?: string,
+  questions?: string
+) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -13,7 +20,40 @@ export async function toggleRsvp(eventId: string, wantRsvp: boolean) {
   }
 
   if (wantRsvp) {
-    await supabase.from('event_rsvps').insert({ event_id: eventId, user_id: user.id });
+    const trimmedYear = (yearOfStudy ?? '').trim();
+    if (!trimmedYear) {
+      throw new Error('Year of study is required.');
+    }
+
+    const { error } = await supabase.from('event_rsvps').insert({
+      event_id: eventId,
+      user_id: user.id,
+      year_of_study: trimmedYear,
+      questions: questions?.trim() || null,
+    });
+
+    // email is best-effort and only makes sense once the RSVP actually
+    // took (skip on error, e.g. already RSVP'd)
+    if (!error && user.email) {
+      const { data: event } = await supabase
+        .from('events')
+        .select('title, location, starts_at')
+        .eq('id', eventId)
+        .single();
+
+      if (event) {
+        const when = event.starts_at
+          ? `${toDateString(event.starts_at)} at ${toTimeString(event.starts_at)}`
+          : 'TBD';
+        await sendEventEmail(user.email, `You're RSVP'd: ${event.title}`, {
+          heading: "You're on the list!",
+          intro: `You've successfully RSVP'd for the following event.`,
+          title: event.title,
+          when,
+          location: event.location,
+        });
+      }
+    }
   } else {
     await supabase.from('event_rsvps').delete().eq('event_id', eventId).eq('user_id', user.id);
   }

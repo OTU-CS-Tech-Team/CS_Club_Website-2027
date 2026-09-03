@@ -23,7 +23,7 @@ export default async function CheckinPage() {
   // per-event route; the scanner filters by the selected event client-side
   const admin = createAdminClient();
   const [{ data: rsvps }, { data: profiles }, { data: stamps }] = await Promise.all([
-    admin.from('event_rsvps').select('event_id, user_id'),
+    admin.from('event_rsvps').select('event_id, user_id, year_of_study'),
     admin.from('profiles').select('id, full_name, email'),
     admin.from('passport_stamps').select('event_id, user_id').not('event_id', 'is', null),
   ]);
@@ -37,6 +37,7 @@ export default async function CheckinPage() {
       eventId: rsvp.event_id,
       email: profile?.email ?? '',
       name: profile?.full_name || profile?.email || 'Member',
+      yearOfStudy: rsvp.year_of_study,
       attended: attendedSet.has(`${rsvp.event_id}:${rsvp.user_id}`),
     };
   });

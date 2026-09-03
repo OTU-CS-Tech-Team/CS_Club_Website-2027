@@ -3,7 +3,7 @@ import type { ClubEvent } from '@/types/landing';
 
 const CLUB_TZ = 'America/Toronto';
 
-function toDateString(iso: string) {
+export function toDateString(iso: string) {
   // en-CA formats as YYYY-MM-DD, matching what ClubEvent.date/eventSchedule expect
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: CLUB_TZ,
@@ -18,7 +18,7 @@ function toDateString(iso: string) {
 // plain "h:mm AM/PM" pattern eventSchedule.ts's regex expects.
 const NARROW_NBSP = String.fromCharCode(0x202f);
 
-function toTimeString(iso: string) {
+export function toTimeString(iso: string) {
   const formatted = new Intl.DateTimeFormat('en-US', {
     timeZone: CLUB_TZ,
     hour: 'numeric',

@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { toggleRsvp, registerGuest } from '@/app/events/actions';
+import { YEARS } from './EventSignupForm';
 import styles from './landing.module.css';
 
 // RSVP control for a real, DB-backed event. Signed-in members RSVP
@@ -21,6 +22,10 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
   const [studentId, setStudentId] = useState('');
   const [guestStatus, setGuestStatus] = useState('');
   const [guestDone, setGuestDone] = useState(false);
+
+  const [yearOfStudy, setYearOfStudy] = useState('');
+  const [questions, setQuestions] = useState('');
+  const [rsvpError, setRsvpError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -54,11 +59,23 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
     };
   }, [eventId, supabase]);
 
-  async function handleClick() {
-    const next = !rsvped;
-    setRsvped(next);
+  async function handleRsvpSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setRsvpError('');
     setPending(true);
-    await toggleRsvp(eventId, next);
+    try {
+      await toggleRsvp(eventId, true, yearOfStudy, questions);
+      setRsvped(true);
+    } catch (error) {
+      setRsvpError(error instanceof Error ? error.message : 'Could not RSVP — try again.');
+    }
+    setPending(false);
+  }
+
+  async function handleCancelRsvp() {
+    setPending(true);
+    await toggleRsvp(eventId, false);
+    setRsvped(false);
     setPending(false);
   }
 
@@ -113,9 +130,54 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
     );
   }
 
+  if (rsvped) {
+    return (
+      <div className={styles.form}>
+        <h3 className={styles.formTitle}>You&apos;re going!</h3>
+        <div className={styles.formActions}>
+          <button type="button" className={styles.cta} onClick={handleCancelRsvp} disabled={pending}>
+            Cancel RSVP
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <button type="button" className={styles.cta} onClick={handleClick} disabled={pending}>
-      {rsvped ? "You're going ✓ — cancel" : 'RSVP'}
-    </button>
+    <form className={styles.form} onSubmit={handleRsvpSubmit} noValidate>
+      <h3 className={styles.formTitle}>Sign up sheet</h3>
+      <div className={`${styles.field} ${styles.fieldWide}`}>
+        <label htmlFor={`year-${eventId}`}>Year of study</label>
+        <select
+          id={`year-${eventId}`}
+          value={yearOfStudy}
+          onChange={(event) => setYearOfStudy(event.target.value)}
+          required
+        >
+          <option value="" disabled>
+            Select year
+          </option>
+          {YEARS.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className={`${styles.field} ${styles.fieldWide}`}>
+        <label htmlFor={`questions-${eventId}`}>Questions (optional)</label>
+        <textarea
+          id={`questions-${eventId}`}
+          value={questions}
+          onChange={(event) => setQuestions(event.target.value)}
+        />
+      </div>
+      {rsvpError && <p className={styles.formError}>{rsvpError}</p>}
+      <div className={styles.formActions}>
+        <button type="submit" className={styles.cta} disabled={pending}>
+          {pending ? 'Signing up…' : 'RSVP'}
+        </button>
+      </div>
+    </form>
   );
 }

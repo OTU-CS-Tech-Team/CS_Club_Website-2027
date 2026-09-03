@@ -6,7 +6,13 @@ import QrScanner from 'qr-scanner';
 QrScanner.WORKER_PATH = '/qr-scanner-worker.min.js';
 
 type EventOption = { id: string; title: string };
-type Rsvp = { eventId: string; email: string; name: string; attended: boolean };
+type Rsvp = {
+  eventId: string;
+  email: string;
+  name: string;
+  yearOfStudy: string | null;
+  attended: boolean;
+};
 
 export default function CheckinScanner({
   events,
@@ -188,7 +194,8 @@ export default function CheckinScanner({
               const attended = rsvp.attended || justCheckedIn.has(rsvp.email);
               return (
                 <li key={rsvp.email}>
-                  {rsvp.name}{' '}
+                  {rsvp.name}
+                  {rsvp.yearOfStudy ? ` (${rsvp.yearOfStudy})` : ''}{' '}
                   {attended ? (
                     '✅'
                   ) : (
