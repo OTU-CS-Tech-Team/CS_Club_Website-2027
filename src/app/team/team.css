@@ -1,4 +1,5 @@
 /* Container & Base Page Layout */
+
 .page {
   width: 100%;
   max-width: 1700px;
@@ -19,79 +20,343 @@
 .page h2 {
   font-size: 1.5rem;
   font-weight: 600;
-  margin: 1.5rem 0 1rem 0;
+  margin: 0.5rem 0;
   color: #1f2937;
 }
 
-/* Tier Rows (Presidents, Vice-Presidents) */
-.Presidents,
+/*PRESIDENT / VP EXECUTIVE TREE */
+
+.executive-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.Presidents {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5rem;
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.Presidents .teamCard {
+  max-width: 200px;
+}
+
+/* President cards -> horizontal merge -> center line */
+
+.president-merge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.president-stems {
+  display: flex;
+  justify-content: space-between;
+  width: calc(400px + 5rem);
+  height: 16px;
+}
+
+.president-stems > span {
+  width: 2px;
+  height: 100%;
+  background-color: #9ca3af;
+}
+
+.president-bar {
+  width: calc(400px + 5rem);
+  height: 2px;
+  background-color: #9ca3af;
+}
+
+.president-center-line {
+  width: 2px;
+  height: 32px;
+  background-color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.vice-presidents-section .heading-v-wrapper {
+  margin: 0;
+}
+
+.vice-presidents-section .heading-v-wrapper h2 {
+  margin: 0.15rem 0;
+}
+
+/* Fork entering VP cards */
+
+.vp-top-fork {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.vp-top-fork .fork-bar {
+  width: calc(400px + 5rem);
+  height: 2px;
+  background-color: #9ca3af;
+}
+
+.vp-top-fork .fork-stems {
+  display: flex;
+  justify-content: space-between;
+  width: calc(400px + 5rem);
+  height: 16px;
+}
+
+.vp-top-fork .fork-stems > span {
+  width: 2px;
+  height: 100%;
+  background-color: #9ca3af;
+}
+
+/* Vice President cards */
+
 .Vice-Presidents {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-  margin-bottom: 2.5rem;
+  gap: 5rem;
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
 }
 
-/* Department Columns Container */
+.Vice-Presidents .teamCard {
+  max-width: 200px;
+}
+
+/* Bottom merge for VP cards -> feeds into the department branch below */
+
+.pair-merge-bracket {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.pair-merge-bracket .bracket-stems {
+  display: flex;
+  justify-content: space-between;
+  width: calc(400px + 5rem);
+  height: 16px;
+}
+
+.pair-merge-bracket .bracket-stems > span {
+  width: 2px;
+  height: 100%;
+  background-color: #9ca3af;
+}
+
+.pair-merge-bracket .bracket-bar {
+  width: calc(400px + 5rem);
+  height: 2px;
+  background-color: #9ca3af;
+}
+
+/* Continuous Vertical Center Line */
+
+.center-v-line {
+  width: 2px;
+  height: 20px;
+  background-color: #9ca3af;
+  margin: 0 auto;
+  flex-shrink: 0;
+}
+
+/* Department Heading Vertical Alignment Wrapper */
+
+.heading-v-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+}
+
+.heading-v-wrapper .v-stem-top,
+.heading-v-wrapper .v-stem-bottom {
+  width: 2px;
+  height: 16px;
+  background-color: #9ca3af;
+  display: block;
+  margin: 0 auto;
+  flex-shrink: 0;
+}
+
+.heading-v-wrapper h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0.15rem 0;
+  color: #111827;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/*DEPARTMENT TREE*/
+
+.dept-tree-wrapper {
+  display: block;
+  position: relative;
+  width: 100%;
+}
+
+.dept-row {
+  position: relative;
+  display: grid;
+  grid-template-rows: 20px auto;
+  align-items: start;
+  justify-items: center;
+  column-gap: 1.25rem;
+  row-gap: 1.5rem;
+  width: max-content;
+  left: 50%;
+  margin: 0;
+  transform: translateX(-50%);
+}
+
+.dept-row.dept-count-1 {
+  grid-template-columns: 240px;
+}
+.dept-row.dept-count-2 {
+  grid-template-columns: repeat(2, 240px);
+}
+.dept-row.dept-count-3 {
+  grid-template-columns: repeat(3, 240px);
+}
+.dept-row.dept-count-4 {
+  grid-template-columns: repeat(4, 240px);
+}
+.dept-row.dept-count-5 {
+  grid-template-columns: repeat(5, 240px);
+}
+
+/* Row 1: Horizontal line calculated dynamically based on 240px column width */
+
+.dept-row .branch-line-main {
+  grid-row: 1;
+  grid-column: 1 / -1;
+  position: absolute;
+  top: 0;
+  left: 120px;
+  right: 120px;
+  height: 2px;
+  background-color: #9ca3af;
+}
+
+.dept-row .branch-stem {
+  grid-row: 1;
+  justify-self: center;
+  width: 2px;
+  height: 100%;
+  background-color: #9ca3af;
+}
+
+/* Row 2: Department columns */
+
+.dept-column {
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+/* Department Columns Grid Container */
+
 .department-grid {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3rem;
   width: 100%;
-  margin-top: 2.5rem;
 }
 
-/* Department Specific Headings */
-.department-grid h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  color: #111827;
-  white-space: nowrap;
-}
+/* Side-by-Side Officers Row */
 
-/* Row that holds a set of department columns side by side */
-.dept-row {
+.side-by-side-row {
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
   justify-content: center;
-  align-items: flex-start;
-  gap: 15.25rem 2.25rem;
+  align-items: center;
+  gap: 0.5rem;
   width: 100%;
 }
 
-/* Individual Department Column (director + officer grid) */
-.Tech-Team,
-.Marketing-Team,
-.Logistics-Team,
-.Events-Team,
-.Sponsors-Team {
+/* Single Card Wrappers under Merges */
+
+.small-card-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* Officer Fork (1 center line -> 2 side-by-side cards) */
+
+.officer-fork-2 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.25rem;
-  flex: 1 1 260px;
-  max-width: 300px;
-}
-
-/* Officer/Coordinator grid — 2 columns under the director */
-.dept-officers-coordinators {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.25rem;
   width: 100%;
-  justify-items: center;
 }
 
-/* Center a lone odd-one-out officer under a 2-col grid */
-.dept-officers-coordinators > *:last-child:nth-child(odd) {
-  grid-column: 1 / -1;
-  justify-self: center;
+.officer-fork-2 .fork-bar {
+  width: 125px;
+  height: 2px;
+  background-color: #9ca3af;
 }
+
+.officer-fork-2 .fork-stems {
+  display: flex;
+  justify-content: space-between;
+  width: 125px;
+  height: 12px;
+}
+
+.officer-fork-2 .fork-stems > span {
+  width: 2px;
+  height: 100%;
+  background-color: #9ca3af;
+}
+
+/* Officer Merge (2 side-by-side cards -> 1 center line) */
+
+.officer-merge-2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.officer-merge-2 .merge-stems {
+  display: flex;
+  justify-content: space-between;
+  width: 125px;
+  height: 12px;
+}
+
+.officer-merge-2 .merge-stems > span {
+  width: 2px;
+  height: 100%;
+  background-color: #9ca3af;
+}
+
+.officer-merge-2 .merge-bar {
+  width: 125px;
+  height: 2px;
+  background-color: #9ca3af;
+}
+
+/* Advisors Section */
 
 .Advisors {
   display: flex;
@@ -99,24 +364,27 @@
   align-items: center;
   gap: 1.5rem;
   flex-wrap: wrap;
-  margin-top: 2.5rem;
-  margin-bottom: 1rem;
+  margin-top: 1rem;
 }
 
-/* Team Member Card Styling */
+/* Team Member Card Base Styles */
+
 .teamCard {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 1.25rem 1rem;
+  padding: 1rem 0.75rem;
   width: 100%;
-  max-width: 220px;
+  max-width: 200px;
   display: flex;
   flex-direction: column;
   align-items: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   box-sizing: border-box;
+  position: relative;
+  z-index: 2;
+  margin: 0 auto;
 }
 
 .teamCard:hover {
@@ -124,103 +392,189 @@
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Cards inside the 2-col officer grid run a touch smaller so 2 fit cleanly */
-.dept-officers-coordinators .teamCard {
-  max-width: 150px;
-  padding: 0.75rem 0.5rem;
+/* Sizing Officer/Coordinator Level Cards */
+
+.side-by-side-row .teamCard,
+.small-card-wrapper .teamCard {
+  max-width: 120px;
+  padding: 0.5rem 0.25rem;
 }
 
-.dept-officers-coordinators .teamCard > img:first-of-type {
-  width: 60px;
-  height: 60px;
+.side-by-side-row .teamCard > img:first-of-type,
+.small-card-wrapper .teamCard > img:first-of-type {
+  width: 44px;
+  height: 44px;
 }
 
-/* Card Avatar Image */
+.side-by-side-row .teamCard h3,
+.small-card-wrapper .teamCard h3 {
+  font-size: 0.78rem;
+}
+
+.side-by-side-row .teamCard span,
+.small-card-wrapper .teamCard span {
+  font-size: 0.65rem;
+}
+
+/* Image Rotation Fix */
+
+.rameen-card img:first-of-type {
+  transform: rotate(90deg);
+}
+
+/* Base Card Avatar Image */
+
 .teamCard > img:first-of-type {
-  width: 90px;
-  height: 90px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   object-fit: cover;
-  object-position: center 20%; /* biases crop toward the top third so faces aren't chopped */
-  margin-bottom: 0.75rem;
+  object-position: center 20%;
+  margin-bottom: 0.5rem;
   border: 2px solid #f3f4f6;
 }
 
-/* Member Name */
+/* Member Name & Role */
+
 .teamCard h3 {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
-  margin: 0 0 0.25rem 0;
+  margin: 0 0 0.2rem 0;
   color: #1f2937;
 }
 
-.dept-officers-coordinators .teamCard h3 {
-  font-size: 1rem;
-}
-
-/* Role Label */
 .teamCard span {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-bottom: 0.75rem;
-}
-
-.dept-officers-coordinators .teamCard span {
   font-size: 0.8rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
 }
 
 .teamCard a:hover {
   text-decoration: underline;
 }
 
-/* LinkedIn Icon */
-.teamCard a img {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-  flex-shrink: 0;
-
-  /* Prevents blurriness when images scale */
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-}
-
-/* If using the inline SVG LinkedIn icon instead of an <img>, size it directly */
 .teamCard a svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 
-/* Responsive: stack department columns on narrower screens */
-@media (max-width: 900px) {
-  .department-grid {
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
+.hidden {
+  display: none !important;
+}
+
+/* Dropdown Filter Bar */
+
+.top-bar {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 1rem;
+}
+
+.dept-filter {
+  position: relative;
+  display: inline-block;
+  text-align: left;
+}
+
+.dept-filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.dept-filter-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 220px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 0.5rem;
+  z-index: 20;
+}
+
+.dept-filter-search {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  box-sizing: border-box;
+}
+
+.dept-filter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: 200px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.dept-filter-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.dept-filter-empty {
+  font-size: 0.8rem;
+  color: #6b7280;
+  padding: 0.25rem;
+}
+
+/* Responsive breakpoint */
+
+@media (max-width: 1000px) {
+  .dept-row .branch-line-main,
+  .dept-row .branch-stem {
+    display: none;
   }
 
   .dept-row {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .Tech-Team,
-  .Marketing-Team,
-  .Logistics-Team,
-  .Events-Team,
-  .Sponsors-Team {
-    flex: 1 1 260px;
-    max-width: 300px;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto !important;
+    width: 100% !important;
+    max-width: 100%;
+    left: auto;
+    margin: 0;
+    transform: none;
+    gap: 2rem;
   }
 }
 
-@media (max-width: 480px) {
-  .dept-officers-coordinators {
-    grid-template-columns: 1fr;
+/* Executive tree responsiveness */
+
+@media (max-width: 650px) {
+  .Presidents,
+  .Vice-Presidents {
+    gap: 1.5rem;
   }
 
-  .dept-officers-coordinators > *:last-child:nth-child(odd) {
-    grid-column: auto;
+  .president-stems,
+  .president-bar,
+  .vp-top-fork .fork-bar,
+  .vp-top-fork .fork-stems,
+  .pair-merge-bracket .bracket-stems,
+  .pair-merge-bracket .bracket-bar {
+    width: calc(400px + 1.5rem);
+    max-width: calc(100% - 2rem);
+  }
+
+  .Presidents .teamCard,
+  .Vice-Presidents .teamCard {
+    max-width: 200px;
   }
 }
