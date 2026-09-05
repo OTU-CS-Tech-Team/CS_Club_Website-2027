@@ -3,29 +3,26 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { toggleRsvp, registerGuest } from '@/app/events/actions';
-import { YEARS } from './EventSignupForm';
 import styles from './landing.module.css';
 
-// RSVP control for a real, DB-backed event. Signed-in members RSVP
-// normally (event_rsvps). Signed-out visitors register as a guest instead
-// (event_guests) — no account, no points, just an attendance record for
-// metrics. Only used for events that actually exist in the events table;
-// the hardcoded sample events keep using the existing local-only
-// EventSignupForm instead.
+// RSVP control for a real, DB-backed event. Signed-in members RSVP with
+// one click (event_rsvps) — we already have their name/email from their
+// account. Signed-out visitors register as a guest instead (event_guests):
+// no account, no points, just an attendance record for metrics. Only used
+// for events that actually exist in the events table; the hardcoded
+// sample events keep using the existing local-only EventSignupForm instead.
 export default function DbEventRsvp({ eventId }: { eventId: string }) {
   const supabase = createClient();
   const [status, setStatus] = useState<'loading' | 'signedOut' | 'signedIn'>('loading');
   const [rsvped, setRsvped] = useState(false);
   const [pending, setPending] = useState(false);
+  const [rsvpError, setRsvpError] = useState('');
 
   const [guestName, setGuestName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
   const [studentId, setStudentId] = useState('');
   const [guestStatus, setGuestStatus] = useState('');
   const [guestDone, setGuestDone] = useState(false);
-
-  const [yearOfStudy, setYearOfStudy] = useState('');
-  const [questions, setQuestions] = useState('');
-  const [rsvpError, setRsvpError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -59,12 +56,11 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
     };
   }, [eventId, supabase]);
 
-  async function handleRsvpSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleRsvpClick() {
     setRsvpError('');
     setPending(true);
     try {
-      await toggleRsvp(eventId, true, yearOfStudy, questions);
+      await toggleRsvp(eventId, true);
       setRsvped(true);
     } catch (error) {
       setRsvpError(error instanceof Error ? error.message : 'Could not RSVP — try again.');
@@ -84,7 +80,7 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
     setGuestStatus('');
     setPending(true);
     try {
-      await registerGuest(eventId, guestName, studentId);
+      await registerGuest(eventId, guestName, studentId, guestEmail);
       setGuestDone(true);
     } catch (error) {
       setGuestStatus(error instanceof Error ? error.message : 'Could not register — try again.');
@@ -112,6 +108,16 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
           />
         </div>
         <div className={styles.field}>
+          <label htmlFor={`guest-email-${eventId}`}>Email</label>
+          <input
+            id={`guest-email-${eventId}`}
+            type="email"
+            value={guestEmail}
+            onChange={(event) => setGuestEmail(event.target.value)}
+            required
+          />
+        </div>
+        <div className={`${styles.field} ${styles.fieldWide}`}>
           <label htmlFor={`guest-student-id-${eventId}`}>Student ID</label>
           <input
             id={`guest-student-id-${eventId}`}
@@ -144,40 +150,14 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
   }
 
   return (
-    <form className={styles.form} onSubmit={handleRsvpSubmit} noValidate>
-      <h3 className={styles.formTitle}>Sign up sheet</h3>
-      <div className={`${styles.field} ${styles.fieldWide}`}>
-        <label htmlFor={`year-${eventId}`}>Year of study</label>
-        <select
-          id={`year-${eventId}`}
-          value={yearOfStudy}
-          onChange={(event) => setYearOfStudy(event.target.value)}
-          required
-        >
-          <option value="" disabled>
-            Select year
-          </option>
-          {YEARS.map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className={`${styles.field} ${styles.fieldWide}`}>
-        <label htmlFor={`questions-${eventId}`}>Questions (optional)</label>
-        <textarea
-          id={`questions-${eventId}`}
-          value={questions}
-          onChange={(event) => setQuestions(event.target.value)}
-        />
-      </div>
+    <div className={styles.form}>
+      <h3 className={styles.formTitle}>RSVP</h3>
       {rsvpError && <p className={styles.formError}>{rsvpError}</p>}
       <div className={styles.formActions}>
-        <button type="submit" className={styles.cta} disabled={pending}>
+        <button type="button" className={styles.cta} onClick={handleRsvpClick} disabled={pending}>
           {pending ? 'Signing up…' : 'RSVP'}
         </button>
       </div>
-    </form>
+    </div>
   );
 }

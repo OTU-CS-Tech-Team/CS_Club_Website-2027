@@ -114,11 +114,13 @@ main {
 }
 
 .auth-form input,
-.auth-form select {
+.auth-form select,
+.auth-form textarea {
   padding: 0.5rem 0.6rem;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 1rem;
+  font-family: inherit;
 }
 
 .auth-form button {
