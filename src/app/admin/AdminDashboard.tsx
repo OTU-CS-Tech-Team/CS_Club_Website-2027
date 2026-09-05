@@ -8,6 +8,7 @@ import {
   deleteJob,
   saveEvent,
   saveJob,
+  sendNewsletter,
   signOut,
   type AdminActionState,
 } from './actions';
@@ -15,6 +16,8 @@ import styles from './admin.module.css';
 import { DatePicker, TimePicker } from './CustomPickers';
 
 const initialState: AdminActionState = { ok: false, message: '' };
+
+type SentNewsletter = { id: string; subject: string; recipient_count: number; sent_at: string };
 
 function EventEditor({ event, onDone, onSuccess }: { event: ManagedEvent | null; onDone: () => void; onSuccess: (message: string) => void }) {
   const router = useRouter();
@@ -134,6 +137,55 @@ function JobEditor({ job, onDone, onSuccess }: { job: ClubJob | null; onDone: ()
   );
 }
 
+function NewsletterEditor({ recipientCount, onSuccess }: { recipientCount: number; onSuccess: (message: string) => void }) {
+  const router = useRouter();
+  const [state, action, pending] = useActionState(sendNewsletter, initialState);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [clientError, setClientError] = useState('');
+
+  useEffect(() => {
+    if (state.ok) {
+      onSuccess(state.message);
+      // a test send is just checking how it looks — keep the draft so it
+      // can be tweaked and sent for real; a real send clears it
+      if (!state.message.startsWith('Test sent')) {
+        formRef.current?.reset();
+      }
+      router.refresh();
+    }
+  }, [state.ok, state.message, onSuccess, router]);
+
+  function validate(event: FormEvent<HTMLFormElement>) {
+    setClientError('');
+    const data = new FormData(event.currentTarget);
+    if (!String(data.get('subject') ?? '').trim() || !String(data.get('body') ?? '').trim()) {
+      event.preventDefault();
+      setClientError('Please enter a subject and body.');
+    }
+  }
+
+  return (
+    <form ref={formRef} action={action} className={styles.editor} noValidate onSubmit={validate} onInput={() => setClientError('')}>
+      <div className={styles.editorHead}>
+        <div>
+          <p className={styles.kicker}>Club update</p>
+          <h2>Send a newsletter</h2>
+        </div>
+      </div>
+      <div className={styles.formGrid}>
+        <label className={styles.wide}>Subject<input name="subject" maxLength={200} aria-required="true" /></label>
+        <label className={styles.wide}>Body<textarea name="body" rows={8} maxLength={20000} aria-required="true" /></label>
+      </div>
+      {clientError || state.message ? <p className={clientError || !state.ok ? styles.error : styles.success} role="alert">{clientError || state.message}</p> : null}
+      <p className={styles.hint}>Will send to {recipientCount} general member(s) — people who applied via the careers page, not just anyone with a website login.</p>
+      <div className={styles.itemActions}>
+        <button className={styles.textButton} type="submit" name="intent" value="test" disabled={pending}>{pending ? 'Sending...' : 'Send test to myself'}</button>
+        <button className={styles.primaryButton} type="submit" name="intent" value="send" disabled={pending}>{pending ? 'Sending...' : `Send to all ${recipientCount}`}</button>
+      </div>
+    </form>
+  );
+}
+
 type DeleteTarget = { type: 'event' | 'job'; id: string; title: string };
 
 function DeleteDialog({ target, onClose, onComplete }: { target: DeleteTarget; onClose: () => void; onComplete: (state: AdminActionState) => void }) {
@@ -178,12 +230,16 @@ export default function AdminDashboard({
   email,
   events,
   jobs,
+  recipientCount,
+  newsletters,
 }: {
   email: string;
   events: ManagedEvent[];
   jobs: ClubJob[];
+  recipientCount: number;
+  newsletters: SentNewsletter[];
 }) {
-  const [tab, setTab] = useState<'events' | 'jobs'>('events');
+  const [tab, setTab] = useState<'events' | 'jobs' | 'newsletter'>('events');
   const [editingEvent, setEditingEvent] = useState<ManagedEvent | null>(null);
   const [editingJob, setEditingJob] = useState<ClubJob | null>(null);
   const [deleting, setDeleting] = useState<DeleteTarget | null>(null);
@@ -202,6 +258,7 @@ export default function AdminDashboard({
       <nav className={styles.tabs} aria-label="Dashboard sections">
         <button type="button" className={tab === 'events' ? styles.activeTab : ''} onClick={() => setTab('events')}>Events <span>{events.length}</span></button>
         <button type="button" className={tab === 'jobs' ? styles.activeTab : ''} onClick={() => setTab('jobs')}>Jobs <span>{jobs.length}</span></button>
+        <button type="button" className={tab === 'newsletter' ? styles.activeTab : ''} onClick={() => setTab('newsletter')}>Newsletter <span>{newsletters.length}</span></button>
       </nav>
       {notice ? <div className={styles.notification} role={notice.ok ? 'status' : 'alert'}><span className={styles.notificationMark} aria-hidden="true">{notice.ok ? '•' : '!'}</span><span>{notice.message}</span><button type="button" onClick={() => setNotice(null)} aria-label="Dismiss notification">×</button></div> : null}
       {tab === 'events' ? <main className={styles.workspace}>
@@ -209,12 +266,19 @@ export default function AdminDashboard({
         <section className={styles.collection} aria-labelledby="events-list-heading"><h2 id="events-list-heading">All events</h2>
           {events.length ? events.map((event) => <article className={styles.item} key={event.id}><div><p className={styles.itemMeta}>{event.date} / {event.time}</p><h3>{event.title}</h3><p>{event.location}</p></div><div className={styles.itemActions}><button type="button" onClick={() => setEditingEvent(event)}>Edit</button><button className={styles.deleteButton} type="button" onClick={() => setDeleting({ type: 'event', id: event.id, title: event.title })}>Delete</button></div></article>) : <p className={styles.empty}>No events yet.</p>}
         </section>
-      </main> : <main className={styles.workspace}>
+      </main> : null}
+      {tab === 'jobs' ? <main className={styles.workspace}>
         <JobEditor key={editingJob?.id ?? 'new-job'} job={editingJob} onDone={finishJobEdit} onSuccess={showSuccess} />
         <section className={styles.collection} aria-labelledby="jobs-list-heading"><h2 id="jobs-list-heading">All jobs</h2>
           {jobs.length ? jobs.map((job) => <article className={styles.item} key={job.id}><div><p className={styles.itemMeta}>{job.category} / {job.is_active ? 'Live' : 'Hidden'}</p><h3>{job.title}</h3></div><div className={styles.itemActions}><button type="button" onClick={() => setEditingJob(job)}>Edit</button><button className={styles.deleteButton} type="button" onClick={() => setDeleting({ type: 'job', id: job.id, title: job.title })}>Delete</button></div></article>) : <p className={styles.empty}>No jobs yet.</p>}
         </section>
-      </main>}
+      </main> : null}
+      {tab === 'newsletter' ? <main className={styles.workspace}>
+        <NewsletterEditor recipientCount={recipientCount} onSuccess={showSuccess} />
+        <section className={styles.collection} aria-labelledby="newsletter-list-heading"><h2 id="newsletter-list-heading">Recently sent</h2>
+          {newsletters.length ? newsletters.map((newsletter) => <article className={styles.item} key={newsletter.id}><div><p className={styles.itemMeta}>{new Date(newsletter.sent_at).toLocaleDateString()} / {newsletter.recipient_count} recipient(s)</p><h3>{newsletter.subject}</h3></div></article>) : <p className={styles.empty}>No newsletters sent yet.</p>}
+        </section>
+      </main> : null}
       {deleting ? <DeleteDialog target={deleting} onClose={() => setDeleting(null)} onComplete={completeDelete} /> : null}
     </div>
   );
