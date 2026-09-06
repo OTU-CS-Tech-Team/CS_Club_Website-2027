@@ -3,6 +3,7 @@
 import { useActionState, useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ClubJob, ManagedEvent } from '@/types/content';
+import type { MailingListSubscriber } from '@/lib/members';
 import {
   deleteEvent,
   deleteJob,
@@ -146,8 +147,6 @@ function NewsletterEditor({ recipientCount, onSuccess }: { recipientCount: numbe
   useEffect(() => {
     if (state.ok) {
       onSuccess(state.message);
-      // a test send is just checking how it looks — keep the draft so it
-      // can be tweaked and sent for real; a real send clears it
       if (!state.message.startsWith('Test sent')) {
         formRef.current?.reset();
       }
@@ -155,17 +154,18 @@ function NewsletterEditor({ recipientCount, onSuccess }: { recipientCount: numbe
     }
   }, [state.ok, state.message, onSuccess, router]);
 
-  function validate(event: FormEvent<HTMLFormElement>) {
-    setClientError('');
-    const data = new FormData(event.currentTarget);
+  function validateFields(form: HTMLFormElement) {
+    const data = new FormData(form);
     if (!String(data.get('subject') ?? '').trim() || !String(data.get('body') ?? '').trim()) {
-      event.preventDefault();
       setClientError('Please enter a subject and body.');
+      return false;
     }
+    setClientError('');
+    return true;
   }
 
   return (
-    <form ref={formRef} action={action} className={styles.editor} noValidate onSubmit={validate} onInput={() => setClientError('')}>
+    <form ref={formRef} className={styles.editor} noValidate onInput={() => setClientError('')}>
       <div className={styles.editorHead}>
         <div>
           <p className={styles.kicker}>Club update</p>
@@ -177,16 +177,85 @@ function NewsletterEditor({ recipientCount, onSuccess }: { recipientCount: numbe
         <label className={styles.wide}>Body<textarea name="body" rows={8} maxLength={20000} aria-required="true" /></label>
       </div>
       {clientError || state.message ? <p className={clientError || !state.ok ? styles.error : styles.success} role="alert">{clientError || state.message}</p> : null}
-      <p className={styles.hint}>Will send to {recipientCount} general member(s) — people who applied via the careers page, not just anyone with a website login.</p>
+      <p className={styles.hint}>Will send to {recipientCount} mailing list subscriber(s) — people who signed up on the homepage.</p>
       <div className={styles.itemActions}>
-        <button className={styles.textButton} type="submit" name="intent" value="test" disabled={pending}>{pending ? 'Sending...' : 'Send test to myself'}</button>
-        <button className={styles.primaryButton} type="submit" name="intent" value="send" disabled={pending}>{pending ? 'Sending...' : `Send to all ${recipientCount}`}</button>
+        <button
+          className={styles.textButton}
+          type="submit"
+          disabled={pending}
+          formAction={(formData) => {
+            if (!formRef.current || !validateFields(formRef.current)) return;
+            formData.set('intent', 'test');
+            action(formData);
+          }}
+        >
+          {pending ? 'Sending...' : 'Send test to myself'}
+        </button>
+        <button
+          className={styles.primaryButton}
+          type="submit"
+          disabled={pending}
+          formAction={(formData) => {
+            if (!formRef.current || !validateFields(formRef.current)) return;
+            formData.set('intent', 'send');
+            action(formData);
+          }}
+        >
+          {pending ? 'Sending...' : `Send to all ${recipientCount}`}
+        </button>
       </div>
     </form>
   );
 }
 
 type DeleteTarget = { type: 'event' | 'job'; id: string; title: string };
+
+function MailingListPanel({ subscribers }: { subscribers: MailingListSubscriber[] }) {
+  const [query, setQuery] = useState('');
+  const needle = query.trim().toLowerCase();
+  const filtered = needle
+    ? subscribers.filter(
+        (person) =>
+          person.name.toLowerCase().includes(needle) ||
+          person.email.toLowerCase().includes(needle),
+      )
+    : subscribers;
+
+  return (
+    <section className={styles.collection} aria-labelledby="mailing-list-heading">
+      <h2 id="mailing-list-heading">Mailing list</h2>
+      {subscribers.length ? (
+        <>
+          <label className={styles.filterField}>
+            <span className={styles.srOnly}>Filter mailing list</span>
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Filter by name or email"
+            />
+          </label>
+          {filtered.length ? (
+            <div className={styles.scrollList}>
+              {filtered.map((person) => (
+                <article className={styles.item} key={String(person.id)}>
+                  <div>
+                    <h3>{person.name}</h3>
+                    <p>{person.email}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className={styles.empty}>No subscribers match that filter.</p>
+          )}
+        </>
+      ) : (
+        <p className={styles.empty}>Nobody on the mailing list yet.</p>
+      )}
+    </section>
+  );
+}
 
 function DeleteDialog({ target, onClose, onComplete }: { target: DeleteTarget; onClose: () => void; onComplete: (state: AdminActionState) => void }) {
   const deleteAction = target.type === 'event' ? deleteEvent : deleteJob;
@@ -230,13 +299,13 @@ export default function AdminDashboard({
   email,
   events,
   jobs,
-  recipientCount,
+  subscribers,
   newsletters,
 }: {
   email: string;
   events: ManagedEvent[];
   jobs: ClubJob[];
-  recipientCount: number;
+  subscribers: MailingListSubscriber[];
   newsletters: SentNewsletter[];
 }) {
   const [tab, setTab] = useState<'events' | 'jobs' | 'newsletter'>('events');
@@ -258,7 +327,7 @@ export default function AdminDashboard({
       <nav className={styles.tabs} aria-label="Dashboard sections">
         <button type="button" className={tab === 'events' ? styles.activeTab : ''} onClick={() => setTab('events')}>Events <span>{events.length}</span></button>
         <button type="button" className={tab === 'jobs' ? styles.activeTab : ''} onClick={() => setTab('jobs')}>Jobs <span>{jobs.length}</span></button>
-        <button type="button" className={tab === 'newsletter' ? styles.activeTab : ''} onClick={() => setTab('newsletter')}>Newsletter <span>{newsletters.length}</span></button>
+        <button type="button" className={tab === 'newsletter' ? styles.activeTab : ''} onClick={() => setTab('newsletter')}>Newsletter <span>{subscribers.length}</span></button>
       </nav>
       {notice ? <div className={styles.notification} role={notice.ok ? 'status' : 'alert'}><span className={styles.notificationMark} aria-hidden="true">{notice.ok ? '•' : '!'}</span><span>{notice.message}</span><button type="button" onClick={() => setNotice(null)} aria-label="Dismiss notification">×</button></div> : null}
       {tab === 'events' ? <main className={styles.workspace}>
@@ -274,10 +343,21 @@ export default function AdminDashboard({
         </section>
       </main> : null}
       {tab === 'newsletter' ? <main className={styles.workspace}>
-        <NewsletterEditor recipientCount={recipientCount} onSuccess={showSuccess} />
-        <section className={styles.collection} aria-labelledby="newsletter-list-heading"><h2 id="newsletter-list-heading">Recently sent</h2>
-          {newsletters.length ? newsletters.map((newsletter) => <article className={styles.item} key={newsletter.id}><div><p className={styles.itemMeta}>{new Date(newsletter.sent_at).toLocaleDateString()} / {newsletter.recipient_count} recipient(s)</p><h3>{newsletter.subject}</h3></div></article>) : <p className={styles.empty}>No newsletters sent yet.</p>}
-        </section>
+        <NewsletterEditor recipientCount={subscribers.length} onSuccess={showSuccess} />
+        <div className={styles.newsletterSide}>
+          <MailingListPanel subscribers={subscribers} />
+          <section className={styles.collection} aria-labelledby="newsletter-list-heading">
+            <h2 id="newsletter-list-heading">Recently sent</h2>
+            {newsletters.length ? newsletters.map((newsletter) => (
+              <article className={styles.item} key={newsletter.id}>
+                <div>
+                  <p className={styles.itemMeta}>{new Date(newsletter.sent_at).toLocaleDateString()} / {newsletter.recipient_count} recipient(s)</p>
+                  <h3>{newsletter.subject}</h3>
+                </div>
+              </article>
+            )) : <p className={styles.empty}>No newsletters sent yet.</p>}
+          </section>
+        </div>
       </main> : null}
       {deleting ? <DeleteDialog target={deleting} onClose={() => setDeleting(null)} onComplete={completeDelete} /> : null}
     </div>

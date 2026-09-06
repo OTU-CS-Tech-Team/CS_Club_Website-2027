@@ -1,6 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import {
+  getMailingListStatus,
+  subscribeGuest,
+  subscribeLoggedIn,
+} from '@/app/mailing-list/actions';
 import type { NewsItem } from '@/types/landing';
 import RecapVideo from './RecapVideo';
 import styles from './landing.module.css';
@@ -19,7 +25,80 @@ function formatPosted(iso: string) {
 }
 
 export default function TeamActivity({ news, recapVideoId }: TeamActivityProps) {
-  const [mailing, setMailing] = useState(false);
+  const supabase = createClient();
+  const [authStatus, setAuthStatus] = useState<'loading' | 'signedOut' | 'signedIn'>('loading');
+  const [subscribed, setSubscribed] = useState(false);
+  const [showGuestForm, setShowGuestForm] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const status = await getMailingListStatus();
+        if (cancelled) return;
+        setAuthStatus(status.signedIn ? 'signedIn' : 'signedOut');
+        setSubscribed(status.subscribed);
+      } catch {
+        if (cancelled) return;
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        setAuthStatus(session?.user ? 'signedIn' : 'signedOut');
+      }
+    }
+
+    load();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      void load();
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  async function handleLoggedInSignup() {
+    setError('');
+    setMessage('');
+    setPending(true);
+    try {
+      const result = await subscribeLoggedIn();
+      setSubscribed(true);
+      setMessage(
+        result.alreadySubscribed
+          ? "You're already signed up for the mailing list!"
+          : "You're on the mailing list.",
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not join the mailing list.');
+    }
+    setPending(false);
+  }
+
+  async function handleGuestSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError('');
+    setMessage('');
+    setPending(true);
+    try {
+      await subscribeGuest(name, email);
+      setShowGuestForm(false);
+      setMessage('Check your email to confirm — you are not on the list until you confirm.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not join the mailing list.');
+    }
+    setPending(false);
+  }
 
   return (
     <section className={styles.section} aria-labelledby="activity-heading">
@@ -27,20 +106,68 @@ export default function TeamActivity({ news, recapVideoId }: TeamActivityProps) 
         <h2 id="activity-heading" className={styles.sectionTitle}>
           From the team
         </h2>
-        <button
-          type="button"
-          className={`${styles.cta} ${styles.ctaGhost}`}
-          onClick={() => setMailing(true)}
-        >
-          Sign up for our mailing list
-        </button>
+        {authStatus === 'loading' ? null : subscribed ? (
+          <p className={styles.mailingNote} style={{ margin: 0 }}>
+            You&apos;re on the mailing list
+          </p>
+        ) : authStatus === 'signedIn' ? (
+          <button
+            type="button"
+            className={`${styles.cta} ${styles.ctaGhost}`}
+            onClick={() => void handleLoggedInSignup()}
+            disabled={pending}
+          >
+            {pending ? 'Signing up…' : 'Sign up for our mailing list'}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={`${styles.cta} ${styles.ctaGhost}`}
+            onClick={() => {
+              setShowGuestForm((open) => !open);
+              setError('');
+              setMessage('');
+            }}
+          >
+            Sign up for our mailing list
+          </button>
+        )}
       </div>
-      {mailing ? (
-        <p className={styles.mailingNote}>
-          Mailing list signup is not wired yet. The button stays so the layout is
-          honest.
-        </p>
+
+      {showGuestForm && !subscribed && authStatus === 'signedOut' ? (
+        <form className={styles.form} onSubmit={handleGuestSubmit} noValidate style={{ marginTop: '1rem' }}>
+          <h3 className={styles.formTitle}>Join the mailing list</h3>
+          <div className={styles.field}>
+            <label htmlFor="mailing-name">Name</label>
+            <input
+              id="mailing-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              required
+            />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="mailing-email">Email</label>
+            <input
+              id="mailing-email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
+          </div>
+          {error ? <p className={styles.formError}>{error}</p> : null}
+          <div className={styles.formActions}>
+            <button type="submit" className={styles.cta} disabled={pending}>
+              {pending ? 'Signing up…' : 'Sign up'}
+            </button>
+          </div>
+        </form>
       ) : null}
+
+      {message ? <p className={styles.mailingNote}>{message}</p> : null}
+      {error && authStatus === 'signedIn' ? <p className={styles.formError}>{error}</p> : null}
+
       <div className={styles.activity}>
         <div className={styles.activityCol}>
           <p className={styles.kicker}>News from execs</p>
