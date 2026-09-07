@@ -133,12 +133,7 @@ export default function OpenRoles({ jobs }: OpenRolesProps) {
 
   const [query, setQuery] = useState('');
   const [department, setDepartment] = useState('all');
-  const [open, setOpen] = useState<Record<string, boolean>>(() => {
-    const community = jobs.find((job) => job.category?.toLowerCase() === 'community');
-    if (community?.category) return { [community.category]: true };
-    const first = jobs[0]?.category;
-    return first ? { [first]: true } : {};
-  });
+  const [open, setOpen] = useState<Record<string, boolean>>({});
 
   const filteredDepartments = useMemo(() => {
     const q = query.trim().toLowerCase();
