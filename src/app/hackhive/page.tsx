@@ -1,12 +1,5 @@
-import { IBM_Plex_Sans } from 'next/font/google';
 import HackHiveMuseum from '@/components/museum/HackHiveMuseum';
 import { getArchiveCollections } from '@/data/hackhive';
-
-const plex = IBM_Plex_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  display: 'swap',
-});
 
 export const metadata = {
   title: 'HackHive Archive',
@@ -15,7 +8,7 @@ export const metadata = {
 
 export default function HackHivePage() {
   return (
-    <div className={plex.className}>
+    <div>
       <HackHiveMuseum collections={getArchiveCollections()} />
     </div>
   );

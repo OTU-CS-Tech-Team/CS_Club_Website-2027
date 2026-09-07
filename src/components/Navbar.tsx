@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import type { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import styles from './navbar.module.css';
 
@@ -18,7 +17,6 @@ type NavLink = {
 type NavSection = {
   id: string;
   label: string;
-  matches: (pathname: string) => boolean;
   links: NavLink[];
 };
 
@@ -26,13 +24,11 @@ const sections: NavSection[] = [
   {
     id: 'home',
     label: 'home',
-    matches: (pathname) => pathname === '/',
     links: [{ href: '/', label: 'Home', description: 'Club homepage and what’s new' }],
   },
   {
     id: 'team',
     label: 'team',
-    matches: (pathname) => pathname.startsWith('/team'),
     links: [
       {
         href: '/team',
@@ -44,8 +40,6 @@ const sections: NavSection[] = [
   {
     id: 'events',
     label: 'events',
-    matches: (pathname) =>
-      pathname.startsWith('/events') || pathname.startsWith('/hackhive'),
     links: [
       {
         href: '/events',
@@ -63,7 +57,6 @@ const sections: NavSection[] = [
   {
     id: 'careers',
     label: 'careers',
-    matches: (pathname) => pathname.startsWith('/careers'),
     links: [
       {
         href: '/careers',
@@ -78,7 +71,6 @@ const sections: NavSection[] = [
 const adminSection: NavSection = {
   id: 'admin',
   label: 'admin',
-  matches: (pathname) => pathname.startsWith('/admin'),
   links: [
     {
       href: '/admin',
@@ -89,6 +81,18 @@ const adminSection: NavSection = {
       href: '/admin/checkin',
       label: 'Event Check-in',
       description: 'Scan member passports at the door',
+    },
+  ],
+};
+
+const accountSection: NavSection = {
+  id: 'passport',
+  label: 'passport',
+  links: [
+    {
+      href: '/passport',
+      label: 'Member Passport',
+      description: 'Your stamps, points, and check-in QR',
     },
   ],
 };
@@ -135,72 +139,59 @@ function ArrowIcon() {
   );
 }
 
-export default function Navbar() {
+export default function Navbar({
+  signedIn,
+  isAdmin,
+}: {
+  signedIn: boolean;
+  isAdmin: boolean;
+}) {
   const router = useRouter();
   const pathname = usePathname();
-  const supabase = createClient();
   const navId = useId();
   const rootRef = useRef<HTMLElement>(null);
   const closeTimer = useRef<number | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [isAdminUser, setIsAdminUser] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState(signedIn);
+  const [isAdminUser, setIsAdminUser] = useState(isAdmin);
   const [openId, setOpenId] = useState<string | null>(null);
-
-  const accountSection: NavSection = {
-    id: 'passport',
-    label: 'passport',
-    matches: (path) => path.startsWith('/passport'),
-    links: [
-      {
-        href: '/passport',
-        label: 'Member Passport',
-        description: 'Your stamps, points, and check-in QR',
-      },
-    ],
-  };
 
   const visibleSections = [
     ...sections,
     ...(isAdminUser ? [adminSection] : []),
-    ...(user ? [accountSection] : []),
+    ...(isSignedIn ? [accountSection] : []),
   ];
 
   useEffect(() => {
-    let cancelled = false;
+    setIsSignedIn(signedIn);
+    setIsAdminUser(isAdmin);
+  }, [signedIn, isAdmin]);
 
-    async function syncAuth(nextUser: User | null) {
-      if (cancelled) return;
-      setUser(nextUser);
+  useEffect(() => {
+    const supabase = createClient();
 
-      if (!nextUser) {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== 'SIGNED_IN' && event !== 'SIGNED_OUT') return;
+
+      const nextSignedIn = !!session?.user;
+      setIsSignedIn(nextSignedIn);
+
+      if (!nextSignedIn) {
         setIsAdminUser(false);
         return;
       }
 
-      const { data } = await supabase
+      void supabase
         .from('admin_users')
         .select('user_id')
-        .eq('user_id', nextUser.id)
-        .maybeSingle();
-
-      if (!cancelled) {
-        setIsAdminUser(!!data);
-      }
-    }
-
-    supabase.auth.getUser().then(({ data }) => {
-      void syncAuth(data.user);
+        .eq('user_id', session.user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          setIsAdminUser(!!data);
+        });
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      void syncAuth(session?.user ?? null);
-    });
-
-    return () => {
-      cancelled = true;
-      listener.subscription.unsubscribe();
-    };
-  }, [supabase]);
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     setOpenId(null);
@@ -245,6 +236,9 @@ export default function Navbar() {
   }
 
   async function handleSignOut() {
+    const supabase = createClient();
+    setIsSignedIn(false);
+    setIsAdminUser(false);
     await supabase.auth.signOut();
     router.push('/');
     router.refresh();
@@ -274,12 +268,7 @@ export default function Navbar() {
             const panelId = `${navId}-${section.id}-panel`;
 
             return (
-              <div
-                key={section.id}
-                className={`${styles.item} ${
-                  section.id === 'admin' || section.id === 'passport' ? styles.itemReveal : ''
-                }`}
-              >
+              <div key={section.id} className={styles.item}>
                 <button
                   type="button"
                   className={`${styles.trigger} ${isOpen ? styles.triggerOpen : ''}`}
@@ -336,7 +325,7 @@ export default function Navbar() {
         </div>
 
         <div className={styles.actions}>
-          {user ? (
+          {isSignedIn ? (
             <button type="button" className={styles.actionButton} onClick={handleSignOut}>
               Sign out
             </button>
