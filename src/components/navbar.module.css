@@ -109,10 +109,6 @@
   position: relative;
 }
 
-.itemReveal {
-  animation: itemIn 0.22s ease both;
-}
-
 .banner {
   position: absolute;
   top: calc(100% + 8px);
@@ -151,22 +147,11 @@
   }
 }
 
-@keyframes itemIn {
-  from {
-    opacity: 0;
-    transform: translateY(-2px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 .meta {
   padding: 0.75rem 1rem 0.65rem;
   border-bottom: 1px solid #f0f0f0;
   color: #9b9b9b;
-  font-family: ui-monospace, 'DM Mono', 'SFMono-Regular', Menlo, monospace;
+  font-family: inherit;
   font-size: 0.65rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
