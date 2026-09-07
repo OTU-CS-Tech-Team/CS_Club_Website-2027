@@ -3,7 +3,11 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { torontoWallTime } from '@/lib/eventSchedule';
+import { sendBulkEmail, sendDirectEmail, newsletterEmailHtml, newsletterEmailText } from '@/lib/email';
+import { getMailingListEmails } from '@/lib/members';
+import { pruneNewsletterHistory } from '@/lib/newsletters';
 
 export type AdminActionState = {
   ok: boolean;
@@ -61,6 +65,15 @@ function authorizationError(error: unknown) {
   }
   if (error instanceof Error && error.message === 'UNAUTHORIZED') {
     return 'This account is not authorized.';
+  }
+  return null;
+}
+
+function publicErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message;
   }
   return null;
 }
@@ -213,6 +226,68 @@ export async function deleteJob(
   revalidatePath('/careers');
   revalidatePath('/admin');
   return { ok: true, message: 'Job deleted.' };
+}
+
+export async function sendNewsletter(
+  _previousState: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const subject = text(formData, 'subject');
+  const body = text(formData, 'body');
+  const intent = text(formData, 'intent');
+
+  if (!subject || !body) return initialError('Enter a subject and body.');
+  if (subject.length > 200) return initialError('Subject is too long.');
+  if (body.length > 20000) return initialError('Body is too long.');
+  if (intent !== 'test' && intent !== 'send') return initialError('Choose a test send or a full send.');
+
+  try {
+    const { user } = await requireAdmin();
+    const html = newsletterEmailHtml({ subject, body });
+    const plainText = newsletterEmailText({ subject, body });
+
+    if (intent === 'test') {
+      if (!user.email) return initialError('Your account has no email on file.');
+      await sendDirectEmail(user.email, `[TEST] ${subject}`, html, plainText);
+      return { ok: true, message: `Test sent to ${user.email} — check your inbox (and spam).` };
+    }
+
+    const admin = createAdminClient();
+    const recipients = await getMailingListEmails(admin);
+    if (recipients.length === 0) {
+      return initialError('No mailing list subscribers to send to. Someone must sign up on the homepage first.');
+    }
+
+    const { sent, failed } = await sendBulkEmail(recipients, subject, html, plainText);
+    if (sent === 0) return initialError('Sending failed — nobody received this newsletter.');
+
+    const { error } = await admin.from('newsletters').insert({
+      subject,
+      body,
+      sent_by: user.id,
+      recipient_count: sent,
+    });
+    if (error) {
+      console.error('Unable to record newsletter', { code: error.code, message: error.message });
+      return {
+        ok: true,
+        message: failed > 0
+          ? `Sent to ${sent} subscriber(s) — ${failed} failed. History was not saved (${error.message}).`
+          : `Sent to ${sent} subscriber(s). History was not saved (${error.message}).`,
+      };
+    }
+
+    await pruneNewsletterHistory(admin);
+    revalidatePath('/admin');
+    return {
+      ok: true,
+      message: failed > 0
+        ? `Sent to ${sent} subscriber(s) — ${failed} failed.`
+        : `Sent to ${sent} subscriber(s): ${recipients.slice(0, 3).join(', ')}${recipients.length > 3 ? '…' : ''}`,
+    };
+  } catch (error) {
+    return initialError(authorizationError(error) ?? publicErrorMessage(error) ?? 'Could not send the newsletter.');
+  }
 }
 
 export async function signOut() {

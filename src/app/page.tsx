@@ -24,7 +24,9 @@ export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
   const dbEvents = await getPublishedEvents();
-  const upcoming = getUpcomingEvents([...events, ...dbEvents], 3);
+  // Prefer published DB events so the modal gets one-click RSVP; fall back
+  // to sample cards only when the calendar is empty.
+  const upcoming = getUpcomingEvents(dbEvents.length ? dbEvents : events, 3);
   const projects = getFeaturedProjects();
 
   return (
