@@ -752,32 +752,32 @@
 /* Larger department tracks allow every officer/coordinator card to be 180px. */
 @media (min-width: 1001px) {
   .dept-row.dept-count-1 {
-    grid-template-columns: 380px;
+    grid-template-columns: 460px;
   }
 
   .dept-row.dept-count-2 {
-    grid-template-columns: repeat(2, 380px);
+    grid-template-columns: repeat(2, 460px);
   }
 
   .dept-row.dept-count-3 {
-    grid-template-columns: repeat(6, 180px);
+    grid-template-columns: repeat(6, 220px);
   }
 
   .dept-row .branch-line-main,
   .dept-row.dept-count-2 .branch-line-main {
-    left: 190px;
-    right: 190px;
+    left: 230px;
+    right: 230px;
   }
 
   .dept-count-2 .lower-count-2 .lower-tier-bar,
   .dept-count-3 .lower-count-2 .lower-tier-bar {
-    left: calc(50% - 200px);
-    width: 400px;
+    left: calc(50% - 240px);
+    width: 480px;
   }
 
   .dept-count-2 .lower-count-2 .lower-tier-stems,
   .dept-count-3 .lower-count-2 .lower-tier-stems {
-    width: 400px;
+    width: 480px;
   }
 
   .dept-row.upper-count-1 .Tech-Team,
@@ -785,7 +785,38 @@
   .dept-row.upper-count-1 .Events-Team,
   .dept-row.lower-count-1 .Logistics-Team,
   .dept-row.lower-count-1 .Sponsors-Team {
-    width: 380px;
+    width: 460px;
+  }
+}
+
+/* Add breathing room between the Logistics and Sponsors officer groups. */
+@media (min-width: 1001px) {
+  .dept-row.dept-count-3.lower-count-2 .Logistics-Team {
+    transform: translate(-16px, -20px);
+  }
+
+  .dept-row.dept-count-3.lower-count-2 .Sponsors-Team {
+    transform: translate(16px, -20px);
+  }
+
+  .dept-row .lower-tier-connector {
+    transform: translateY(-20px);
+  }
+
+  .dept-row.dept-count-2.lower-count-2 .Logistics-Team,
+  .dept-row.dept-count-2.lower-count-2 .Sponsors-Team,
+  .dept-row.lower-count-1 .Logistics-Team,
+  .dept-row.lower-count-1 .Sponsors-Team {
+    transform: translateY(-20px);
+  }
+
+  .dept-row.dept-count-3 .lower-count-2 .lower-tier-bar {
+    left: calc(50% - 256px);
+    width: 512px;
+  }
+
+  .dept-row.dept-count-3 .lower-count-2 .lower-tier-stems {
+    width: 512px;
   }
 }
 
@@ -803,6 +834,38 @@
 .officer-merge-2 .merge-bar,
 .officer-merge-2 .merge-stems {
   width: 188px;
+}
+
+.sponsors-officer-row {
+  width: 556px;
+  max-width: none;
+}
+
+.officer-fork-3 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.officer-fork-3 .fork-bar {
+  width: 376px;
+  height: var(--tree-line-size);
+  background-color: #9ca3af;
+}
+
+.officer-fork-3 .fork-stems {
+  display: flex;
+  justify-content: space-between;
+  width: 376px;
+  height: 12px;
+}
+
+.officer-fork-3 .fork-stems > span {
+  width: var(--tree-line-size);
+  min-width: var(--tree-line-size);
+  height: 100%;
+  background-color: #9ca3af;
 }
 
 /* Keep the Advisors heading clear: the tree begins below the text. */

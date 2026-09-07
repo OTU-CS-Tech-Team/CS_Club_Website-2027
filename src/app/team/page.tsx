@@ -444,15 +444,16 @@ export default function TeamPage() {
 
               <div className="center-v-line"></div>
 
-              <div className="officer-fork-2">
+              <div className="officer-fork-3">
                 <div className="fork-bar"></div>
                 <div className="fork-stems">
+                  <span></span>
                   <span></span>
                   <span></span>
                 </div>
               </div>
 
-              <div className="side-by-side-row">
+              <div className="side-by-side-row sponsors-officer-row">
                 <TeamMemberCard
                   image="/images/Monty.png"
                   name="Monty"
@@ -465,18 +466,6 @@ export default function TeamPage() {
                   role="Partnerships Officer"
                   link="https://www.linkedin.com/in/bushratzahan/"
                 />
-              </div>
-
-              <div className="officer-merge-2">
-                <div className="merge-stems">
-                  <span></span>
-                  <span></span>
-                </div>
-                <div className="merge-bar"></div>
-                <div className="center-v-line"></div>
-              </div>
-
-              <div className="small-card-wrapper rameen-card">
                 <TeamMemberCard
                   image="/images/Rameen.png"
                   name="Rameen"
