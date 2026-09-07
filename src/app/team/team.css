@@ -37,14 +37,16 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 5rem;
+  gap: 1rem;
   position: relative;
-  width: 100%;
+  width: max-content;
+  max-width: 100%;
   margin: 0 auto;
 }
 
 .Presidents .teamCard {
   max-width: 200px;
+  margin: 0;
 }
 
 /* President cards -> horizontal merge -> center line */
@@ -59,7 +61,7 @@
 .president-stems {
   display: flex;
   justify-content: space-between;
-  width: calc(400px + 5rem);
+  width: calc(200px + 1rem);
   height: 16px;
 }
 
@@ -70,7 +72,7 @@
 }
 
 .president-bar {
-  width: calc(400px + 5rem);
+  width: calc(200px + 1rem);
   height: 2px;
   background-color: #9ca3af;
 }
@@ -100,7 +102,7 @@
 }
 
 .vp-top-fork .fork-bar {
-  width: calc(400px + 5rem);
+  width: calc(200px + 1rem);
   height: 2px;
   background-color: #9ca3af;
 }
@@ -108,7 +110,7 @@
 .vp-top-fork .fork-stems {
   display: flex;
   justify-content: space-between;
-  width: calc(400px + 5rem);
+  width: calc(200px + 1rem);
   height: 16px;
 }
 
@@ -124,14 +126,16 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 5rem;
+  gap: 1rem;
   position: relative;
-  width: 100%;
+  width: max-content;
+  max-width: 100%;
   margin: 0 auto;
 }
 
 .Vice-Presidents .teamCard {
   max-width: 200px;
+  margin: 0;
 }
 
 /* Bottom merge for VP cards -> feeds into the department branch below */
@@ -146,7 +150,7 @@
 .pair-merge-bracket .bracket-stems {
   display: flex;
   justify-content: space-between;
-  width: calc(400px + 5rem);
+  width: calc(200px + 1rem);
   height: 16px;
 }
 
@@ -157,7 +161,7 @@
 }
 
 .pair-merge-bracket .bracket-bar {
-  width: calc(400px + 5rem);
+  width: calc(200px + 1rem);
   height: 2px;
   background-color: #9ca3af;
 }
@@ -231,7 +235,31 @@
   grid-template-columns: repeat(2, 240px);
 }
 .dept-row.dept-count-3 {
-  grid-template-columns: repeat(3, 240px);
+  grid-template-columns: repeat(6, 150px);
+}
+
+.dept-count-3 .Tech-Team {
+  grid-column: 1 / 3 !important;
+}
+
+.dept-count-3 .Marketing-Team {
+  grid-column: 3 / 5 !important;
+}
+
+.dept-count-3 .Events-Team {
+  grid-column: 5 / 7 !important;
+}
+
+.dept-count-3 > .branch-stem:nth-of-type(1) {
+  grid-column: 1 / 3 !important;
+}
+
+.dept-count-3 > .branch-stem:nth-of-type(2) {
+  grid-column: 3 / 5 !important;
+}
+
+.dept-count-3 > .branch-stem:nth-of-type(3) {
+  grid-column: 5 / 7 !important;
 }
 .dept-row.dept-count-4 {
   grid-template-columns: repeat(4, 240px);
@@ -247,10 +275,15 @@
   grid-column: 1 / -1;
   position: absolute;
   top: 0;
-  left: 120px;
-  right: 120px;
+  left: 160px;
+  right: 160px;
   height: 2px;
   background-color: #9ca3af;
+}
+
+.dept-row.dept-count-2 .branch-line-main {
+  left: 120px;
+  right: 120px;
 }
 
 .dept-row .branch-stem {
@@ -277,7 +310,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3rem;
+  gap: 0;
   width: 100%;
 }
 
@@ -359,12 +392,149 @@
 /* Advisors Section */
 
 .Advisors {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(5, var(--advisor-card-width));
   justify-content: center;
   align-items: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
+  gap: var(--advisor-card-gap);
+  flex-wrap: nowrap;
   margin-top: 1rem;
+}
+
+/* Logistics and Sponsors form a larger second team row. */
+.Logistics-Team,
+.Sponsors-Team {
+  grid-row: 4;
+}
+
+.lower-tier-connector {
+  grid-row: 3;
+  grid-column: 1 / -1;
+  position: relative;
+  width: 100%;
+  height: 58px;
+}
+
+.lower-tier-in {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 30px;
+  background: #9ca3af;
+}
+
+.lower-tier-bar {
+  position: absolute;
+  top: 28px;
+  left: calc(50% - 170px);
+  width: 340px;
+  height: 2px;
+  background: #9ca3af;
+}
+
+.lower-tier-stems {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  display: flex;
+  justify-content: space-between;
+  width: 2px;
+  height: 30px;
+  transform: translateX(-50%);
+}
+
+.dept-count-2 .lower-count-2 .lower-tier-bar {
+  left: calc(50% - 130px);
+  width: 260px;
+}
+
+.dept-count-2 .lower-count-2 .lower-tier-stems {
+  width: 260px;
+}
+
+.dept-count-3 .lower-count-2 .lower-tier-bar {
+  left: calc(50% - 170px);
+  width: 340px;
+}
+
+.dept-count-3 .lower-count-2 .lower-tier-stems {
+  width: 340px;
+}
+.dept-count-3 .Logistics-Team {
+  grid-column: 2 / 4 !important;
+}
+
+.dept-count-3 .Sponsors-Team {
+  grid-column: 4 / 6 !important;
+}
+
+/* Center a single remaining upper department and its incoming stem. */
+.dept-row.upper-count-1 .Tech-Team,
+.dept-row.upper-count-1 .Marketing-Team,
+.dept-row.upper-count-1 .Events-Team {
+  grid-column: 1 / -1 !important;
+  justify-self: center;
+  width: 320px;
+}
+
+.dept-row.upper-count-1 > .branch-stem {
+  grid-column: 1 / -1 !important;
+}
+
+/* Center Logistics or Sponsors when it is the only lower team selected. */
+.dept-row.lower-count-1 .Logistics-Team,
+.dept-row.lower-count-1 .Sponsors-Team {
+  grid-column: 1 / -1 !important;
+  justify-self: center;
+  width: 320px;
+}
+.lower-tier-stems span { width: 2px; height: 100%; background: #9ca3af; }
+
+/* Larger officer cards now that each team has more horizontal room. */
+.side-by-side-row .teamCard,
+.small-card-wrapper .teamCard { max-width: 150px; padding: .75rem .5rem; }
+.side-by-side-row .teamCard > img:first-of-type,
+.small-card-wrapper .teamCard > img:first-of-type { width: 60px; height: 60px; }
+
+/* Advisors are part of the tree and stay in one five-card row. */
+.advisors-tree {
+  --advisor-card-width: 200px;
+  --advisor-card-gap: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+.advisors-in-line { width: 2px; height: 32px; background: #9ca3af; }
+.advisors-tree h2 { margin: .25rem 0; }
+.advisors-fanout {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  width: calc(5 * var(--advisor-card-width) + 4 * var(--advisor-card-gap));
+  height: 28px;
+  padding: 0 calc(var(--advisor-card-width) / 2);
+  box-sizing: border-box;
+}
+.advisors-fanout::before { content: ""; position: absolute; left: 50%; bottom: 100%; width: 2px; height: 16px; background: #9ca3af; }
+.advisors-fanout::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: calc(var(--advisor-card-width) / 2);
+  right: calc(var(--advisor-card-width) / 2);
+  height: 2px;
+  background: #9ca3af;
+}
+.advisors-fanout span { width: 2px; height: 28px; background: #9ca3af; }
+.Advisors { margin-top: 0; }
+
+@media (max-width: 1100px) {
+  .advisors-tree {
+    --advisor-card-width: 150px;
+    --advisor-card-gap: .75rem;
+  }
 }
 
 /* Team Member Card Base Styles */
@@ -569,12 +739,238 @@
   .vp-top-fork .fork-stems,
   .pair-merge-bracket .bracket-stems,
   .pair-merge-bracket .bracket-bar {
-    width: calc(400px + 1.5rem);
+    width: min(calc(200px + 1rem), calc(100% - 2rem));
     max-width: calc(100% - 2rem);
   }
 
   .Presidents .teamCard,
   .Vice-Presidents .teamCard {
     max-width: 200px;
+  }
+}
+
+/* Larger department tracks allow every officer/coordinator card to be 180px. */
+@media (min-width: 1001px) {
+  .dept-row.dept-count-1 {
+    grid-template-columns: 380px;
+  }
+
+  .dept-row.dept-count-2 {
+    grid-template-columns: repeat(2, 380px);
+  }
+
+  .dept-row.dept-count-3 {
+    grid-template-columns: repeat(6, 180px);
+  }
+
+  .dept-row .branch-line-main,
+  .dept-row.dept-count-2 .branch-line-main {
+    left: 190px;
+    right: 190px;
+  }
+
+  .dept-count-2 .lower-count-2 .lower-tier-bar,
+  .dept-count-3 .lower-count-2 .lower-tier-bar {
+    left: calc(50% - 200px);
+    width: 400px;
+  }
+
+  .dept-count-2 .lower-count-2 .lower-tier-stems,
+  .dept-count-3 .lower-count-2 .lower-tier-stems {
+    width: 400px;
+  }
+
+  .dept-row.upper-count-1 .Tech-Team,
+  .dept-row.upper-count-1 .Marketing-Team,
+  .dept-row.upper-count-1 .Events-Team,
+  .dept-row.lower-count-1 .Logistics-Team,
+  .dept-row.lower-count-1 .Sponsors-Team {
+    width: 380px;
+  }
+}
+
+.side-by-side-row .teamCard,
+.small-card-wrapper .teamCard {
+  flex: 0 0 180px;
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+  min-height: 220px;
+}
+
+.officer-fork-2 .fork-bar,
+.officer-fork-2 .fork-stems,
+.officer-merge-2 .merge-bar,
+.officer-merge-2 .merge-stems {
+  width: 188px;
+}
+
+/* Keep the Advisors heading clear: the tree begins below the text. */
+.advisors-fanout::before {
+  display: block;
+  height: 0.5rem;
+}
+
+.advisors-in-line {
+  display: block;
+}
+
+.advisors-tree h2 {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 0.5rem;
+  background: #ffffff;
+}
+
+/* Final sizing and connector alignment overrides. Keep at end of file. */
+.page {
+  --tree-line-size: 2px;
+}
+
+.Presidents,
+.Vice-Presidents {
+  width: calc(440px + 2rem);
+  max-width: 100%;
+  gap: 2rem;
+}
+
+.Presidents .teamCard,
+.Vice-Presidents .teamCard {
+  flex: 0 0 220px;
+  width: 220px;
+  max-width: 220px;
+  min-height: 220px;
+  margin: 0;
+}
+
+.president-stems,
+.president-bar,
+.vp-top-fork .fork-bar,
+.vp-top-fork .fork-stems,
+.pair-merge-bracket .bracket-stems,
+.pair-merge-bracket .bracket-bar {
+  width: calc(220px + 2rem);
+}
+
+.dept-column > .teamCard {
+  width: 220px;
+  max-width: 220px;
+  min-height: 220px;
+}
+
+.side-by-side-row .teamCard,
+.small-card-wrapper .teamCard {
+  flex: 0 0 180px;
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+  min-height: 220px;
+  padding: 0.75rem 0.5rem;
+}
+
+.small-card-wrapper .teamCard {
+  flex-basis: 180px;
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+}
+
+.side-by-side-row .teamCard > img:first-of-type,
+.small-card-wrapper .teamCard > img:first-of-type {
+  width: 70px;
+  height: 70px;
+}
+
+.side-by-side-row .teamCard h3,
+.small-card-wrapper .teamCard h3 {
+  font-size: 0.95rem;
+}
+
+.side-by-side-row .teamCard span,
+.small-card-wrapper .teamCard span {
+  font-size: 0.78rem;
+}
+
+/* Keep centered vertical segments on the same exact center pixel. */
+.lower-tier-in,
+.advisors-fanout::before {
+  transform: translateX(-50%);
+}
+
+.president-center-line,
+.center-v-line,
+.advisors-in-line {
+  align-self: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Do not reserve the empty upper-team row when all upper teams are hidden. */
+.dept-row.upper-count-0 {
+  grid-template-rows: 58px auto;
+  row-gap: 0;
+}
+
+.dept-row.upper-count-0 .lower-tier-connector {
+  grid-row: 1;
+}
+
+.dept-row.upper-count-0 .Logistics-Team,
+.dept-row.upper-count-0 .Sponsors-Team {
+  grid-row: 2;
+}
+
+/* Force every horizontal and vertical tree segment to the same thickness. */
+.president-stems > span,
+.president-center-line,
+.vp-top-fork .fork-stems > span,
+.pair-merge-bracket .bracket-stems > span,
+.center-v-line,
+.heading-v-wrapper .v-stem-top,
+.heading-v-wrapper .v-stem-bottom,
+.dept-row .branch-stem,
+.lower-tier-in,
+.lower-tier-stems span,
+.officer-fork-2 .fork-stems > span,
+.officer-merge-2 .merge-stems > span,
+.advisors-in-line,
+.advisors-fanout span,
+.advisors-fanout::before {
+  width: var(--tree-line-size);
+  min-width: var(--tree-line-size);
+}
+
+.president-bar,
+.vp-top-fork .fork-bar,
+.pair-merge-bracket .bracket-bar,
+.dept-row .branch-line-main,
+.lower-tier-bar,
+.officer-fork-2 .fork-bar,
+.officer-merge-2 .merge-bar,
+.advisors-fanout::after {
+  height: var(--tree-line-size);
+  min-height: var(--tree-line-size);
+}
+
+@media (max-width: 650px) {
+  .Presidents,
+  .Vice-Presidents {
+    width: min(calc(100% - 1rem), 472px);
+    gap: 1rem;
+  }
+
+  .Presidents .teamCard,
+  .Vice-Presidents .teamCard {
+    flex-basis: min(220px, calc(50vw - 2rem));
+    width: min(220px, calc(50vw - 2rem));
+  }
+
+  .president-stems,
+  .president-bar,
+  .vp-top-fork .fork-bar,
+  .vp-top-fork .fork-stems,
+  .pair-merge-bracket .bracket-stems,
+  .pair-merge-bracket .bracket-bar {
+    width: min(calc(220px + 1rem), calc(100% - 2rem));
   }
 }

@@ -24,13 +24,25 @@ export default function TeamPage() {
 
   const showPresidents = selected.includes("presidents");
   const showVPs = selected.includes("vice-presidents");
+  const upperDeptIds = ["tech", "marketing", "events"];
+  const lowerDeptIds = ["logistics", "sponsors"];
+  const selectedUpperDepts = upperDeptIds.filter((id) => selected.includes(id));
+  const selectedLowerDepts = lowerDeptIds.filter((id) => selected.includes(id));
   const selectedDepts = deptIds.filter((id) => selected.includes(id));
   const hasDepts = selectedDepts.length > 0;
-  const deptCount = selectedDepts.length;
+  const showAdvisors = selected.includes("advisors");
+  const deptCount = Math.max(selectedUpperDepts.length, selectedLowerDepts.length);
 
   // Keep each visible department and its connector on the same grid track.
   const getDeptColumn = (id: string) => {
-    const index = selectedDepts.indexOf(id);
+    const row = lowerDeptIds.includes(id) ? selectedLowerDepts : selectedUpperDepts;
+    const index = row.indexOf(id);
+    if (lowerDeptIds.includes(id) && selectedLowerDepts.length === 1) {
+      return Math.ceil(deptCount / 2);
+    }
+    if (lowerDeptIds.includes(id) && selectedLowerDepts.length === 2 && deptCount === 3) {
+      return index * 2 + 1;
+    }
     return index === -1 ? undefined : index + 1;
   };
 
@@ -71,7 +83,7 @@ export default function TeamPage() {
         </div>
 
         {/* Only draw the line down out of Presidents if there's something below to connect to */}
-        {(showVPs || hasDepts) && (
+        {(showVPs || hasDepts || showAdvisors) && (
           <div className="president-merge">
             <div className="president-stems">
               <span></span>
@@ -121,7 +133,7 @@ export default function TeamPage() {
         </div>
 
         {/* Only draw the line down into the department tree if a department is visible */}
-        {hasDepts && (
+        {(hasDepts || showAdvisors) && (
           <div className="pair-merge-bracket">
             <div className="bracket-stems">
               <span></span>
@@ -135,17 +147,29 @@ export default function TeamPage() {
       </div>
 
       <div className="department-grid">
-        <div className="dept-tree-wrapper">
-          <div className={`dept-row dept-count-${deptCount}`}>
-            {hasDepts && deptCount > 1 && <div className="branch-line-main"></div>}
-            {hasDepts &&
-              selectedDepts.map((id, index) => (
+        <div className={`dept-tree-wrapper ${hasDepts ? "" : "hidden"}`}>
+          <div
+            className={`dept-row dept-count-${deptCount} upper-count-${selectedUpperDepts.length} lower-count-${selectedLowerDepts.length}`}
+          >
+            {selectedUpperDepts.length > 1 && <div className="branch-line-main"></div>}
+            {selectedUpperDepts.length > 0 &&
+              selectedUpperDepts.map((id, index) => (
                 <span
                   key={id}
                   className="branch-stem"
                   style={{ gridColumn: index + 1 }}
                 ></span>
               ))}
+
+            {selectedLowerDepts.length > 0 && (
+              <div className={`lower-tier-connector lower-count-${selectedLowerDepts.length}`}>
+                {(selectedUpperDepts.length > 0 || showVPs || showPresidents) && <span className="lower-tier-in" />}
+                {selectedLowerDepts.length > 1 && <span className="lower-tier-bar" />}
+                <div className="lower-tier-stems">
+                  {selectedLowerDepts.map((id) => <span key={id} />)}
+                </div>
+              </div>
+            )}
 
             {/* Tech Team */}
             <div
@@ -465,8 +489,10 @@ export default function TeamPage() {
         </div>
 
         {/* Advisors Section */}
-        <div className={selected.includes("advisors") ? "" : "hidden"}>
+        <div className={showAdvisors ? "advisors-tree" : "hidden"}>
+          {(hasDepts || showVPs || showPresidents) && <div className="advisors-in-line" />}
           <h2>Advisors</h2>
+          <div className="advisors-fanout"><span /><span /><span /><span /><span /></div>
           <div className="Advisors">
             <TeamMemberCard
               image="/images/Kevin.png"
