@@ -154,6 +154,16 @@ export default function CareerApplicationForm({ job }: { job: ClubJob }) {
           <>
             <p className={styles.applyEyebrow}>{job.category}</p>
             <h1 className={styles.applyTitle}>{job.title}</h1>
+            <div className={styles.applyMeta}>
+              {job.commitment ? <span>{job.commitment}</span> : null}
+              {job.location ? <span>{job.location}</span> : null}
+              <span>
+                {job.closes_at
+                  ? `Closes ${new Intl.DateTimeFormat('en-CA', { dateStyle: 'medium', timeZone: 'America/Toronto' }).format(new Date(job.closes_at))}`
+                  : 'Open until filled'}
+              </span>
+            </div>
+            <p className={styles.applyDescription}>{job.description}</p>
             <form onSubmit={handleSubmit} noValidate>
               <input type="hidden" name="jobId" value={job.id} />
               <div className={styles.formGrid}>

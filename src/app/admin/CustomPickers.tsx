@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import styles from './admin.module.css';
 
 function pad(value: number) {
@@ -49,10 +49,12 @@ export function DatePicker({
   name,
   value,
   onChange,
+  ariaLabel = 'Choose event date',
 }: {
   name: string;
   value: string;
   onChange: (value: string) => void;
+  ariaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(() => monthStart(parseDateValue(value) ?? new Date()));
@@ -94,7 +96,7 @@ export function DatePicker({
         <span className={styles.pickerChevron} aria-hidden="true">⌄</span>
       </button>
       {open ? (
-        <div className={styles.calendarPopover} role="dialog" aria-label="Choose event date">
+        <div className={styles.calendarPopover} role="dialog" aria-label={ariaLabel}>
           <div className={styles.calendarHeader}>
             <button type="button" onClick={() => setVisibleMonth((current) => shiftMonth(current, -1))} aria-label="Previous month">←</button>
             <strong>{monthLabel(visibleMonth)}</strong>
@@ -130,6 +132,154 @@ export function DatePicker({
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+const JOB_CATEGORIES = [
+  'Community',
+  'Engineering',
+  'Marketing',
+  'Design',
+  'Events',
+  'Partnerships',
+  'Operations',
+] as const;
+
+export function CategoryPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const isPreset = JOB_CATEGORIES.some((category) => category === value);
+  const [open, setOpen] = useState(false);
+  const [customMode, setCustomMode] = useState(Boolean(value && !isPreset));
+  const [highlighted, setHighlighted] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  function toggle() {
+    setOpen((current) => {
+      if (!current) setHighlighted(isPreset ? value : JOB_CATEGORIES[0]);
+      return !current;
+    });
+  }
+
+  function handleKeyDown(event: ReactKeyboardEvent<HTMLButtonElement>) {
+    const currentIndex = JOB_CATEGORIES.indexOf(highlighted as (typeof JOB_CATEGORIES)[number]);
+    if (event.key === 'Escape') setOpen(false);
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (open && highlighted) {
+        onChange(highlighted);
+        setOpen(false);
+      } else {
+        toggle();
+      }
+    }
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setHighlighted(JOB_CATEGORIES[Math.min(currentIndex + 1, JOB_CATEGORIES.length - 1)]);
+      setOpen(true);
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setHighlighted(JOB_CATEGORIES[Math.max(currentIndex, 1) - 1]);
+      setOpen(true);
+    }
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [open]);
+
+  return (
+    <div className={styles.picker} ref={containerRef}>
+      <input type="hidden" name="category" value={value} />
+      {customMode ? (
+        <div className={styles.customCategory}>
+          <input
+            aria-label="Custom job category"
+            autoFocus
+            maxLength={80}
+            placeholder="Enter a category"
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+          />
+          <button
+            type="button"
+            className={styles.textButton}
+            onClick={() => {
+              setCustomMode(false);
+              onChange('');
+            }}
+          >
+            Use a suggested category
+          </button>
+        </div>
+      ) : (
+        <>
+          <button
+            type="button"
+            className={styles.pickerButton}
+            aria-haspopup="listbox"
+            aria-expanded={open}
+            onClick={toggle}
+            onKeyDown={handleKeyDown}
+          >
+            <span>{value || 'Select category'}</span>
+            <span className={styles.pickerChevron} aria-hidden="true">⌄</span>
+          </button>
+          {open ? (
+            <div className={styles.choicePopover} role="listbox" aria-label="Choose job category">
+              {JOB_CATEGORIES.map((category) => (
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={value === category}
+                  className={highlighted === category ? styles.choiceOptionSelected : styles.choiceOption}
+                  key={category}
+                  onFocus={() => setHighlighted(category)}
+                  onMouseEnter={() => setHighlighted(category)}
+                  onClick={() => {
+                    onChange(category);
+                    setHighlighted(category);
+                    setOpen(false);
+                  }}
+                >
+                  {category}
+                </button>
+              ))}
+              <button
+                type="button"
+                role="option"
+                aria-selected="false"
+                className={styles.choiceOption}
+                onClick={() => {
+                  onChange('');
+                  setCustomMode(true);
+                  setOpen(false);
+                }}
+              >
+                Custom category
+              </button>
+            </div>
+          ) : null}
+        </>
+      )}
     </div>
   );
 }

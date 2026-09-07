@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createAdminClient, isAdminClientConfigured } from '@/lib/supabase/admin';
 import { sendDirectEmail } from '@/lib/email';
 import { mailingVerifyUrl, verifyMailingVerifyToken } from '@/lib/guestCancelToken';
 
@@ -66,6 +66,7 @@ export async function getMailingListStatus(): Promise<{
   } = await supabase.auth.getUser();
 
   if (!user?.email) return { signedIn: false, subscribed: false };
+  if (!isAdminClientConfigured()) return { signedIn: true, subscribed: false };
 
   const subscribed = Boolean(await findConfirmedSubscriber(normalizeEmail(user.email)));
   return { signedIn: true, subscribed };

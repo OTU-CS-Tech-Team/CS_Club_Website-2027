@@ -50,12 +50,25 @@ export async function POST(request: Request) {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(jobId)) {
     return NextResponse.json({ error: 'This job posting is not available.' }, { status: 400 });
   }
-  const { data: job } = await supabase
+  let { data: job, error: jobError } = await supabase
     .from('jobs')
     .select('id')
     .eq('id', jobId)
     .eq('is_active', true)
+    .or(`closes_at.is.null,closes_at.gt.${new Date().toISOString()}`)
     .maybeSingle();
+  if (jobError?.code === '42703') {
+    ({ data: job, error: jobError } = await supabase
+      .from('jobs')
+      .select('id')
+      .eq('id', jobId)
+      .eq('is_active', true)
+      .maybeSingle());
+  }
+  if (jobError) {
+    console.error('Unable to verify job availability', { code: jobError.code, message: jobError.message });
+    return NextResponse.json({ error: 'We could not verify this job posting. Please try again.' }, { status: 500 });
+  }
   if (!job) {
     return NextResponse.json({ error: 'This job posting is no longer available.' }, { status: 400 });
   }
