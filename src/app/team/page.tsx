@@ -4,7 +4,18 @@ import "./team.css";
 import { useState } from "react";
 import TeamMemberCard from "@/app/team/memberCard";
 import DepartmentFilter from "@/app/team/departmentFilter";
+import { teamData, type TeamMember } from "@/app/team/teamData";
 
+function MemberCard({ member }: { member: TeamMember }) {
+  return (
+    <TeamMemberCard
+      image={member.Image}
+      name={member.name}
+      role={member.role}
+      link={member.link}
+    />
+  );
+}
 const departmentList = [
   { id: "presidents", name: "Presidents" },
   { id: "vice-presidents", name: "Vice Presidents" },
@@ -67,19 +78,9 @@ export default function TeamPage() {
         <h2>Presidents</h2>
 
         <div className="Presidents">
-          <TeamMemberCard
-            image="/images/Maryam.png"
-            name="Maryam"
-            role="Co-President"
-            link="https://www.linkedin.com/in/maryam-baz-mb1423/"
-          />
-
-          <TeamMemberCard
-            image="/images/Abdul.png"
-            name="Abdul"
-            role="Co-President"
-            link="https://www.linkedin.com/in/abdul-muqit-afzal/"
-          />
+          {teamData.presidents.map((member) => (
+          <MemberCard key={member.name} member={member} />
+          ))}
         </div>
 
         {/* Only draw the line down out of Presidents if there's something below to connect to */}
@@ -102,34 +103,28 @@ export default function TeamPage() {
         }`}
       >
         <div className="heading-v-wrapper">
-          {/* The president connection supplies the line above this heading */}
           <h2>Vice Presidents</h2>
-          <span className="v-stem-bottom"></span>
+
+          {showPresidents && (
+            <span className="v-stem-bottom"></span>
+          )}
         </div>
 
-        {/* Fork going down into Vice President cards */}
-        <div className="vp-top-fork">
-          <div className="fork-bar"></div>
-          <div className="fork-stems">
-            <span></span>
-            <span></span>
+        {showPresidents && (
+          <div className="vp-top-fork">
+            <div className="fork-bar"></div>
+
+            <div className="fork-stems">
+              <span></span>
+              <span></span>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="Vice-Presidents">
-          <TeamMemberCard
-            image="/images/Samad.jpg"
-            name="Ata-us-Samad"
-            role="Vice-President"
-            link="https://www.linkedin.com/in/samadaku/"
-          />
-
-          <TeamMemberCard
-            image="/images/Samir.png"
-            name="Samir"
-            role="Vice-President"
-            link="https://www.linkedin.com/in/samir-chowdhury23/"
-          />
+          {teamData.vicePresidents.map((member) => (
+          <MemberCard key={member.name} member={member} />
+          ))}
         </div>
 
         {/* Only draw the line down into the department tree if a department is visible */}
@@ -181,12 +176,7 @@ export default function TeamPage() {
                 <span className="v-stem-bottom"></span>
               </div>
 
-              <TeamMemberCard
-                image="/images/Umad.png"
-                name="Umad"
-                role="Director of Technology"
-                link="https://www.linkedin.com/in/umad-akram/"
-              />
+              <MemberCard member={teamData.tech[0]} />
 
               <div className="center-v-line"></div>
 
@@ -199,18 +189,9 @@ export default function TeamPage() {
               </div>
 
               <div className="side-by-side-row">
-                <TeamMemberCard
-                  image="/images/Haseeb.png"
-                  name="Haseeb"
-                  role="Technology Officer"
-                  link="https://www.linkedin.com/in/haseeb-khann/"
-                />
-                <TeamMemberCard
-                  image="/images/Tabish.png"
-                  name="Tabish"
-                  role="Technology Officer"
-                  link="https://www.linkedin.com/in/tabish-ghouri/"
-                />
+                {teamData.tech.slice(1, 3).map((member) => (
+                <MemberCard key={member.name} member={member} />
+                ))}
               </div>
 
               <div className="officer-merge-2">
@@ -223,12 +204,7 @@ export default function TeamPage() {
               </div>
 
               <div className="small-card-wrapper">
-                <TeamMemberCard
-                  image="/images/Xavier.png"
-                  name="Xavier"
-                  role="Technology Officer"
-                  link="https://www.linkedin.com/in/xavier-koch-527bb2387/"
-                />
+                <MemberCard member={teamData.tech[3]} />
               </div>
             </div>
 
@@ -242,13 +218,7 @@ export default function TeamPage() {
                 <span className="v-stem-bottom"></span>
               </div>
 
-              <TeamMemberCard
-                image="/images/Amna.png"
-                name="Amna"
-                role="Director of Marketing"
-                link="https://www.linkedin.com/in/amna--yousuf/"
-              />
-
+              <MemberCard member={teamData.marketing[0]} />
               <div className="center-v-line"></div>
 
               <div className="officer-fork-2">
@@ -260,18 +230,9 @@ export default function TeamPage() {
               </div>
 
               <div className="side-by-side-row">
-                <TeamMemberCard
-                  image="/images/Amitav.png"
-                  name="Amitav"
-                  role="UI/UX Designer"
-                  link="https://www.linkedin.com/in/amitav-sonawane/"
-                />
-                <TeamMemberCard
-                  image="/images/Hemanti.png"
-                  name="Hemanti"
-                  role="Marketing Coordinator"
-                  link="https://www.linkedin.com/in/hemanti-badam-9b6986396/"
-                />
+                {teamData.marketing.slice(1, 3).map((member) => (
+                <MemberCard key={member.name} member={member} />
+                ))}
               </div>
 
               <div className="officer-merge-2">
@@ -292,18 +253,9 @@ export default function TeamPage() {
               </div>
 
               <div className="side-by-side-row">
-                <TeamMemberCard
-                  image="/images/Qudsia.jpg"
-                  name="Qudsia"
-                  role="Marketing Coordinator"
-                  link=""
-                />
-                <TeamMemberCard
-                  image="/images/Atifa Baz photo.jpg"
-                  name="Atifa"
-                  role="Marketing Coordinator"
-                  link=""
-                />
+                {teamData.marketing.slice(3, 5).map((member) => (
+                <MemberCard key={member.name} member={member} />
+                ))}
               </div>
             </div>
 
@@ -317,12 +269,7 @@ export default function TeamPage() {
                 <span className="v-stem-bottom"></span>
               </div>
 
-              <TeamMemberCard
-                image="/images/Ihsan.png"
-                name="Ihsan"
-                role="Director of Logistics"
-                link="https://www.linkedin.com/in/mohammad-ihsan-wadid-47596b36b/"
-              />
+              <MemberCard member={teamData.logistics[0]} />
 
               <div className="center-v-line"></div>
 
@@ -333,20 +280,11 @@ export default function TeamPage() {
                   <span></span>
                 </div>
               </div>
+            <div className="side-by-side-row">
 
-              <div className="side-by-side-row">
-                <TeamMemberCard
-                  image="/images/Aakash.png"
-                  name="Aakash"
-                  role="Tech Logistics Officer"
-                  link="https://www.linkedin.com/in/aakashharen/"
-                />
-                <TeamMemberCard
-                  image="/images/Akeell.png"
-                  name="Akeell"
-                  role="Logistics Officer"
-                  link="https://www.linkedin.com/in/akeell-parameswaran/"
-                />
+              {teamData.logistics.slice(1).map((member) => (
+                <MemberCard key={member.name} member={member} />
+                ))}
               </div>
             </div>
 
@@ -360,12 +298,7 @@ export default function TeamPage() {
                 <span className="v-stem-bottom"></span>
               </div>
 
-              <TeamMemberCard
-                image="/images/Aravind.png"
-                name="Aravind"
-                role="Director of Events"
-                link="https://www.linkedin.com/in/aravindnira/"
-              />
+              <MemberCard member={teamData.events[0]} />
 
               <div className="center-v-line"></div>
 
@@ -378,18 +311,9 @@ export default function TeamPage() {
               </div>
 
               <div className="side-by-side-row">
-                <TeamMemberCard
-                  image="/images/Thomas.jpg"
-                  name="Thomas"
-                  role="Events Coordinator"
-                  link="https://www.linkedin.com/in/thomas-mitchinson/"
-                />
-                <TeamMemberCard
-                  image="/images/Haris.png"
-                  name="Haris"
-                  role="Events Coordinator"
-                  link="https://www.linkedin.com/in/haris-khan-915300246/"
-                />
+                {teamData.events.slice(1, 3).map((member) => (
+                <MemberCard key={member.name} member={member} />
+                ))}
               </div>
 
               <div className="officer-merge-2">
@@ -410,18 +334,9 @@ export default function TeamPage() {
               </div>
 
               <div className="side-by-side-row">
-                <TeamMemberCard
-                  image="/images/Bach.png"
-                  name="Bach"
-                  role="Events Officer"
-                  link="https://www.linkedin.com/in/bach-nguyen-vu/"
-                />
-                <TeamMemberCard
-                  image="/images/Zoha.jpeg"
-                  name="Zoha"
-                  role="Events Officer"
-                  link=""
-                />
+                {teamData.events.slice(3, 5).map((member) => (
+                <MemberCard key={member.name} member={member} />
+                ))}
               </div>
             </div>
 
@@ -435,12 +350,7 @@ export default function TeamPage() {
                 <span className="v-stem-bottom"></span>
               </div>
 
-              <TeamMemberCard
-                image="/images/Khalid.png"
-                name="Khalid"
-                role="Director of Sponsors"
-                link="https://linkedin.com/in/Khalid"
-              />
+              <MemberCard member={teamData.sponsors[0]} />
 
               <div className="center-v-line"></div>
 
@@ -454,24 +364,9 @@ export default function TeamPage() {
               </div>
 
               <div className="side-by-side-row sponsors-officer-row">
-                <TeamMemberCard
-                  image="/images/Monty.png"
-                  name="Monty"
-                  role="Partnerships Officer"
-                  link="https://www.linkedin.com/in/monty-abdi-94a5a8371/"
-                />
-                <TeamMemberCard
-                  image="/images/Bushrat.png"
-                  name="Bushrat"
-                  role="Partnerships Officer"
-                  link="https://www.linkedin.com/in/bushratzahan/"
-                />
-                <TeamMemberCard
-                  image="/images/Rameen.png"
-                  name="Rameen"
-                  role="Partnerships Officer"
-                  link=""
-                />
+                {teamData.sponsors.slice(1).map((member) => (
+                <MemberCard key={member.name} member={member} />
+                ))}
               </div>
             </div>
           </div>
@@ -483,36 +378,9 @@ export default function TeamPage() {
           <h2>Advisors</h2>
           <div className="advisors-fanout"><span /><span /><span /><span /><span /></div>
           <div className="Advisors">
-            <TeamMemberCard
-              image="/images/Kevin.png"
-              name="Kevin"
-              role="Advisor"
-              link="https://www.linkedin.com/in/kevintheinnovator/"
-            />
-            <TeamMemberCard
-              image="/images/Wasay.jpg"
-              name="Wasay"
-              role="Advisor"
-              link="https://www.linkedin.com/in/wasayaamir/"
-            />
-            <TeamMemberCard
-              image="/images/Taha.png"
-              name="Taha"
-              role="Advisor"
-              link="https://www.linkedin.com/in/taha-rana-haha/"
-            />
-            <TeamMemberCard
-              image="/images/Hayden.png"
-              name="Hayden"
-              role="Advisor"
-              link="https://www.linkedin.com/in/haydenpmac/"
-            />
-            <TeamMemberCard
-              image="/images/Edrees.png"
-              name="Edrees"
-              role="Advisor"
-              link="https://www.linkedin.com/in/edrees-amiri/"
-            />
+            {teamData.advisors.map((member) => (
+            <MemberCard key={member.name} member={member} />
+            ))}
           </div>
         </div>
       </div>
