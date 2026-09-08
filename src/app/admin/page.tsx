@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createAdminClient, isAdminClientConfigured } from '@/lib/supabase/admin';
 import { mapDatabaseEvent } from '@/lib/content';
-import { getMailingListSubscribers } from '@/lib/members';
+import { getMailingListSubscribers, type MailingListSubscriber } from '@/lib/members';
 import { NEWSLETTER_HISTORY_LIMIT, pruneNewsletterHistory } from '@/lib/newsletters';
-import type { ClubJob, ManagedEvent } from '@/types/content';
+import type { ClubJob, EventAttendee, ManagedEvent } from '@/types/content';
 import AdminDashboard from './AdminDashboard';
 
 export const metadata = {
@@ -27,27 +27,187 @@ export default async function AdminPage() {
     .maybeSingle();
   if (!admin) redirect('/login');
 
-  const adminClient = createAdminClient();
-  await pruneNewsletterHistory(adminClient);
+  const [eventsResult, jobsResult] = await Promise.all([
+    supabase.from('events').select('id, title, description, location, starts_at, ends_at, images, points, is_published, created_by, created_at, updated_at').order('starts_at', { ascending: false }),
+    supabase.from('jobs').select('id, title, category, description, is_active, closes_at, commitment, location, created_by, created_at, updated_at').order('created_at', { ascending: false }),
+  ]);
 
-  const [eventsResult, jobsResult, subscribers, newslettersResult] = await Promise.all([
-    supabase.from('events').select('id, title, description, location, starts_at, ends_at, images, points, created_at, updated_at').order('starts_at', { ascending: false }),
-    supabase.from('jobs').select('*').order('created_at', { ascending: false }),
-    getMailingListSubscribers(adminClient),
-    adminClient
+  // Keep the dashboard usable while the additive content-controls migration rolls out.
+  let eventRows: ManagedEvent[];
+  let eventsLoadError = '';
+  if (eventsResult.error?.code === '42703') {
+    const legacyEventsResult = await supabase
+      .from('events')
+      .select('id, title, description, location, starts_at, ends_at, images, points, created_by, created_at, updated_at')
+      .order('starts_at', { ascending: false });
+    eventRows = (legacyEventsResult.data ?? [])
+      .map(mapDatabaseEvent)
+      .filter((event): event is ManagedEvent => event !== null);
+    if (legacyEventsResult.error) {
+      console.error('Unable to load dashboard events', {
+        code: legacyEventsResult.error.code,
+        message: legacyEventsResult.error.message,
+      });
+      eventsLoadError = 'Events could not be loaded. Refresh the page and try again.';
+    }
+  } else {
+    eventRows = (eventsResult.data ?? [])
+      .map(mapDatabaseEvent)
+      .filter((event): event is ManagedEvent => event !== null);
+    if (eventsResult.error) {
+      console.error('Unable to load dashboard events', {
+        code: eventsResult.error.code,
+        message: eventsResult.error.message,
+      });
+      eventsLoadError = 'Events could not be loaded. Refresh the page and try again.';
+    }
+  }
+
+  let jobRows: ClubJob[];
+  let jobsLoadError = '';
+  if (jobsResult.error?.code === '42703') {
+    const legacyJobsResult = await supabase
+      .from('jobs')
+      .select('id, title, category, description, is_active, created_by, created_at, updated_at')
+      .order('created_at', { ascending: false });
+    jobRows = (legacyJobsResult.data ?? []) as ClubJob[];
+    if (legacyJobsResult.error) {
+      console.error('Unable to load dashboard jobs', {
+        code: legacyJobsResult.error.code,
+        message: legacyJobsResult.error.message,
+      });
+      jobsLoadError = 'Jobs could not be loaded. Refresh the page and try again.';
+    }
+  } else {
+    jobRows = (jobsResult.data ?? []) as ClubJob[];
+    if (jobsResult.error) {
+      console.error('Unable to load dashboard jobs', {
+        code: jobsResult.error.code,
+        message: jobsResult.error.message,
+      });
+      jobsLoadError = 'Jobs could not be loaded. Refresh the page and try again.';
+    }
+  }
+
+  const adminClientConfigured = isAdminClientConfigured();
+  const adminClient = adminClientConfigured ? createAdminClient() : null;
+  const creatorEmails: Record<string, string> = {};
+  if (user.email) creatorEmails[user.id] = user.email;
+
+  if (adminClient) {
+    const creatorIds = Array.from(new Set(
+      [...eventRows, ...jobRows]
+        .map((item) => item.created_by)
+        .filter((id): id is string => Boolean(id) && id !== user.id),
+    ));
+    await Promise.all(creatorIds.map(async (creatorId) => {
+      const { data, error } = await adminClient.auth.admin.getUserById(creatorId);
+      if (!error && data.user?.email) creatorEmails[creatorId] = data.user.email;
+    }));
+  }
+
+  let subscribers: MailingListSubscriber[] = [];
+  let newsletters: Array<{ id: string; subject: string; recipient_count: number; sent_at: string }> = [];
+  let attendees: EventAttendee[] = [];
+  let attendanceLoadError = adminClient
+    ? ''
+    : 'RSVP information is unavailable because secure server access is not configured.';
+
+  if (adminClient) {
+    await pruneNewsletterHistory(adminClient);
+    const [subscriberRows, newslettersResult] = await Promise.all([
+      getMailingListSubscribers(adminClient),
+      adminClient
       .from('newsletters')
       .select('id, subject, recipient_count, sent_at')
       .order('sent_at', { ascending: false })
       .limit(NEWSLETTER_HISTORY_LIMIT),
-  ]);
+    ]);
+    subscribers = subscriberRows;
+    newsletters = newslettersResult.data ?? [];
+
+    const eventIds = eventRows.map((event) => event.id).filter(Boolean);
+    if (eventIds.length) {
+      const [memberResult, guestResult, stampResult] = await Promise.all([
+        adminClient
+          .from('event_rsvps')
+          .select('event_id, user_id, year_of_study')
+          .in('event_id', eventIds),
+        adminClient
+          .from('event_guests')
+          .select('id, event_id, name, email, confirmed')
+          .in('event_id', eventIds),
+        adminClient
+          .from('passport_stamps')
+          .select('event_id, user_id')
+          .in('event_id', eventIds),
+      ]);
+
+      const attendanceError = memberResult.error ?? guestResult.error ?? stampResult.error;
+      if (attendanceError) {
+        console.error('Unable to load event RSVPs', {
+          code: attendanceError.code,
+          message: attendanceError.message,
+        });
+        attendanceLoadError = 'RSVP information could not be loaded. Refresh the page and try again.';
+      } else {
+        const memberRows = memberResult.data ?? [];
+        const memberIds = Array.from(new Set(memberRows.map((row) => row.user_id)));
+        const profileResult = memberIds.length
+          ? await adminClient.from('profiles').select('id, full_name, email').in('id', memberIds)
+          : { data: [], error: null };
+
+        if (profileResult.error) {
+          console.error('Unable to load RSVP profiles', {
+            code: profileResult.error.code,
+            message: profileResult.error.message,
+          });
+          attendanceLoadError = 'RSVP information could not be loaded. Refresh the page and try again.';
+        } else {
+          const profiles = new Map((profileResult.data ?? []).map((profile) => [profile.id, profile]));
+          const attendedMembers = new Set(
+            (stampResult.data ?? []).map((stamp) => `${stamp.event_id}:${stamp.user_id}`),
+          );
+
+          attendees = [
+            ...memberRows.map((rsvp): EventAttendee => {
+              const profile = profiles.get(rsvp.user_id);
+              return {
+                id: `member:${rsvp.event_id}:${rsvp.user_id}`,
+                event_id: rsvp.event_id,
+                name: profile?.full_name || profile?.email || 'Member',
+                email: profile?.email ?? '',
+                year_of_study: rsvp.year_of_study,
+                kind: 'member',
+                status: attendedMembers.has(`${rsvp.event_id}:${rsvp.user_id}`) ? 'attended' : 'confirmed',
+              };
+            }),
+            ...(guestResult.data ?? []).map((guest): EventAttendee => ({
+              id: `guest:${guest.id}`,
+              event_id: guest.event_id,
+              name: guest.name || guest.email || 'Guest',
+              email: guest.email ?? '',
+              year_of_study: null,
+              kind: 'guest',
+              status: guest.confirmed ? 'confirmed' : 'pending',
+            })),
+          ];
+        }
+      }
+    }
+  }
 
   return (
     <AdminDashboard
       email={user.email ?? 'Executive'}
-      events={(eventsResult.data ?? []).map(mapDatabaseEvent).filter((event): event is ManagedEvent => event !== null)}
-      jobs={(jobsResult.data ?? []) as ClubJob[]}
+      events={eventRows}
+      jobs={jobRows}
       subscribers={subscribers}
-      newsletters={newslettersResult.data ?? []}
+      newsletters={newsletters}
+      newsletterConfigured={adminClientConfigured}
+      creatorEmails={creatorEmails}
+      attendees={attendees}
+      loadErrors={{ events: eventsLoadError, jobs: jobsLoadError, attendance: attendanceLoadError }}
     />
   );
 }

@@ -195,10 +195,21 @@
   background: #f0f0f0;
 }
 
+.roleCopy {
+  display: grid;
+  gap: 0.3rem;
+}
+
 .roleTitle {
   font-size: 0.98rem;
   font-weight: 500;
   letter-spacing: -0.01em;
+}
+
+.roleDetails {
+  color: #7a7a7a;
+  font-size: 0.72rem;
+  letter-spacing: 0.01em;
 }
 
 .roleApply {
@@ -262,11 +273,31 @@
 }
 
 .applyTitle {
-  margin: 0 0 2rem;
+  margin: 0 0 0.8rem;
   font-size: clamp(1.7rem, 3.4vw, 2.4rem);
   font-weight: 650;
   letter-spacing: -0.04em;
   line-height: 1.15;
+}
+
+.applyMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 1rem;
+  margin-bottom: 1.25rem;
+  color: #6b6b6b;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.applyDescription {
+  max-width: 46rem;
+  margin: 0 0 2.25rem;
+  color: #4d4d4d;
+  font-size: 0.98rem;
+  line-height: 1.7;
+  white-space: pre-line;
 }
 
 .formGrid {

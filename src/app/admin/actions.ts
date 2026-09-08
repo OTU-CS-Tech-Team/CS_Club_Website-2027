@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { torontoWallTime } from '@/lib/eventSchedule';
+import { isValidCalendarDate, parseEventImageUrls, validateEventForm } from '@/lib/eventFormValidation';
 import { sendBulkEmail, sendDirectEmail, newsletterEmailHtml, newsletterEmailText } from '@/lib/email';
 import { getMailingListEmails } from '@/lib/members';
 import { pruneNewsletterHistory } from '@/lib/newsletters';
@@ -26,15 +27,6 @@ function slugify(value: string) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, 100);
-}
-
-function validImageUrl(value: string) {
-  return (value.startsWith('/') && !value.startsWith('//')) || /^https:\/\/[^\s]+$/i.test(value);
-}
-
-function validDate(value: string) {
-  const parsed = new Date(`${value}T00:00:00Z`);
-  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
 
 function torontoDateTime(date: string, time: string) {
@@ -89,26 +81,24 @@ export async function saveEvent(
   const startTime = text(formData, 'startTime');
   const endTime = text(formData, 'endTime');
   const location = text(formData, 'location');
-  const points = Number(text(formData, 'points'));
-  const images = text(formData, 'images')
-    .split(/[\n,]/)
-    .map((value) => value.trim())
-    .filter(Boolean);
+  const pointsText = text(formData, 'points');
+  const points = Number(pointsText);
+  const intent = text(formData, 'intent') || 'publish';
+  const isPublished = intent === 'publish';
+  const imageText = text(formData, 'images');
+  const images = parseEventImageUrls(imageText);
   const startsAt = torontoDateTime(date, startTime);
   const endsAt = torontoDateTime(date, endTime);
 
-  if (!title || !description || !date || !startTime || !endTime || !location) {
-    return initialError('Complete every required event field.');
+  const validationError = validateEventForm({ title, description, date, startTime, endTime, location, points: pointsText, images: imageText });
+  if (validationError) return initialError(validationError);
+  if (intent !== 'publish' && intent !== 'draft') {
+    return initialError('Choose whether to publish the event or save it as a draft.');
   }
   if (originalId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(originalId)) {
     return initialError('The event identifier is invalid.');
   }
-  if (title.length > 160 || description.length > 5000 || location.length > 200) {
-    return initialError('One or more event fields are too long.');
-  }
-  if (!validDate(date) || !startsAt || !endsAt || endsAt <= startsAt || !Number.isInteger(points) || points < 0 || points > 1000 || images.length > 6 || images.some((url) => !validImageUrl(url))) {
-    return initialError('Check the event date, times, points, and image URLs. End time must be after start time.');
-  }
+  if (!startsAt || !endsAt) return initialError('Choose valid event times.');
 
   try {
     const { supabase, user } = await requireAdmin();
@@ -120,15 +110,25 @@ export async function saveEvent(
       location,
       points,
       images,
-      updated_at: new Date().toISOString(),
+      is_published: isPublished,
       ...(!originalId ? { created_by: user.id } : {}),
     };
     const query = originalId
       ? supabase.from('events').update(payload).eq('id', originalId)
       : supabase.from('events').insert(payload);
-    const { error } = await query;
+    let { error } = await query;
+    if (error?.code === '42703' && isPublished) {
+      const { is_published: _isPublished, ...legacyPayload } = payload;
+      const legacyQuery = originalId
+        ? supabase.from('events').update(legacyPayload).eq('id', originalId)
+        : supabase.from('events').insert(legacyPayload);
+      ({ error } = await legacyQuery);
+    }
     if (error) {
       console.error('Unable to save event', { code: error.code, message: error.message });
+      if (error.code === '42703' && !isPublished) {
+        return initialError('Draft storage is not configured yet. Apply the dashboard content-controls migration first.');
+      }
       return initialError(error.code === '23505' ? 'An event with this title already exists.' : 'Unable to save the event.');
     }
   } catch (error) {
@@ -138,7 +138,10 @@ export async function saveEvent(
   revalidatePath('/');
   revalidatePath('/events');
   revalidatePath('/admin');
-  return { ok: true, message: originalId ? 'Event updated.' : 'Event created.' };
+  if (!isPublished) {
+    return { ok: true, message: originalId ? 'Draft updated.' : 'Event saved as a draft.' };
+  }
+  return { ok: true, message: originalId ? 'Event updated and published.' : 'Event published.' };
 }
 
 export async function deleteEvent(
@@ -171,12 +174,19 @@ export async function saveJob(
   const title = text(formData, 'title');
   const category = text(formData, 'category');
   const description = text(formData, 'description');
+  const closingDate = text(formData, 'closingDate');
+  const commitment = text(formData, 'commitment');
+  const location = text(formData, 'jobLocation');
   const id = originalId || slugify(title);
   const isActive = formData.get('isActive') === 'on';
+  const closesAt = closingDate ? torontoDateTime(closingDate, '23:59') : null;
 
   if (!id || !title || !category || !description) return initialError('Complete every required job field.');
-  if (title.length > 160 || category.length > 80 || description.length > 5000) {
+  if (title.length > 160 || category.length > 80 || description.length > 5000 || commitment.length > 120 || location.length > 160) {
     return initialError('One or more job fields are too long.');
+  }
+  if (closingDate && (!isValidCalendarDate(closingDate) || !closesAt)) {
+    return initialError('Choose a valid closing date.');
   }
 
   try {
@@ -187,7 +197,9 @@ export async function saveJob(
       category,
       description,
       is_active: isActive,
-      updated_at: new Date().toISOString(),
+      closes_at: closesAt?.toISOString() ?? null,
+      commitment: commitment || null,
+      location: location || null,
       ...(!originalId ? { created_by: user.id } : {}),
     };
     const query = originalId

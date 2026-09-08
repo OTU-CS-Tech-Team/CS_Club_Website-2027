@@ -261,7 +261,14 @@ export default function OpenRoles({ jobs }: OpenRolesProps) {
                         href={`/careers/${role.id}/apply`}
                         className={styles.role}
                       >
-                        <span className={styles.roleTitle}>{role.title}</span>
+                        <span className={styles.roleCopy}>
+                          <span className={styles.roleTitle}>{role.title}</span>
+                          <span className={styles.roleDetails}>
+                            {[role.commitment, role.location, role.closes_at
+                              ? `Closes ${new Intl.DateTimeFormat('en-CA', { dateStyle: 'medium', timeZone: 'America/Toronto' }).format(new Date(role.closes_at))}`
+                              : 'Open until filled'].filter(Boolean).join(' · ')}
+                          </span>
+                        </span>
                         <span className={styles.roleApply}>
                           APPLY <span aria-hidden="true">→</span>
                         </span>
