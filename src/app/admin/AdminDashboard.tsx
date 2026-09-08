@@ -2,7 +2,7 @@
 
 import { useActionState, useCallback, useDeferredValue, useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import type { ClubJob, ManagedEvent } from '@/types/content';
+import type { ClubJob, EventAttendee, ManagedEvent } from '@/types/content';
 import type { MailingListSubscriber } from '@/lib/members';
 import { validateEventForm } from '@/lib/eventFormValidation';
 import {
@@ -471,6 +471,73 @@ function PreviewDialog({ preview, onClose }: { preview: ContentPreview; onClose:
   );
 }
 
+function RsvpDialog({
+  event,
+  attendees,
+  loadError,
+  onClose,
+}: {
+  event: ManagedEvent;
+  attendees: EventAttendee[];
+  loadError: string;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const closeOnEscape = (keyboardEvent: KeyboardEvent) => {
+      if (keyboardEvent.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [onClose]);
+
+  const confirmed = attendees.filter((attendee) => attendee.status !== 'pending').length;
+  const attended = attendees.filter((attendee) => attendee.status === 'attended').length;
+  const pending = attendees.filter((attendee) => attendee.status === 'pending').length;
+  const statusOrder = { attended: 0, confirmed: 1, pending: 2 } as const;
+  const sortedAttendees = [...attendees].sort((first, second) =>
+    statusOrder[first.status] - statusOrder[second.status] || first.name.localeCompare(second.name),
+  );
+
+  return (
+    <div className={styles.dialogBackdrop} role="presentation" onMouseDown={(mouseEvent) => { if (mouseEvent.target === mouseEvent.currentTarget) onClose(); }}>
+      <section className={`${styles.dialog} ${styles.rsvpDialog}`} role="dialog" aria-modal="true" aria-labelledby="rsvp-dialog-title">
+        <div className={styles.previewHeader}>
+          <div>
+            <p className={styles.kicker}>RSVP status</p>
+            <h2 id="rsvp-dialog-title">{event.title}</h2>
+          </div>
+          <button className={styles.previewClose} type="button" onClick={onClose} aria-label="Close RSVP status">×</button>
+        </div>
+        {loadError ? <p className={styles.error} role="alert">{loadError}</p> : (
+          <>
+            <div className={styles.rsvpSummary} aria-label="RSVP summary">
+              <div><strong>{confirmed}</strong><span>Confirmed</span></div>
+              <div><strong>{attended}</strong><span>Attended</span></div>
+              <div><strong>{pending}</strong><span>Awaiting confirmation</span></div>
+            </div>
+            {sortedAttendees.length ? (
+              <div className={styles.rsvpRoster} aria-label={`RSVPs for ${event.title}`}>
+                {sortedAttendees.map((attendee) => (
+                  <article className={styles.rsvpRow} key={attendee.id}>
+                    <div className={styles.rsvpIdentity}>
+                      <strong>{attendee.name}</strong>
+                      <span>{attendee.email || 'Email unavailable'}</span>
+                      <small>{attendee.kind === 'member' ? ['Member', attendee.year_of_study].filter(Boolean).join(' · ') : 'Guest'}</small>
+                    </div>
+                    <span className={attendee.status === 'attended' ? styles.rsvpAttended : attendee.status === 'pending' ? styles.rsvpPending : styles.rsvpConfirmed}>
+                      {attendee.status === 'attended' ? 'Attended' : attendee.status === 'pending' ? 'Awaiting confirmation' : 'RSVP’d'}
+                    </span>
+                  </article>
+                ))}
+              </div>
+            ) : <p className={styles.empty}>No RSVPs for this event yet.</p>}
+          </>
+        )}
+      </section>
+    </div>
+  );
+}
+
 type EventStatusFilter = 'all' | 'upcoming' | 'past' | 'draft';
 type JobStatusFilter = 'all' | 'live' | 'hidden' | 'expired';
 
@@ -494,6 +561,7 @@ export default function AdminDashboard({
   newsletters,
   newsletterConfigured,
   creatorEmails,
+  attendees,
   loadErrors,
 }: {
   email: string;
@@ -503,7 +571,8 @@ export default function AdminDashboard({
   newsletters: SentNewsletter[];
   newsletterConfigured: boolean;
   creatorEmails: Record<string, string>;
-  loadErrors: { events: string; jobs: string };
+  attendees: EventAttendee[];
+  loadErrors: { events: string; jobs: string; attendance: string };
 }) {
   const [tab, setTab] = useState<'events' | 'jobs' | 'newsletter'>('events');
   const [editingEvent, setEditingEvent] = useState<ManagedEvent | null>(null);
@@ -512,6 +581,7 @@ export default function AdminDashboard({
   const [jobEditorOpen, setJobEditorOpen] = useState(false);
   const [deleting, setDeleting] = useState<DeleteTarget | null>(null);
   const [preview, setPreview] = useState<ContentPreview | null>(null);
+  const [rsvpEvent, setRsvpEvent] = useState<ManagedEvent | null>(null);
   const [notice, setNotice] = useState<AdminActionState | null>(null);
   const [eventQuery, setEventQuery] = useState('');
   const [eventFilter, setEventFilter] = useState<EventStatusFilter>('all');
@@ -578,10 +648,11 @@ export default function AdminDashboard({
             <div className={eventsExpanded ? styles.expandedEventScroll : styles.eventPreviewList} tabIndex={eventsExpanded ? 0 : undefined} aria-label="Event results">
             {visibleEvents.map((event) => {
               const status = eventStatus(event, now);
+              const rsvpCount = attendees.filter((attendee) => attendee.event_id === event.id && attendee.status !== 'pending').length;
               return <article className={styles.item} key={event.id}>
                 {event.images[0] ? <img className={styles.itemImage} src={event.images[0]} alt="" loading="lazy" /> : <div className={styles.itemImagePlaceholder} aria-hidden="true">CS</div>}
                 <div className={styles.itemBody}><p className={styles.itemMeta}>{event.date} / {event.time}</p><h3>{event.title}</h3><p>{event.location}</p><p className={styles.audit}>{auditLabel(event.created_by, creatorEmails, event.updated_at)}</p></div>
-                <div className={styles.itemControls}><span className={status === 'draft' ? styles.statusDraft : status === 'past' ? styles.statusPast : styles.statusLive}>{status}</span><div className={styles.itemActions}><button type="button" onClick={() => { setEditingEvent(event); setEventEditorOpen(true); }}>Edit</button><button type="button" onClick={() => { setEditingEvent({ ...event, id: '', title: `${event.title} copy`, created_by: null, created_at: undefined, updated_at: undefined }); setEventEditorOpen(true); }}>Duplicate</button><button className={styles.deleteButton} type="button" onClick={() => setDeleting({ type: 'event', id: event.id, title: event.title })}>Delete</button></div></div>
+                <div className={styles.itemControls}><span className={status === 'draft' ? styles.statusDraft : status === 'past' ? styles.statusPast : styles.statusLive}>{status}</span><div className={styles.itemActions}><button type="button" onClick={() => setRsvpEvent(event)} aria-label={`View RSVPs for ${event.title}`}>RSVPs {rsvpCount}</button><button type="button" onClick={() => { setEditingEvent(event); setEventEditorOpen(true); }}>Edit</button><button type="button" onClick={() => { setEditingEvent({ ...event, id: '', title: `${event.title} copy`, created_by: null, created_at: undefined, updated_at: undefined }); setEventEditorOpen(true); }}>Duplicate</button><button className={styles.deleteButton} type="button" onClick={() => setDeleting({ type: 'event', id: event.id, title: event.title })}>Delete</button></div></div>
               </article>;
             })}
             </div>
@@ -640,6 +711,7 @@ export default function AdminDashboard({
         </main> : null}
       {deleting ? <DeleteDialog target={deleting} onClose={() => setDeleting(null)} onComplete={completeDelete} /> : null}
       {preview ? <PreviewDialog preview={preview} onClose={closePreview} /> : null}
+      {rsvpEvent ? <RsvpDialog event={rsvpEvent} attendees={attendees.filter((attendee) => attendee.event_id === rsvpEvent.id)} loadError={loadErrors.attendance} onClose={() => setRsvpEvent(null)} /> : null}
     </div>
   );
 }

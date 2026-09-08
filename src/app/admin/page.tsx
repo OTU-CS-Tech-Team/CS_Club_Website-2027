@@ -4,7 +4,7 @@ import { createAdminClient, isAdminClientConfigured } from '@/lib/supabase/admin
 import { mapDatabaseEvent } from '@/lib/content';
 import { getMailingListSubscribers, type MailingListSubscriber } from '@/lib/members';
 import { NEWSLETTER_HISTORY_LIMIT, pruneNewsletterHistory } from '@/lib/newsletters';
-import type { ClubJob, ManagedEvent } from '@/types/content';
+import type { ClubJob, EventAttendee, ManagedEvent } from '@/types/content';
 import AdminDashboard from './AdminDashboard';
 
 export const metadata = {
@@ -108,6 +108,10 @@ export default async function AdminPage() {
 
   let subscribers: MailingListSubscriber[] = [];
   let newsletters: Array<{ id: string; subject: string; recipient_count: number; sent_at: string }> = [];
+  let attendees: EventAttendee[] = [];
+  let attendanceLoadError = adminClient
+    ? ''
+    : 'RSVP information is unavailable because secure server access is not configured.';
 
   if (adminClient) {
     await pruneNewsletterHistory(adminClient);
@@ -121,6 +125,76 @@ export default async function AdminPage() {
     ]);
     subscribers = subscriberRows;
     newsletters = newslettersResult.data ?? [];
+
+    const eventIds = eventRows.map((event) => event.id).filter(Boolean);
+    if (eventIds.length) {
+      const [memberResult, guestResult, stampResult] = await Promise.all([
+        adminClient
+          .from('event_rsvps')
+          .select('event_id, user_id, year_of_study')
+          .in('event_id', eventIds),
+        adminClient
+          .from('event_guests')
+          .select('id, event_id, name, email, confirmed')
+          .in('event_id', eventIds),
+        adminClient
+          .from('passport_stamps')
+          .select('event_id, user_id')
+          .in('event_id', eventIds),
+      ]);
+
+      const attendanceError = memberResult.error ?? guestResult.error ?? stampResult.error;
+      if (attendanceError) {
+        console.error('Unable to load event RSVPs', {
+          code: attendanceError.code,
+          message: attendanceError.message,
+        });
+        attendanceLoadError = 'RSVP information could not be loaded. Refresh the page and try again.';
+      } else {
+        const memberRows = memberResult.data ?? [];
+        const memberIds = Array.from(new Set(memberRows.map((row) => row.user_id)));
+        const profileResult = memberIds.length
+          ? await adminClient.from('profiles').select('id, full_name, email').in('id', memberIds)
+          : { data: [], error: null };
+
+        if (profileResult.error) {
+          console.error('Unable to load RSVP profiles', {
+            code: profileResult.error.code,
+            message: profileResult.error.message,
+          });
+          attendanceLoadError = 'RSVP information could not be loaded. Refresh the page and try again.';
+        } else {
+          const profiles = new Map((profileResult.data ?? []).map((profile) => [profile.id, profile]));
+          const attendedMembers = new Set(
+            (stampResult.data ?? []).map((stamp) => `${stamp.event_id}:${stamp.user_id}`),
+          );
+
+          attendees = [
+            ...memberRows.map((rsvp): EventAttendee => {
+              const profile = profiles.get(rsvp.user_id);
+              return {
+                id: `member:${rsvp.event_id}:${rsvp.user_id}`,
+                event_id: rsvp.event_id,
+                name: profile?.full_name || profile?.email || 'Member',
+                email: profile?.email ?? '',
+                year_of_study: rsvp.year_of_study,
+                kind: 'member',
+                status: attendedMembers.has(`${rsvp.event_id}:${rsvp.user_id}`) ? 'attended' : 'confirmed',
+              };
+            }),
+            ...(guestResult.data ?? []).map((guest): EventAttendee => ({
+              id: `guest:${guest.id}`,
+              event_id: guest.event_id,
+              name: guest.name || guest.email || 'Guest',
+              email: guest.email ?? '',
+              year_of_study: null,
+              kind: 'guest',
+              status: guest.confirmed ? 'confirmed' : 'pending',
+            })),
+          ];
+        }
+      }
+    }
   }
 
   return (
@@ -132,7 +206,8 @@ export default async function AdminPage() {
       newsletters={newsletters}
       newsletterConfigured={adminClientConfigured}
       creatorEmails={creatorEmails}
-      loadErrors={{ events: eventsLoadError, jobs: jobsLoadError }}
+      attendees={attendees}
+      loadErrors={{ events: eventsLoadError, jobs: jobsLoadError, attendance: attendanceLoadError }}
     />
   );
 }

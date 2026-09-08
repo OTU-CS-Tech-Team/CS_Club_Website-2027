@@ -25,3 +25,13 @@ export type ClubJob = {
   created_at?: string;
   updated_at?: string;
 };
+
+export type EventAttendee = {
+  id: string;
+  event_id: string;
+  name: string;
+  email: string;
+  year_of_study: string | null;
+  kind: 'member' | 'guest';
+  status: 'attended' | 'confirmed' | 'pending';
+};
