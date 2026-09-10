@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { ClubJob, ManagedEvent } from '@/types/content';
 import {
@@ -253,7 +254,10 @@ export default function AdminDashboard({
     <div className={styles.page}>
       <header className={styles.header}>
         <div><p className={styles.kicker}>Executive dashboard</p><p>Signed in as {email}</p></div>
-        <form action={signOut}><button className={styles.signOut} type="submit">Sign out</button></form>
+        <div className={styles.headerActions}>
+          <Link className={styles.textButton} href="/admin/checkin">Event check-in</Link>
+          <form action={signOut}><button className={styles.signOut} type="submit">Sign out</button></form>
+        </div>
       </header>
       <nav className={styles.tabs} aria-label="Dashboard sections">
         <button type="button" className={tab === 'events' ? styles.activeTab : ''} onClick={() => setTab('events')}>Events <span>{events.length}</span></button>
@@ -264,7 +268,7 @@ export default function AdminDashboard({
       {tab === 'events' ? <main className={styles.workspace}>
         <EventEditor key={editingEvent?.id ?? 'new-event'} event={editingEvent} onDone={finishEventEdit} onSuccess={showSuccess} />
         <section className={styles.collection} aria-labelledby="events-list-heading"><h2 id="events-list-heading">All events</h2>
-          {events.length ? events.map((event) => <article className={styles.item} key={event.id}><div><p className={styles.itemMeta}>{event.date} / {event.time}</p><h3>{event.title}</h3><p>{event.location}</p></div><div className={styles.itemActions}><button type="button" onClick={() => setEditingEvent(event)}>Edit</button><button className={styles.deleteButton} type="button" onClick={() => setDeleting({ type: 'event', id: event.id, title: event.title })}>Delete</button></div></article>) : <p className={styles.empty}>No events yet.</p>}
+          {events.length ? events.map((event) => <article className={styles.item} key={event.id}><div><p className={styles.itemMeta}>{event.date} / {event.time}</p><h3>{event.title}</h3><p>{event.location}</p></div><div className={styles.itemActions}><Link href={`/admin/checkin?event=${event.id}`}>Check in</Link><button type="button" onClick={() => setEditingEvent(event)}>Edit</button><button className={styles.deleteButton} type="button" onClick={() => setDeleting({ type: 'event', id: event.id, title: event.title })}>Delete</button></div></article>) : <p className={styles.empty}>No events yet.</p>}
         </section>
       </main> : null}
       {tab === 'jobs' ? <main className={styles.workspace}>
