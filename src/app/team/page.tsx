@@ -43,6 +43,13 @@ export default function TeamPage() {
   const hasDepts = selectedDepts.length > 0;
   const showAdvisors = selected.includes("advisors");
   const deptCount = Math.max(selectedUpperDepts.length, selectedLowerDepts.length);
+  // Only draw a stem into a department column if something above it is actually
+  // visible to connect from (or it's grouped with a sibling department) —
+  // otherwise isolating one department via "Only" leaves a stem dangling above its heading.
+  const showTreeAbove = showPresidents || showVPs;
+  const upperTierActive = showTreeAbove || selectedUpperDepts.length > 1;
+  const lowerTierActive =
+    selectedUpperDepts.length > 0 || showTreeAbove || selectedLowerDepts.length > 1;
 
   // Keep each visible department and its connector on the same grid track.
   const getDeptColumn = (id: string) => {
@@ -147,7 +154,7 @@ export default function TeamPage() {
             className={`dept-row dept-count-${deptCount} upper-count-${selectedUpperDepts.length} lower-count-${selectedLowerDepts.length}`}
           >
             {selectedUpperDepts.length > 1 && <div className="branch-line-main"></div>}
-            {selectedUpperDepts.length > 0 &&
+            {upperTierActive &&
               selectedUpperDepts.map((id, index) => (
                 <span
                   key={id}
@@ -160,9 +167,11 @@ export default function TeamPage() {
               <div className={`lower-tier-connector lower-count-${selectedLowerDepts.length}`}>
                 {(selectedUpperDepts.length > 0 || showVPs || showPresidents) && <span className="lower-tier-in" />}
                 {selectedLowerDepts.length > 1 && <span className="lower-tier-bar" />}
-                <div className="lower-tier-stems">
-                  {selectedLowerDepts.map((id) => <span key={id} />)}
-                </div>
+                {lowerTierActive && (
+                  <div className="lower-tier-stems">
+                    {selectedLowerDepts.map((id) => <span key={id} />)}
+                  </div>
+                )}
               </div>
             )}
 

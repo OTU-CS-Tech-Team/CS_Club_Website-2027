@@ -1,27 +1,56 @@
 /* Container & Base Page Layout */
 
 .page {
+  --team-navy: #1b003f;
+  --team-purple: #564f89;
+  --team-lavender: #e6e6fa;
+  --team-yellow: #fff29c;
+  --team-blue: #6495ed;
+  --team-border: rgba(86, 79, 137, 0.22);
+  --team-shadow: rgba(27, 0, 63, 0.08);
+  --team-shadow-hover: rgba(27, 0, 63, 0.16);
+  --team-card-bg: #f5f5fc;
+
   width: 100%;
-  max-width: 1700px;
+  max-width: none;
   margin: 0 auto;
   padding: 2rem 1rem;
   text-align: center;
   box-sizing: border-box;
   font-family: inherit;
+  background: var(--team-lavender);
+  color: var(--team-navy);
+  min-height: calc(100dvh - 3.5rem);
+}
+
+.page > * {
+  max-width: 1700px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .page h1 {
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 2rem;
-  color: #111827;
+  color: var(--team-navy);
+}
+
+.page h1::after {
+  content: "";
+  display: block;
+  width: 64px;
+  height: 4px;
+  margin: 0.85rem auto 0;
+  background: var(--team-blue);
+  border-radius: 2px;
 }
 
 .page h2 {
   font-size: 1.5rem;
   font-weight: 600;
   margin: 0.5rem 0;
-  color: #1f2937;
+  color: var(--team-navy);
 }
 
 /*PRESIDENT / VP EXECUTIVE TREE */
@@ -68,19 +97,19 @@
 .president-stems > span {
   width: 2px;
   height: 100%;
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
 }
 
 .president-bar {
   width: calc(200px + 1rem);
   height: 2px;
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
 }
 
 .president-center-line {
   width: 2px;
   height: 32px;
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
   flex-shrink: 0;
 }
 
@@ -104,7 +133,7 @@
 .vp-top-fork .fork-bar {
   width: calc(200px + 1rem);
   height: 2px;
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
 }
 
 .vp-top-fork .fork-stems {
@@ -117,7 +146,7 @@
 .vp-top-fork .fork-stems > span {
   width: 2px;
   height: 100%;
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
 }
 
 /* Vice President cards */
@@ -157,13 +186,13 @@
 .pair-merge-bracket .bracket-stems > span {
   width: 2px;
   height: 100%;
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
 }
 
 .pair-merge-bracket .bracket-bar {
   width: calc(200px + 1rem);
   height: 2px;
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
 }
 
 /* Continuous Vertical Center Line */
@@ -171,7 +200,7 @@
 .center-v-line {
   width: 2px;
   height: 20px;
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
   margin: 0 auto;
   flex-shrink: 0;
 }
@@ -191,7 +220,7 @@
 .heading-v-wrapper .v-stem-bottom {
   width: 2px;
   height: 16px;
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
   display: block;
   margin: 0 auto;
   flex-shrink: 0;
@@ -201,7 +230,7 @@
   font-size: 1.15rem;
   font-weight: 700;
   margin: 0.15rem 0;
-  color: #111827;
+  color: var(--team-navy);
   white-space: nowrap;
   text-align: center;
 }
@@ -278,7 +307,7 @@
   left: 160px;
   right: 160px;
   height: 2px;
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
 }
 
 .dept-row.dept-count-2 .branch-line-main {
@@ -291,7 +320,7 @@
   justify-self: center;
   width: 2px;
   height: 100%;
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
 }
 
 /* Row 2: Department columns */
@@ -345,7 +374,7 @@
 .officer-fork-2 .fork-bar {
   width: 125px;
   height: 2px;
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
 }
 
 .officer-fork-2 .fork-stems {
@@ -358,7 +387,7 @@
 .officer-fork-2 .fork-stems > span {
   width: 2px;
   height: 100%;
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
 }
 
 /* Officer Merge (2 side-by-side cards -> 1 center line) */
@@ -380,13 +409,13 @@
 .officer-merge-2 .merge-stems > span {
   width: 2px;
   height: 100%;
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
 }
 
 .officer-merge-2 .merge-bar {
   width: 125px;
   height: 2px;
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
 }
 
 /* Advisors Section */
@@ -421,7 +450,7 @@
   left: 50%;
   width: 2px;
   height: 30px;
-  background: #9ca3af;
+  background: var(--team-purple);
 }
 
 .lower-tier-bar {
@@ -430,7 +459,7 @@
   left: calc(50% - 170px);
   width: 340px;
   height: 2px;
-  background: #9ca3af;
+  background: var(--team-purple);
 }
 
 .lower-tier-stems {
@@ -489,7 +518,7 @@
   justify-self: center;
   width: 320px;
 }
-.lower-tier-stems span { width: 2px; height: 100%; background: #9ca3af; }
+.lower-tier-stems span { width: 2px; height: 100%; background: var(--team-purple); }
 
 /* Larger officer cards now that each team has more horizontal room. */
 .side-by-side-row .teamCard,
@@ -506,7 +535,7 @@
   align-items: center;
   width: 100%;
 }
-.advisors-in-line { width: 2px; height: 32px; background: #9ca3af; }
+.advisors-in-line { width: 2px; height: 32px; background: var(--team-purple); }
 .advisors-tree h2 { margin: .25rem 0; }
 .advisors-fanout {
   position: relative;
@@ -517,7 +546,7 @@
   padding: 0 calc(var(--advisor-card-width) / 2);
   box-sizing: border-box;
 }
-.advisors-fanout::before { content: ""; position: absolute; left: 50%; bottom: 100%; width: 2px; height: 16px; background: #9ca3af; }
+.advisors-fanout::before { content: ""; position: absolute; left: 50%; bottom: 100%; width: 2px; height: 16px; background: var(--team-purple); }
 .advisors-fanout::after {
   content: "";
   position: absolute;
@@ -525,9 +554,9 @@
   left: calc(var(--advisor-card-width) / 2);
   right: calc(var(--advisor-card-width) / 2);
   height: 2px;
-  background: #9ca3af;
+  background: var(--team-purple);
 }
-.advisors-fanout span { width: 2px; height: 28px; background: #9ca3af; }
+.advisors-fanout span { width: 2px; height: 28px; background: var(--team-purple); }
 .Advisors { margin-top: 0; }
 
 @media (max-width: 1100px) {
@@ -540,8 +569,8 @@
 /* Team Member Card Base Styles */
 
 .teamCard {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--team-card-bg);
+  border: 1px solid var(--team-navy);
   border-radius: 12px;
   padding: 1rem 0.75rem;
   width: 100%;
@@ -549,8 +578,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 4px var(--team-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   box-sizing: border-box;
   position: relative;
   z-index: 2;
@@ -559,7 +588,8 @@
 
 .teamCard:hover {
   transform: translateY(-4px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--team-blue);
+  box-shadow: 0 6px 12px var(--team-shadow-hover);
 }
 
 /* Sizing Officer/Coordinator Level Cards */
@@ -601,7 +631,7 @@
   object-fit: cover;
   object-position: center 20%;
   margin-bottom: 0.5rem;
-  border: 2px solid #f3f4f6;
+  border: 2px solid var(--team-yellow);
 }
 
 /* Member Name & Role */
@@ -610,12 +640,12 @@
   font-size: 1rem;
   font-weight: 600;
   margin: 0 0 0.2rem 0;
-  color: #1f2937;
+  color: var(--team-navy);
 }
 
 .teamCard span {
   font-size: 0.8rem;
-  color: #6b7280;
+  color: var(--team-purple);
   margin-bottom: 0.5rem;
 }
 
@@ -627,6 +657,19 @@
   width: 20px;
   height: 20px;
   flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.teamCard a svg path {
+  transition: fill 0.2s ease;
+}
+
+.teamCard a:hover svg {
+  transform: scale(1.2);
+}
+
+.teamCard a:hover svg path {
+  fill: var(--team-yellow);
 }
 
 .hidden {
@@ -653,10 +696,17 @@
   gap: 0.4rem;
   font-size: 0.85rem;
   padding: 0.4rem 0.75rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--team-border);
   border-radius: 8px;
   background: #fff;
+  color: var(--team-navy);
   cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.dept-filter-toggle:hover {
+  background: var(--team-lavender);
+  border-color: var(--team-purple);
 }
 
 .dept-filter-panel {
@@ -665,9 +715,9 @@
   left: 0;
   width: 220px;
   background: #fff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--team-border);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px var(--team-shadow-hover);
   padding: 0.5rem;
   z-index: 20;
 }
@@ -676,10 +726,16 @@
   width: 100%;
   padding: 0.35rem 0.5rem;
   font-size: 0.8rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--team-border);
   border-radius: 6px;
   margin-bottom: 0.5rem;
   box-sizing: border-box;
+}
+
+.dept-filter-search:focus {
+  outline: 2px solid var(--team-blue);
+  outline-offset: -1px;
+  border-color: transparent;
 }
 
 .dept-filter-list {
@@ -691,17 +747,58 @@
   text-align: left;
 }
 
+.dept-filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0 0.1rem 0.2rem;
+}
+
+.dept-filter-only-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--team-purple);
+}
+
+.dept-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
 .dept-filter-item {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   font-size: 0.85rem;
   cursor: pointer;
+  min-width: 0;
+}
+
+.dept-filter-item:hover {
+  color: var(--team-purple);
+}
+
+.dept-filter-item input[type="checkbox"],
+.dept-filter-only input[type="checkbox"] {
+  accent-color: var(--team-blue);
+  flex-shrink: 0;
+}
+
+.dept-filter-only {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .dept-filter-empty {
   font-size: 0.8rem;
-  color: #6b7280;
+  color: var(--team-purple);
   padding: 0.25rem;
 }
 
@@ -851,7 +948,7 @@
 .officer-fork-3 .fork-bar {
   width: 376px;
   height: var(--tree-line-size);
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
 }
 
 .officer-fork-3 .fork-stems {
@@ -865,7 +962,7 @@
   width: var(--tree-line-size);
   min-width: var(--tree-line-size);
   height: 100%;
-  background-color: #9ca3af;
+  background-color: var(--team-purple);
 }
 
 /* Keep the Advisors heading clear: the tree begins below the text. */
@@ -882,7 +979,7 @@
   position: relative;
   z-index: 2;
   margin-bottom: 0.5rem;
-  background: #ffffff;
+  background: var(--team-lavender);
 }
 
 /* Final sizing and connector alignment overrides. Keep at end of file. */
