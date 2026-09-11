@@ -4,11 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { isAdmin } from '@/lib/admin';
 import CheckinScanner from './CheckinScanner';
 
-export default async function CheckinPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ event?: string }>;
-}) {
+export default async function CheckinPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,10 +18,6 @@ export default async function CheckinPage({
     .from('events')
     .select('id, title')
     .order('starts_at', { ascending: false });
-
-  // deep link from the dashboard's per-event "Check in" button
-  const { event: eventParam } = await searchParams;
-  const initialEventId = (events ?? []).some((e) => e.id === eventParam) ? eventParam! : '';
 
   // small club, small tables — fetch everything once rather than a
   // per-event route; the scanner filters by the selected event client-side
@@ -54,7 +46,7 @@ export default async function CheckinPage({
     <div className="page">
       <h1>Event Check-in</h1>
       <p>Pick today&apos;s event, then scan each member&apos;s passport QR as they arrive.</p>
-      <CheckinScanner events={events ?? []} rsvps={rsvpList} initialEventId={initialEventId} />
+      <CheckinScanner events={events ?? []} rsvps={rsvpList} />
     </div>
   );
 }

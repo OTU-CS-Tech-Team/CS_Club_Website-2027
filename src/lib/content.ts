@@ -9,6 +9,9 @@ const fallbackJob: ClubJob = {
   description:
     "Bring your ideas, energy, and perspective to the team behind Ontario Tech's CS community.",
   is_active: true,
+  closes_at: null,
+  commitment: null,
+  location: 'Ontario Tech',
 };
 
 type EventRow = {
@@ -20,6 +23,8 @@ type EventRow = {
   ends_at: string | null;
   images: string[] | null;
   points: number | null;
+  is_published?: boolean;
+  created_by?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -64,6 +69,8 @@ export function mapDatabaseEvent(row: EventRow): ManagedEvent | null {
     start_time: timePart(row.starts_at, false),
     end_time: row.ends_at ? timePart(row.ends_at, false) : '',
     points: row.points ?? 0,
+    is_published: row.is_published ?? true,
+    created_by: row.created_by,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -71,34 +78,58 @@ export function mapDatabaseEvent(row: EventRow): ManagedEvent | null {
 
 export async function getPublishedEvents(): Promise<ManagedEvent[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const result = await supabase
     .from('events')
-    .select('id, title, description, location, starts_at, ends_at, images, points, created_at, updated_at')
+    .select('id, title, description, location, starts_at, ends_at, images, points, is_published, created_by, created_at, updated_at')
+    .eq('is_published', true)
     .not('starts_at', 'is', null)
     .order('starts_at');
+  let rows: EventRow[] | null = result.data as EventRow[] | null;
+  let error = result.error;
+  if (result.error?.code === '42703') {
+    const legacyResult = await supabase
+      .from('events')
+      .select('id, title, description, location, starts_at, ends_at, images, points, created_by, created_at, updated_at')
+      .not('starts_at', 'is', null)
+      .order('starts_at');
+    rows = legacyResult.data as EventRow[] | null;
+    error = legacyResult.error;
+  }
   if (error) {
     if (!['42703', 'PGRST205'].includes(error.code)) {
       console.error('Unable to load events', { code: error.code, message: error.message });
     }
     return fallbackEvents;
   }
-  return (data as EventRow[]).map(mapDatabaseEvent).filter((event): event is ManagedEvent => event !== null);
+  return (rows ?? []).map(mapDatabaseEvent).filter((event): event is ManagedEvent => event !== null);
 }
 
 export async function getActiveJobs(): Promise<ClubJob[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const result = await supabase
     .from('jobs')
-    .select('*')
+    .select('id, title, category, description, is_active, closes_at, commitment, location, created_by, created_at, updated_at')
     .eq('is_active', true)
+    .or(`closes_at.is.null,closes_at.gt.${new Date().toISOString()}`)
     .order('created_at');
+  let rows: ClubJob[] | null = result.data as ClubJob[] | null;
+  let error = result.error;
+  if (result.error?.code === '42703') {
+    const legacyResult = await supabase
+      .from('jobs')
+      .select('id, title, category, description, is_active, created_by, created_at, updated_at')
+      .eq('is_active', true)
+      .order('created_at');
+    rows = legacyResult.data as ClubJob[] | null;
+    error = legacyResult.error;
+  }
   if (error) {
     if (!['42703', 'PGRST205'].includes(error.code)) {
       console.error('Unable to load jobs', { code: error.code, message: error.message });
     }
     return [fallbackJob];
   }
-  return data as ClubJob[];
+  return rows ?? [];
 }
 
 export async function getActiveJob(id: string): Promise<ClubJob | null> {

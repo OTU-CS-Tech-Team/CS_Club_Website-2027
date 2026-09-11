@@ -2,21 +2,18 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { toggleRsvp, registerGuest } from '@/app/events/actions';
+import { toggleRsvp, registerGuest, getLoggedInRsvpState } from '@/app/events/actions';
 import styles from './landing.module.css';
 
-// RSVP control for a real, DB-backed event. Signed-in members RSVP with
-// one click (event_rsvps) — we already have their name/email from their
-// account. Signed-out visitors register as a guest instead (event_guests):
-// no account, no points, just an attendance record for metrics. Only used
-// for events that actually exist in the events table; the hardcoded
-// sample events keep using the existing local-only EventSignupForm instead.
+// Logged-in: one RSVP button (name / email / student ID come from the account).
+// Signed-out: collect those three fields as a guest registration + confirmation email.
 export default function DbEventRsvp({ eventId }: { eventId: string }) {
   const supabase = createClient();
   const [status, setStatus] = useState<'loading' | 'signedOut' | 'signedIn'>('loading');
   const [rsvped, setRsvped] = useState(false);
   const [pending, setPending] = useState(false);
   const [rsvpError, setRsvpError] = useState('');
+  const [emailWarning, setEmailWarning] = useState('');
 
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
@@ -27,41 +24,62 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
   useEffect(() => {
     let cancelled = false;
 
-    async function load() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        if (!cancelled) setStatus('signedOut');
+    async function loadForUser(userId: string | undefined) {
+      if (!userId) {
+        if (!cancelled) {
+          setRsvped(false);
+          setStatus('signedOut');
+        }
         return;
       }
 
-      const { data } = await supabase
-        .from('event_rsvps')
-        .select('event_id')
-        .eq('event_id', eventId)
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!cancelled) {
-        setRsvped(!!data);
-        setStatus('signedIn');
+      try {
+        const { rsvped: alreadyGoing } = await getLoggedInRsvpState(eventId);
+        if (!cancelled) {
+          setRsvped(alreadyGoing);
+          setStatus('signedIn');
+        }
+      } catch {
+        if (!cancelled) {
+          setRsvped(false);
+          setStatus('signedIn');
+        }
       }
     }
 
+    async function load() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      await loadForUser(session?.user?.id);
+    }
+
     load();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      void loadForUser(session?.user?.id);
+    });
+
     return () => {
       cancelled = true;
+      subscription.unsubscribe();
     };
   }, [eventId, supabase]);
 
   async function handleRsvpClick() {
     setRsvpError('');
+    setEmailWarning('');
     setPending(true);
     try {
-      await toggleRsvp(eventId, true);
+      const result = await toggleRsvp(eventId, true);
       setRsvped(true);
+      if (result?.alreadyRegistered) {
+        setEmailWarning("You've already RSVP'd!");
+      } else if (result?.emailWarning) {
+        setEmailWarning(result.emailWarning);
+      }
     } catch (error) {
       setRsvpError(error instanceof Error ? error.message : 'Could not RSVP — try again.');
     }
@@ -69,19 +87,27 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
   }
 
   async function handleCancelRsvp() {
+    setRsvpError('');
+    setEmailWarning('');
     setPending(true);
-    await toggleRsvp(eventId, false);
-    setRsvped(false);
+    try {
+      await toggleRsvp(eventId, false);
+      setRsvped(false);
+    } catch (error) {
+      setRsvpError(error instanceof Error ? error.message : 'Could not cancel RSVP — try again.');
+    }
     setPending(false);
   }
 
   async function handleGuestSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setGuestStatus('');
+    setEmailWarning('');
     setPending(true);
     try {
-      await registerGuest(eventId, guestName, studentId, guestEmail);
+      const result = await registerGuest(eventId, guestName, studentId, guestEmail);
       setGuestDone(true);
+      if (result.emailWarning) setEmailWarning(result.emailWarning);
     } catch (error) {
       setGuestStatus(error instanceof Error ? error.message : 'Could not register — try again.');
     }
@@ -92,18 +118,37 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
 
   if (status === 'signedOut') {
     if (guestDone) {
-      return <p className={styles.success}>You&apos;re registered for this event.</p>;
+      return (
+        <div className={styles.form}>
+          <p className={styles.success}>
+            Check your email to confirm your RSVP. It does not count until you confirm.
+          </p>
+          {emailWarning ? <p className={styles.formError}>{emailWarning}</p> : null}
+        </div>
+      );
     }
 
     return (
       <form className={styles.form} onSubmit={handleGuestSubmit} noValidate>
-        <h3 className={styles.formTitle}>Register without an account</h3>
+        <h3 className={styles.formTitle}>RSVP</h3>
+        <p style={{ margin: '0 0 0.75rem', fontSize: '0.85rem', opacity: 0.85 }}>
+          Not signed in — enter your name, student ID, and email.
+        </p>
         <div className={styles.field}>
           <label htmlFor={`guest-name-${eventId}`}>Name</label>
           <input
             id={`guest-name-${eventId}`}
             value={guestName}
             onChange={(event) => setGuestName(event.target.value)}
+            required
+          />
+        </div>
+        <div className={`${styles.field} ${styles.fieldWide}`}>
+          <label htmlFor={`guest-student-id-${eventId}`}>Student ID</label>
+          <input
+            id={`guest-student-id-${eventId}`}
+            value={studentId}
+            onChange={(event) => setStudentId(event.target.value)}
             required
           />
         </div>
@@ -117,19 +162,10 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
             required
           />
         </div>
-        <div className={`${styles.field} ${styles.fieldWide}`}>
-          <label htmlFor={`guest-student-id-${eventId}`}>Student ID</label>
-          <input
-            id={`guest-student-id-${eventId}`}
-            value={studentId}
-            onChange={(event) => setStudentId(event.target.value)}
-            required
-          />
-        </div>
         {guestStatus && <p className={styles.formError}>{guestStatus}</p>}
         <div className={styles.formActions}>
           <button type="submit" className={styles.cta} disabled={pending}>
-            {pending ? 'Registering…' : 'Register'}
+            {pending ? 'Sending…' : 'RSVP'}
           </button>
         </div>
       </form>
@@ -140,6 +176,8 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
     return (
       <div className={styles.form}>
         <h3 className={styles.formTitle}>You&apos;re going!</h3>
+        {emailWarning ? <p className={styles.formError}>{emailWarning}</p> : null}
+        {rsvpError ? <p className={styles.formError}>{rsvpError}</p> : null}
         <div className={styles.formActions}>
           <button type="button" className={styles.cta} onClick={handleCancelRsvp} disabled={pending}>
             Cancel RSVP
@@ -152,10 +190,13 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
   return (
     <div className={styles.form}>
       <h3 className={styles.formTitle}>RSVP</h3>
+      <p style={{ margin: '0 0 0.75rem', fontSize: '0.85rem', opacity: 0.85 }}>
+        Signed in — one click uses your account details.
+      </p>
       {rsvpError && <p className={styles.formError}>{rsvpError}</p>}
       <div className={styles.formActions}>
         <button type="button" className={styles.cta} onClick={handleRsvpClick} disabled={pending}>
-          {pending ? 'Signing up…' : 'RSVP'}
+          {pending ? 'RSVPing…' : 'RSVP'}
         </button>
       </div>
     </div>

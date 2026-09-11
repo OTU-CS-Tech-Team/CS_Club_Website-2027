@@ -1,20 +1,46 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-// "General member" = applied via career_applications for the
-// general-member job posting — separate from having a website login
-// (profiles/auth.users are about passport/event access, not membership).
-// A handful of legacy rows predate the jobs table and have job_id null;
-// they're treated as general-member applications too since that was the
-// only kind of application that existed when they were submitted.
+export type MailingListSubscriber = {
+  id: string | number;
+  name: string;
+  email: string;
+};
+
+// Only confirmed double-opt-in subscribers receive newsletters.
+export async function getMailingListSubscribers(
+  supabase: SupabaseClient,
+): Promise<MailingListSubscriber[]> {
+  const { data, error } = await supabase
+    .from('mailing_list_subscribers')
+    .select('id, name, email')
+    .eq('confirmed', true)
+    .order('email', { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const seen = new Set<string>();
+  const subscribers: MailingListSubscriber[] = [];
+  for (const row of data ?? []) {
+    const email = (row.email as string | null)?.toLowerCase().trim();
+    if (!email || seen.has(email)) continue;
+    seen.add(email);
+    subscribers.push({
+      id: row.id as string | number,
+      name: String(row.name ?? '').trim() || '—',
+      email,
+    });
+  }
+  return subscribers;
+}
+
+export async function getMailingListEmails(supabase: SupabaseClient): Promise<string[]> {
+  const subscribers = await getMailingListSubscribers(supabase);
+  return subscribers.map((row) => row.email);
+}
+
+/** @deprecated Prefer getMailingListEmails */
 export async function getGeneralMemberEmails(supabase: SupabaseClient): Promise<string[]> {
-  const { data } = await supabase
-    .from('career_applications')
-    .select('ontario_tech_email')
-    .or('job_id.eq.general-member,job_id.is.null');
-
-  const emails = (data ?? [])
-    .map((row) => (row.ontario_tech_email as string | null)?.toLowerCase().trim())
-    .filter((email): email is string => !!email);
-
-  return Array.from(new Set(emails));
+  return getMailingListEmails(supabase);
 }

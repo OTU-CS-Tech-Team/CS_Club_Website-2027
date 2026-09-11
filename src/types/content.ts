@@ -6,6 +6,8 @@ export type ManagedEvent = ClubEvent & {
   start_time?: string;
   end_time?: string;
   points?: number;
+  is_published?: boolean;
+  created_by?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -16,6 +18,20 @@ export type ClubJob = {
   category: string;
   description: string;
   is_active: boolean;
+  closes_at?: string | null;
+  commitment?: string | null;
+  location?: string | null;
+  created_by?: string | null;
   created_at?: string;
   updated_at?: string;
+};
+
+export type EventAttendee = {
+  id: string;
+  event_id: string;
+  name: string;
+  email: string;
+  year_of_study: string | null;
+  kind: 'member' | 'guest';
+  status: 'attended' | 'confirmed' | 'pending';
 };

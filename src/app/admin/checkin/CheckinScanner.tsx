@@ -29,13 +29,11 @@ type Phase = "scanning" | "confirm" | "done";
 export default function CheckinScanner({
   events,
   rsvps,
-  initialEventId = "",
 }: {
   events: EventOption[];
   rsvps: Rsvp[];
-  initialEventId?: string;
 }) {
-  const [eventId, setEventId] = useState(initialEventId);
+  const [eventId, setEventId] = useState("");
   const [phase, setPhase] = useState<Phase>("scanning");
   const [preview, setPreview] = useState<Preview | null>(null);
   const [feedback, setFeedback] = useState("");
@@ -362,7 +360,26 @@ export default function CheckinScanner({
         Event
         <select
           value={eventId}
-          onChange={(event) => setEventId(event.target.value)}
+          onChange={(event) => {
+            setEventId(event.target.value);
+
+            /*
+             * Switching events tears down and rebuilds the scanner, so drop
+             * any held scan too — otherwise a pending confirm would check
+             * that person into the event we just switched to.
+             */
+            pendingTokenRef.current = null;
+            stableTokenRef.current = null;
+
+            if (lockTimerRef.current) {
+              clearTimeout(lockTimerRef.current);
+              lockTimerRef.current = null;
+            }
+
+            setPreview(null);
+            setFeedback("");
+            setPhase("scanning");
+          }}
         >
           <option value="">— pick today&apos;s event —</option>
 

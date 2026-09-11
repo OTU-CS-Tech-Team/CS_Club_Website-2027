@@ -1,6 +1,13 @@
 import { Resend } from 'resend';
 
-const FROM = process.env.RESEND_FROM_EMAIL ?? 'CS Club <onboarding@resend.dev>';
+function resolveFrom() {
+  const raw = process.env.RESEND_FROM_EMAIL ?? 'CS Club <onboarding@resend.dev>';
+  const address = raw.match(/<([^>]+)>/)?.[1]?.trim() || raw.trim();
+  // Resend wants a normal display name; bare "domain <email>" is easy to misparse.
+  return `CS Club <${address}>`;
+}
+
+const FROM = resolveFrom();
 const FONT = '-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
 
 // Email clients need inline styles, not a stylesheet — this is the one
@@ -29,7 +36,18 @@ export function eventEmailHtml(opts: {
   title: string;
   when: string;
   location?: string | null;
+  cancelUrl?: string;
+  confirmUrl?: string;
 }) {
+  const actionBlock = opts.confirmUrl
+    ? `<p style="margin:20px 0 0;font-size:13px;line-height:1.5;color:#666666;">
+        <a href="${opts.confirmUrl}" style="color:#111111;font-weight:600;">Click here to confirm your RSVP</a>
+      </p>`
+    : opts.cancelUrl
+      ? `<p style="margin:20px 0 0;font-size:13px;line-height:1.5;color:#666666;">
+        <a href="${opts.cancelUrl}" style="color:#111111;font-weight:600;">Click here to cancel your RSVP</a>
+      </p>`
+      : '';
   return emailShell(`
       <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111111;">${opts.heading}</h1>
       <p style="margin:0 0 20px;font-size:14px;line-height:1.5;color:#444444;">${opts.intro}</p>
@@ -42,7 +60,8 @@ export function eventEmailHtml(opts: {
             </p>
           </td>
         </tr>
-      </table>`);
+      </table>
+      ${actionBlock}`);
 }
 
 function escapeHtml(text: string) {
@@ -75,25 +94,40 @@ export function eventEmailText(opts: {
   title: string;
   when: string;
   location?: string | null;
+  cancelUrl?: string;
+  confirmUrl?: string;
 }) {
-  return `${opts.heading}\n\n${opts.intro}\n\n${opts.title}\n${opts.when}${opts.location ? ` - ${opts.location}` : ''}\n\nOTU Computer Science Club`;
+  const actionLine = opts.confirmUrl
+    ? `\n\nConfirm your RSVP: ${opts.confirmUrl}`
+    : opts.cancelUrl
+      ? `\n\nClick here to cancel your RSVP: ${opts.cancelUrl}`
+      : '';
+  return `${opts.heading}\n\n${opts.intro}\n\n${opts.title}\n${opts.when}${opts.location ? ` - ${opts.location}` : ''}${actionLine}\n\nOTU Computer Science Club`;
 }
 
 export function newsletterEmailText(opts: { subject: string; body: string }) {
   return `${opts.subject}\n\n${opts.body}\n\nOTU Computer Science Club`;
 }
 
-// Best-effort — an email failing to send should never block the action
-// that triggered it (RSVPing, a reminder sweep). Errors are logged, not thrown.
+// Returns whether the message actually went out. Callers that must stay
+// best-effort (cron reminders) can ignore the result; RSVP surfaces it.
 export async function sendEventEmail(
   to: string,
   subject: string,
-  content: { heading: string; intro: string; title: string; when: string; location?: string | null }
-) {
+  content: {
+    heading: string;
+    intro: string;
+    title: string;
+    when: string;
+    location?: string | null;
+    cancelUrl?: string;
+    confirmUrl?: string;
+  }
+): Promise<{ sent: boolean; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.error('RESEND_API_KEY not set — skipping email:', subject);
-    return;
+    return { sent: false, error: 'RESEND_API_KEY is not set.' };
   }
 
   try {
@@ -105,9 +139,21 @@ export async function sendEventEmail(
       html: eventEmailHtml(content),
       text: eventEmailText(content),
     });
-    if (error) console.error('Resend error:', error);
+    if (error) {
+      console.error('Resend error:', error);
+      const message =
+        typeof error === 'object' && error && 'message' in error
+          ? String((error as { message: unknown }).message)
+          : 'Resend rejected the email.';
+      return { sent: false, error: message };
+    }
+    return { sent: true };
   } catch (error) {
     console.error('Failed to send email:', error);
+    return {
+      sent: false,
+      error: error instanceof Error ? error.message : 'Failed to send email.',
+    };
   }
 }
 
@@ -124,15 +170,20 @@ export async function sendDirectEmail(to: string, subject: string, html: string,
   }
 
   const resend = new Resend(apiKey);
-  const { error } = await resend.emails.send({ from: FROM, to, subject, html, text });
-  if (error) throw error;
+  const { data, error } = await resend.emails.send({ from: FROM, to, subject, html, text });
+  if (error) {
+    const message =
+      typeof error === 'object' && error && 'message' in error
+        ? String((error as { message: unknown }).message)
+        : 'Resend rejected the email.';
+    throw new Error(message);
+  }
+  if (!data?.id) {
+    throw new Error('Resend did not return a message id.');
+  }
 }
 
-const BCC_BATCH_SIZE = 45; // Resend caps `to` at 50; bcc is undocumented but kept well under that
-
-// Unlike sendEventEmail, this reports what actually happened — a deliberate
-// broadcast (newsletter) needs the admin to know if it failed, not have
-// the error silently swallowed. One bad batch doesn't stop the rest.
+// One message per recipient so addresses stay private (no shared To: list).
 export async function sendBulkEmail(
   recipients: string[],
   subject: string,
@@ -144,28 +195,45 @@ export async function sendBulkEmail(
     throw new Error('RESEND_API_KEY is not set.');
   }
 
+  const unique = Array.from(
+    new Set(recipients.map((email) => email.trim().toLowerCase()).filter(Boolean)),
+  );
+  if (unique.length === 0) {
+    return { sent: 0, failed: 0 };
+  }
+
   const resend = new Resend(apiKey);
   let sent = 0;
   let failed = 0;
+  let lastError: unknown = null;
 
-  for (let i = 0; i < recipients.length; i += BCC_BATCH_SIZE) {
-    const batch = recipients.slice(i, i + BCC_BATCH_SIZE);
+  for (const to of unique) {
     try {
       const { error } = await resend.emails.send({
         from: FROM,
-        to: FROM, // real recipients are bcc'd so they don't see each other's address
-        bcc: batch,
+        to,
         subject,
         html,
         text,
       });
       if (error) throw error;
-      sent += batch.length;
+      sent += 1;
     } catch (error) {
-      console.error('Newsletter batch failed:', error);
-      failed += batch.length;
+      console.error('Newsletter recipient failed:', to, error);
+      lastError = error;
+      failed += 1;
     }
   }
 
+  if (sent === 0 && lastError) {
+    const message =
+      lastError instanceof Error
+        ? lastError.message
+        : typeof lastError === 'object' && lastError && 'message' in lastError
+          ? String((lastError as { message: unknown }).message)
+          : 'Newsletter send failed.';
+    throw new Error(message);
+  }
   return { sent, failed };
 }
+
