@@ -17,6 +17,9 @@ export async function POST(request: Request) {
   const token = typeof body?.token === 'string' ? body.token : '';
   const email = typeof body?.email === 'string' ? body.email.trim() : '';
   const eventId = typeof body?.eventId === 'string' ? body.eventId : '';
+  // preview: resolve who the code belongs to and which event, but don't
+  // record anything — lets the admin see a name before they confirm.
+  const preview = body?.preview === true;
 
   if ((!token && !email) || !eventId) {
     return NextResponse.json({ error: 'Bad request' }, { status: 400 });
@@ -25,19 +28,18 @@ export async function POST(request: Request) {
   try {
     const admin = createAdminClient();
     let userId: string;
-    let tokenRow: { user_id: string; expires_at: string } | null = null;
 
     if (token) {
       // scanned path: resolve via the member's short-lived passport QR
-      // token — NOT consumed yet. If the stamp insert below fails for a
-      // transient reason, the token needs to still be valid so the same
-      // scan can just be retried instead of the member needing a new QR.
-      const { data } = await admin
+      // token. Never deleted here — it expires on its own in 5 min, and the
+      // passport_stamps unique index below is what actually stops a double
+      // check-in. Deleting on use just made an accidental re-scan of a
+      // still-displayed QR report "invalid code" instead of "already in".
+      const { data: tokenRow } = await admin
         .from('checkin_tokens')
         .select('user_id, expires_at')
         .eq('token', token)
         .single();
-      tokenRow = data;
 
       if (!tokenRow || new Date(tokenRow.expires_at) < new Date()) {
         return NextResponse.json({ error: 'Invalid or expired code' }, { status: 400 });
@@ -68,6 +70,14 @@ export async function POST(request: Request) {
 
     const displayName = profile?.full_name || profile?.email || 'Member';
 
+    if (preview) {
+      return NextResponse.json({
+        name: displayName,
+        event: eventRow.title,
+        points: eventRow.points,
+      });
+    }
+
     const { error: insertError } = await admin.from('passport_stamps').insert({
       user_id: userId,
       label: eventRow.title,
@@ -75,25 +85,22 @@ export async function POST(request: Request) {
       event_id: eventId,
     });
 
-    if (insertError && insertError.code !== '23505') {
-      // real failure, not a duplicate — leave the token alone so this
-      // exact scan can be retried instead of the code being burned
-      throw insertError;
-    }
-
-    // stamp saved (or already existed) — the token's job is done either way
-    if (token) {
-      await admin.from('checkin_tokens').delete().eq('token', token);
-    }
-
-    if (insertError) {
+    if (insertError && insertError.code === '23505') {
       return NextResponse.json(
-        { error: `${displayName} already checked in to this event` },
+        { error: `${displayName} is already checked in to ${eventRow.title}` },
         { status: 409 }
       );
     }
 
-    return NextResponse.json({ name: displayName, points: eventRow.points });
+    if (insertError) {
+      throw insertError;
+    }
+
+    return NextResponse.json({
+      name: displayName,
+      event: eventRow.title,
+      points: eventRow.points,
+    });
   } catch (error) {
     console.error(error);
     return new Response('Internal error', { status: 500 });
