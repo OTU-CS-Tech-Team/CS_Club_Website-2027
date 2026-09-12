@@ -35,6 +35,15 @@ export default function DepartmentFilter({ departments, selected, onChange }: Fi
     }
   }
 
+  function toggleOnly(id: string) {
+    const isOnly = selected.length === 1 && selected[0] === id;
+    if (isOnly) {
+      onChange(departments.map((d) => d.id));
+    } else {
+      onChange([id]);
+    }
+  }
+
   return (
     <div className="dept-filter" ref={wrapperRef}>
       <button className="dept-filter-toggle" onClick={() => setOpen((o) => !o)} type="button">
@@ -53,11 +62,27 @@ export default function DepartmentFilter({ departments, selected, onChange }: Fi
             onChange={(e) => setSearch(e.target.value)}
           />
           <div className="dept-filter-list">
+            {filtered.length > 0 && (
+              <div className="dept-filter-header">
+                <span />
+                <span className="dept-filter-only-label">Only</span>
+              </div>
+            )}
             {filtered.map((d) => (
-              <label key={d.id} className="dept-filter-item">
-                <input type="checkbox" checked={selected.includes(d.id)} onChange={() => toggle(d.id)} />
-                {d.name}
-              </label>
+              <div key={d.id} className="dept-filter-row">
+                <label className="dept-filter-item">
+                  <input type="checkbox" checked={selected.includes(d.id)} onChange={() => toggle(d.id)} />
+                  {d.name}
+                </label>
+                <label className="dept-filter-only" title={`Show only ${d.name}`}>
+                  <input
+                    type="checkbox"
+                    checked={selected.length === 1 && selected[0] === d.id}
+                    onChange={() => toggleOnly(d.id)}
+                    aria-label={`Show only ${d.name}`}
+                  />
+                </label>
+              </div>
             ))}
             {filtered.length === 0 && <div className="dept-filter-empty">No matches</div>}
           </div>
