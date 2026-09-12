@@ -535,7 +535,6 @@
   align-items: center;
   width: 100%;
 }
-.advisors-in-line { width: 2px; height: 32px; background: var(--team-purple); }
 .advisors-tree h2 { margin: .25rem 0; }
 .advisors-fanout {
   position: relative;
@@ -546,7 +545,6 @@
   padding: 0 calc(var(--advisor-card-width) / 2);
   box-sizing: border-box;
 }
-.advisors-fanout::before { content: ""; position: absolute; left: 50%; bottom: 100%; width: 2px; height: 16px; background: var(--team-purple); }
 .advisors-fanout::after {
   content: "";
   position: absolute;
@@ -965,16 +963,6 @@
   background-color: var(--team-purple);
 }
 
-/* Keep the Advisors heading clear: the tree begins below the text. */
-.advisors-fanout::before {
-  display: block;
-  height: 0.5rem;
-}
-
-.advisors-in-line {
-  display: block;
-}
-
 .advisors-tree h2 {
   position: relative;
   z-index: 2;
@@ -1052,14 +1040,12 @@
 }
 
 /* Keep centered vertical segments on the same exact center pixel. */
-.lower-tier-in,
-.advisors-fanout::before {
+.lower-tier-in {
   transform: translateX(-50%);
 }
 
 .president-center-line,
-.center-v-line,
-.advisors-in-line {
+.center-v-line {
   align-self: center;
   margin-left: auto;
   margin-right: auto;
@@ -1093,9 +1079,7 @@
 .lower-tier-stems span,
 .officer-fork-2 .fork-stems > span,
 .officer-merge-2 .merge-stems > span,
-.advisors-in-line,
-.advisors-fanout span,
-.advisors-fanout::before {
+.advisors-fanout span {
   width: var(--tree-line-size);
   min-width: var(--tree-line-size);
 }

@@ -182,7 +182,7 @@ export default function TeamPage() {
             >
               <div className="heading-v-wrapper">
                 <h2>Tech Team</h2>
-                <span className="v-stem-bottom"></span>
+                {upperTierActive && <span className="v-stem-bottom"></span>}
               </div>
 
               <MemberCard member={teamData.tech[0]} />
@@ -224,7 +224,7 @@ export default function TeamPage() {
             >
               <div className="heading-v-wrapper">
                 <h2>Marketing Team</h2>
-                <span className="v-stem-bottom"></span>
+                {upperTierActive && <span className="v-stem-bottom"></span>}
               </div>
 
               <MemberCard member={teamData.marketing[0]} />
@@ -275,7 +275,7 @@ export default function TeamPage() {
             >
               <div className="heading-v-wrapper">
                 <h2>Logistics Team</h2>
-                <span className="v-stem-bottom"></span>
+                {lowerTierActive && <span className="v-stem-bottom"></span>}
               </div>
 
               <MemberCard member={teamData.logistics[0]} />
@@ -304,7 +304,7 @@ export default function TeamPage() {
             >
               <div className="heading-v-wrapper">
                 <h2>Events Team</h2>
-                <span className="v-stem-bottom"></span>
+                {upperTierActive && <span className="v-stem-bottom"></span>}
               </div>
 
               <MemberCard member={teamData.events[0]} />
@@ -356,7 +356,7 @@ export default function TeamPage() {
             >
               <div className="heading-v-wrapper">
                 <h2>Sponsors Team</h2>
-                <span className="v-stem-bottom"></span>
+                {lowerTierActive && <span className="v-stem-bottom"></span>}
               </div>
 
               <MemberCard member={teamData.sponsors[0]} />
@@ -383,7 +383,6 @@ export default function TeamPage() {
 
         {/* Advisors Section */}
         <div className={showAdvisors ? "advisors-tree" : "hidden"}>
-          {(hasDepts || showVPs || showPresidents) && <div className="advisors-in-line" />}
           <h2>Advisors</h2>
           <div className="advisors-fanout"><span /><span /><span /><span /><span /></div>
           <div className="Advisors">
