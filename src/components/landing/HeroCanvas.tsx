@@ -4,7 +4,8 @@ import { useEffect, useRef, type RefObject } from 'react';
 import * as THREE from 'three';
 import styles from './landing.module.css';
 
-const CLIP_SRC = '/hero/clips/recap.mp4';
+const CLIP_SRC =
+  'https://efkbzaxczglgyfsaynjw.supabase.co/storage/v1/object/public/hero/Adobe%20Express%20-%20CS_CLUB_Recap.mp4';
 const STACK_RADIUS = 0.16;
 
 type HeroCanvasProps = {
@@ -116,6 +117,9 @@ function createLoopingClip(src: string, onReady: (video: HTMLVideoElement) => vo
   video.setAttribute('muted', '');
   video.setAttribute('playsinline', '');
   video.setAttribute('webkit-playsinline', '');
+  if (/^https?:\/\//i.test(src)) {
+    video.crossOrigin = 'anonymous';
+  }
   video.src = src;
 
   const onLoaded = () => {
