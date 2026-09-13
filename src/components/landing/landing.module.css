@@ -1,18 +1,206 @@
 .landing {
   --canvas: #e6e6fa;
   --ink: #1b003f;
+  --hero-p: 0;
   width: 100%;
   background: var(--canvas);
   color: var(--ink);
   min-height: calc(100dvh - 3.5rem);
-  padding: clamp(2rem, 5vw, 4.5rem) clamp(1.25rem, 5vw, 5rem)
-    clamp(3rem, 7vw, 6rem);
 }
 
 .shell {
   width: 100%;
-  max-width: none;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 4.5rem) clamp(1.5rem, 7vw, 6.5rem)
+    clamp(3rem, 7vw, 6rem);
+}
+
+.heroChapter {
+  --hero-p: 0;
+  height: 230vh;
+  color: #f4f4f5;
+  background: #fff;
+}
+
+.heroChapter[data-phase='frame'],
+.heroChapter[data-phase='stack'] {
+  background: #000;
+}
+
+.heroSticky {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow: hidden;
+  background: #fff;
+}
+
+.heroChapter[data-phase='frame'] .heroSticky,
+.heroChapter[data-phase='stack'] .heroSticky {
+  background: #000;
+}
+
+.heroStage {
+  position: absolute;
+  inset: 0 1.75%;
+  overflow: hidden;
+  border-radius: 1.75rem;
+  background: #111;
+}
+
+.heroGl,
+.heroGl canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.heroScrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.28) 0%,
+    rgba(0, 0, 0, 0.12) 40%,
+    rgba(0, 0, 0, 0.42) 100%
+  );
+  opacity: clamp(0.22, calc(0.9 - var(--hero-p) * 0.7), 0.9);
+  pointer-events: none;
+}
+
+.heroChapter[data-phase='frame'] .heroStage,
+.heroChapter[data-phase='stack'] .heroStage {
+  inset: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.heroChapterIndex {
+  position: absolute;
+  top: 1.35rem;
+  left: clamp(1.25rem, 5vw, 4rem);
+  z-index: 2;
   margin: 0;
+  color: #f4f4f5;
+  opacity: 0.72;
+}
+
+.heroWelcome {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 clamp(1.25rem, 6vw, 4rem);
+  text-align: center;
+  opacity: clamp(0, calc(1 - (var(--hero-p) - 0.06) / 0.28), 1);
+  transform: translateY(calc(var(--hero-p) * -1.25rem));
+  pointer-events: none;
+}
+
+.heroWelcomeTitle {
+  margin: 0;
+  max-width: 16ch;
+  font-size: clamp(2.1rem, 5.4vw, 4.4rem);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+}
+
+.heroLater {
+  position: absolute;
+  left: clamp(1.4rem, 7vw, 6.5rem);
+  top: 50%;
+  z-index: 2;
+  width: min(22rem, 32vw);
+  transform: translateY(-50%);
+  opacity: clamp(0, calc((var(--hero-p) - 0.54) / 0.2), 1);
+  pointer-events: none;
+}
+
+.heroChapter[data-phase='stack'] .heroLater {
+  pointer-events: auto;
+}
+
+.heroLaterTitle {
+  margin: 0 0 0.7rem;
+  font-size: clamp(1.7rem, 3.4vw, 2.75rem);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+}
+
+.heroLaterCaption {
+  margin: 0 0 1.35rem;
+  max-width: 22rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: rgba(244, 244, 245, 0.68);
+}
+
+.heroJoin {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.72rem 1.05rem;
+  border-radius: 999px;
+  background: #f4f4f5;
+  color: #111 !important;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+}
+
+.heroJoin:hover {
+  opacity: 0.88;
+}
+
+.heroSocials {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  list-style: none;
+  margin: 1.05rem 0 0;
+  padding: 0;
+}
+
+.heroSocials a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  color: rgba(244, 244, 245, 0.72);
+}
+
+.heroSocials a:hover {
+  color: #fff;
+}
+
+.heroSocials svg {
+  display: block;
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroChapter {
+    height: 100dvh;
+  }
+
+  .heroWelcome {
+    opacity: 0;
+  }
+
+  .heroLater {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .landing a {
@@ -30,6 +218,31 @@
   align-items: end;
   padding-bottom: 4.5rem;
   border-bottom: 1px solid var(--ink);
+}
+
+.hero .chapterIndex {
+  grid-column: 1 / -1;
+  margin-bottom: 0.25rem;
+}
+
+.chapterIndex {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1.35rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.chapterIndexRule {
+  display: block;
+  width: 2.25rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.55;
 }
 
 .brandCol {
@@ -585,8 +798,23 @@
   }
 }
 
+@media (max-width: 760px) {
+  .heroLater {
+    left: 1.25rem;
+    right: 1.25rem;
+    top: auto;
+    bottom: 2.25rem;
+    width: auto;
+    transform: none;
+  }
+
+  .heroLaterTitle {
+    font-size: clamp(1.45rem, 7vw, 2rem);
+  }
+}
+
 @media (max-width: 560px) {
-  .landing {
+  .shell {
     padding: 1.75rem 1rem 3rem;
   }
 

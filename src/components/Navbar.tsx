@@ -246,7 +246,7 @@ export default function Navbar({
 
   return (
     <header
-      className={styles.header}
+      className={`${styles.header} ${pathname === '/' ? styles.headerHome : ''}`}
       ref={rootRef}
       onMouseLeave={scheduleClose}
       onMouseEnter={cancelClose}

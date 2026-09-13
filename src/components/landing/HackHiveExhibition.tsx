@@ -14,6 +14,11 @@ export default function HackHiveExhibition({
 }: HackHiveExhibitionProps) {
   return (
     <section className={styles.section} aria-labelledby="hackhive-heading">
+      <p className={styles.chapterIndex}>
+        <span>04</span>
+        <span className={styles.chapterIndexRule} aria-hidden="true" />
+        <span>HackHive</span>
+      </p>
       <div className={styles.sectionHead}>
         <h2 id="hackhive-heading" className={styles.sectionTitle}>
           HackHive Exhibition

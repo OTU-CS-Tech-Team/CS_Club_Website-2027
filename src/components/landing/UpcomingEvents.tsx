@@ -16,6 +16,11 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
 
   return (
     <section className={styles.section} aria-labelledby="upcoming-heading">
+      <p className={styles.chapterIndex}>
+        <span>02</span>
+        <span className={styles.chapterIndexRule} aria-hidden="true" />
+        <span>Events</span>
+      </p>
       <div className={styles.sectionHead}>
         <h2 id="upcoming-heading" className={styles.sectionTitle}>
           Upcoming events

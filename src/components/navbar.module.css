@@ -5,6 +5,10 @@
   border-bottom: 1px solid #ececec;
 }
 
+.headerHome {
+  border-bottom: none;
+}
+
 .bar {
   display: flex;
   flex-wrap: wrap;

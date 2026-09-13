@@ -25,8 +25,8 @@ export default async function HomePage() {
 
   return (
     <div className={styles.landing}>
+      <Hero />
       <div className={styles.shell}>
-        <Hero />
         <UpcomingEvents events={upcoming} />
         <TeamActivity news={news} recapVideoId={recapYoutubeId} />
         <HackHiveExhibition

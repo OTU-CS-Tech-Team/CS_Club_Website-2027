@@ -102,6 +102,11 @@ export default function TeamActivity({ news, recapVideoId }: TeamActivityProps) 
 
   return (
     <section className={styles.section} aria-labelledby="activity-heading">
+      <p className={styles.chapterIndex}>
+        <span>03</span>
+        <span className={styles.chapterIndexRule} aria-hidden="true" />
+        <span>From the team</span>
+      </p>
       <div className={styles.sectionHead}>
         <h2 id="activity-heading" className={styles.sectionTitle}>
           From the team
