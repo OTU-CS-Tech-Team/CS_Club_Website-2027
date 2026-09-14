@@ -1,4 +1,4 @@
-import type { ClubEvent, NewsItem } from '@/types/landing';
+import type { ClubEvent, HackHiveClip, NewsItem } from '@/types/landing';
 
 export { getPastEvents, getUpcomingEvents } from '@/lib/eventSchedule';
 
@@ -66,3 +66,11 @@ export const news: NewsItem[] = [
 
 // Last year's recap (unlisted YouTube). Plays on the homepage when scrolled into view.
 export const recapYoutubeId = 'jjOVJi_N3zg';
+
+export const hackhiveSneakPeekClips: HackHiveClip[] = [
+  { id: 'neuro-detect', src: '/projects/neuro-detect.png', type: 'image' },
+  { id: 'doug', src: '/projects/doug-the-poker-bot.png', type: 'image' },
+  { id: 'lockblock', src: '/projects/lockblock.png', type: 'image' },
+  { id: 'cutos', src: '/projects/cutos.png', type: 'image' },
+  { id: 'flash-ai', src: '/projects/flash-ai.png', type: 'image' },
+];

@@ -1,10 +1,10 @@
 import { Caveat } from 'next/font/google';
 import Hero from '@/components/landing/Hero';
 import HackHiveExhibition from '@/components/landing/HackHiveExhibition';
-import TeamActivity from '@/components/landing/TeamActivity';
+import HackHiveSneakPeek from '@/components/landing/HackHiveSneakPeek';
 import UpcomingEvents from '@/components/landing/UpcomingEvents';
 import { getFeaturedProjects } from '@/data/hackhive';
-import { events, getUpcomingEvents, news, recapYoutubeId } from '@/data/landing';
+import { events, getUpcomingEvents } from '@/data/landing';
 import { getPublishedEvents } from '@/lib/content';
 import styles from '@/components/landing/landing.module.css';
 
@@ -28,7 +28,9 @@ export default async function HomePage() {
       <Hero />
       <div className={styles.shell}>
         <UpcomingEvents events={upcoming} />
-        <TeamActivity news={news} recapVideoId={recapYoutubeId} />
+      </div>
+      <HackHiveSneakPeek />
+      <div className={styles.shell}>
         <HackHiveExhibition
           projects={projects}
           handwrittenClass={caveat.className}
