@@ -165,7 +165,7 @@ function createAnnotation(width: number, height: number, radius: number) {
   });
 
   const borderGeo = new THREE.BufferGeometry().setFromPoints(
-    roundedRectShape(width, height, radius).getPoints(56),
+    roundedRectShape(width, height, radius).getPoints(72),
   );
   disposables.push(borderGeo);
   group.add(new THREE.LineLoop(borderGeo, borderMat));
@@ -240,7 +240,7 @@ export default function HeroCanvas({ sectionRef }: HeroCanvasProps) {
 
     const makeGlass = (order: number) => {
       const glassMat = new THREE.MeshBasicMaterial({
-        color: 0xd8d8de,
+        color: 0xffffff,
         transparent: true,
         opacity: 0,
         depthWrite: false,
@@ -313,11 +313,6 @@ export default function HeroCanvas({ sectionRef }: HeroCanvasProps) {
       return { visibleWidth, visibleHeight };
     };
 
-    const coverScale = (planeZ = 0) => {
-      const { visibleWidth, visibleHeight } = viewSize(planeZ);
-      return Math.max(visibleWidth / screenWidth, visibleHeight / screenHeight) * 1.04;
-    };
-
     const onPointerMove = (event: PointerEvent) => {
       const rect = host.getBoundingClientRect();
       mouse.tx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -329,26 +324,22 @@ export default function HeroCanvas({ sectionRef }: HeroCanvasProps) {
       const stacked = reduceMotion ? 1 : smoothstep(0.48, 0.92, progress);
       const mobile = host.clientWidth < 760;
       const originX = mobile ? 0.55 : 1.48;
-      const rotY = mobile ? -0.48 : -0.62;
-      const rotX = 0.08;
+      const rotY = mobile ? -0.5 : -0.64;
+      const rotX = 0.09;
       const card = mobile ? 0.86 : 1.08;
-      const gap = 0.4;
+      const gap = 0.42;
 
       panes.forEach((pane, index) => {
         const t = index / (panes.length - 1);
         const planeZ = lerp(0, -gap * (panes.length - 1 - index), stacked);
         const { visibleWidth, visibleHeight } = viewSize(planeZ);
-        if (pane.userData.kind === 'clip') {
-          pane.scale.set(
-            lerp(visibleWidth / screenWidth, card, framed),
-            lerp(visibleHeight / screenHeight, card, framed),
-            1,
-          );
-        } else {
-          pane.scale.setScalar(lerp(coverScale(planeZ), card, framed));
-        }
+        pane.scale.set(
+          lerp(visibleWidth / screenWidth, card, framed),
+          lerp(visibleHeight / screenHeight, card, framed),
+          1,
+        );
         pane.position.set(
-          lerp(0, originX + (1 - t) * (mobile ? 0.22 : 0.38), stacked),
+          lerp(0, originX + (1 - t) * (mobile ? 0.24 : 0.4), stacked),
           lerp(0, (1 - t) * 0.05, stacked),
           planeZ,
         );
@@ -360,19 +351,24 @@ export default function HeroCanvas({ sectionRef }: HeroCanvasProps) {
       clipMat.opacity = framed;
       clipIntro.visible = framed < 0.999;
       clip.visible = framed > 0.001;
+      clipMat.color.setRGB(
+        lerp(1, 0.78, stacked),
+        lerp(1, 0.8, stacked),
+        lerp(1, 0.82, stacked),
+      );
       renderer.setClearColor(framed < 0.12 ? 0xffffff : 0x000000, framed < 0.12 ? 1 : 0);
 
       glassMats.forEach((material, index) => {
         const front = index / Math.max(glassMats.length - 1, 1);
-        material.opacity = stacked * lerp(0.025, 0.06, front);
+        material.opacity = stacked * lerp(0.008, 0.035, front);
       });
       glassLayers.forEach((layer, index) => {
         const isClip = index === 0;
         const isFront = index === glassLayers.length - 1;
-        const stackBorder = stacked * (isFront ? 0.95 : isClip ? 0.28 : 0.22);
-        layer.borderMat.opacity = stackBorder;
-        layer.dashMat.opacity = stacked * (isFront ? 0.4 : 0.1);
-        layer.markMat.opacity = stacked * (isFront ? 0.5 : 0.12);
+        const depth = index / Math.max(glassLayers.length - 1, 1);
+        layer.borderMat.opacity = stacked * (isFront ? 0.92 : isClip ? 0.14 : lerp(0.12, 0.34, depth));
+        layer.dashMat.opacity = stacked * (isFront ? 0.38 : 0);
+        layer.markMat.opacity = stacked * (isFront ? 0.48 : 0);
       });
 
       camera.position.set(
