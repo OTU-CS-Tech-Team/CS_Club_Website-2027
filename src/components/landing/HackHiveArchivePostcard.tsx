@@ -18,13 +18,15 @@ function easeOutCubic(t: number) {
   return 1 - (1 - t) ** 3;
 }
 
-const POLAROID_TILTS = [-8, 4, -3, 6] as const;
+const POLAROID_TILTS = [-6, 2, -4, 5] as const;
+const POLAROID_YEARS = ["'24", "'25", "'26", "'26"] as const;
 
 export default function HackHiveArchivePostcard({
   projects,
 }: HackHiveArchivePostcardProps) {
   const [progress, setProgress] = useState(0);
   const [interactable, setInteractable] = useState(false);
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
 
   const polaroids = projects.slice(0, 4);
@@ -112,10 +114,10 @@ export default function HackHiveArchivePostcard({
             <span>Archive</span>
           </p>
           <h2 id="archive-heading" className={styles.archiveHeadline}>
-            See how 3&nbsp;a.m. ideas became first-place builds.
+            See how 3&nbsp;a.m. <em>ideas</em> became first-place <em>builds</em>.
           </h2>
           <p className={styles.archiveSubline}>
-            HackHive &apos;24 · &apos;25 · &apos;26
+            A peek at HackHive &apos;24 · &apos;25 · &apos;26 — the rest is in the museum.
           </p>
           <Link
             href="/hackhive"
@@ -148,7 +150,9 @@ export default function HackHiveArchivePostcard({
               const dropY = 12 * (1 - pinProgress);
               const pinSquash = 1 - 0.15 * (1 - pinProgress);
               const tilt = POLAROID_TILTS[idx % POLAROID_TILTS.length];
+              const year = POLAROID_YEARS[idx % POLAROID_YEARS.length];
               const isLast = idx === 3;
+              const isHovered = hoveredIdx === idx && interactable;
 
               return (
                 <Link
@@ -159,12 +163,19 @@ export default function HackHiveArchivePostcard({
                     {
                       '--tilt': `${tilt}deg`,
                       opacity: pinProgress,
-                      transform: `translateY(${dropY}px) rotate(${tilt}deg)`,
+                      transform: isHovered
+                        ? `translateY(-12px) rotate(0deg) scale(1.08)`
+                        : `translateY(${dropY}px) rotate(${tilt}deg)`,
                       pointerEvents: interactable ? 'auto' : 'none',
+                      zIndex: isHovered ? 20 : 1,
                     } as CSSProperties
                   }
                   tabIndex={interactable ? 0 : -1}
                   aria-label={`View ${project.title}`}
+                  onMouseEnter={() => setHoveredIdx(idx)}
+                  onMouseLeave={() => setHoveredIdx(null)}
+                  onFocus={() => setHoveredIdx(idx)}
+                  onBlur={() => setHoveredIdx(null)}
                 >
                   <span
                     className={styles.archivePin}
@@ -177,16 +188,44 @@ export default function HackHiveArchivePostcard({
                       alt={project.title}
                       width={200}
                       height={200}
-                      sizes="120px"
+                      sizes="140px"
                     />
                   </div>
-                  <span className={styles.archivePolaroidCaption}>
-                    {project.title}
-                  </span>
+                  <div className={styles.archivePolaroidCaption}>
+                    <span className={styles.archivePolaroidYear}>
+                      HackHive {year}
+                    </span>
+                    <span className={styles.archivePolaroidAward}>
+                      <svg
+                        className={styles.archiveTrophyIcon}
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M5 3h14v2h-1v1c0 2.8-1.7 5.2-4.1 6.3.1.5.1 1 .1 1.7v2h2v2H8v-2h2v-2c0-.7 0-1.2.1-1.7C7.7 11.2 6 8.8 6 6V5H5V3zm2 3c0 2.2 1.8 4 4 4s4-1.8 4-4V5H7v1zm-4 0h2v1c0 1.1.2 2.1.6 3H3V6zm18 0v4h-2.6c.4-.9.6-1.9.6-3V6h2z" />
+                      </svg>
+                      1st Place
+                    </span>
+                  </div>
+                  {isHovered && (
+                    <div className={styles.archivePolaroidTooltip}>
+                      <span className={styles.archiveTooltipTitle}>{project.title}</span>
+                      <span className={styles.archiveTooltipSub}>
+                        {project.category ? `${project.category} · ` : ''}click to enter museum
+                      </span>
+                    </div>
+                  )}
                 </Link>
               );
             })}
           </div>
+          <p
+            className={styles.archiveHint}
+            style={{ opacity: shimmerOpacity } as CSSProperties}
+          >
+            <span className={styles.archiveHintStar} aria-hidden="true">✦</span>
+            Hover a polaroid to peek
+          </p>
         </div>
       </div>
     </section>

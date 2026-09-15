@@ -25,9 +25,6 @@ function formatDate(iso: string) {
       .format(d)
       .toUpperCase(),
     day: new Intl.DateTimeFormat('en-US', { day: 'numeric' }).format(d),
-    weekday: new Intl.DateTimeFormat('en-US', { weekday: 'short' })
-      .format(d)
-      .toUpperCase(),
   };
 }
 
@@ -114,23 +111,38 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
           <span>Events</span>
         </p>
 
-        <div
-          className={styles.eventsUpNextWrap}
-          style={
-            {
-              opacity: upNextOpacity,
-              transform: `translateY(${upNextY}px)`,
-            } as CSSProperties
-          }
-        >
-          <h2 id="upcoming-heading" className={styles.eventsUpNext}>
-            Up next
-          </h2>
-          <span
-            className={styles.eventsUpNextUnderline}
-            style={{ width: `${underlineWidth}%` } as CSSProperties}
-            aria-hidden="true"
-          />
+        <div className={styles.eventsHeader}>
+          <div
+            className={styles.eventsUpNextWrap}
+            style={
+              {
+                opacity: upNextOpacity,
+                transform: `translateY(${upNextY}px)`,
+              } as CSSProperties
+            }
+          >
+            <h2 id="upcoming-heading" className={styles.eventsUpNext}>
+              Up next
+            </h2>
+            <span
+              className={styles.eventsUpNextUnderline}
+              style={{ width: `${underlineWidth}%` } as CSSProperties}
+              aria-hidden="true"
+            />
+          </div>
+
+          <Link
+            href="/events"
+            className={styles.eventsViewAll}
+            style={
+              {
+                opacity: viewAllOpacity,
+                pointerEvents: interactable ? 'auto' : 'none',
+              } as CSSProperties
+            }
+          >
+            View all <span aria-hidden="true">→</span>
+          </Link>
         </div>
 
         {!hasEvents ? (
@@ -167,7 +179,7 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
                 }
                 onClick={() => setSelected(featured)}
               >
-                <div className={styles.eventsFeaturedDate}>
+                <div className={styles.eventsFeaturedDateBlock}>
                   <span className={styles.eventsFeaturedMonth}>
                     {formatDate(featured.date).month}
                   </span>
@@ -175,11 +187,29 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
                     {formatDate(featured.date).day}
                   </span>
                 </div>
-                <h3 className={styles.eventsFeaturedTitle}>{featured.title}</h3>
-                <p className={styles.eventsFeaturedLocation}>
-                  {featured.time} · {featured.location}
-                </p>
-                <span className={styles.eventsFeaturedRsvp}>RSVP</span>
+                <span className={styles.eventsFeaturedDivider} aria-hidden="true" />
+                <div className={styles.eventsFeaturedContent}>
+                  <h3 className={styles.eventsFeaturedTitle}>{featured.title}</h3>
+                  <p className={styles.eventsFeaturedLocation}>
+                    <svg
+                      className={styles.eventsPinIcon}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    {featured.location}
+                  </p>
+                  <span className={styles.eventsFeaturedRsvp}>
+                    RSVP <span aria-hidden="true">→</span>
+                  </span>
+                </div>
               </button>
             )}
 
@@ -201,33 +231,39 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
                     }
                     onClick={() => setSelected(event)}
                   >
-                    <span className={styles.eventsSideDateChip}>
-                      {formatDate(event.date).month} {formatDate(event.date).day}
-                    </span>
-                    <span className={styles.eventsSideTitle}>{event.title}</span>
-                    <span className={styles.eventsSideLocation}>
-                      {event.location}
-                    </span>
+                    <div className={styles.eventsSideDateBlock}>
+                      <span className={styles.eventsSideMonth}>
+                        {formatDate(event.date).month}
+                      </span>
+                      <span className={styles.eventsSideDay}>
+                        {formatDate(event.date).day}
+                      </span>
+                    </div>
+                    <div className={styles.eventsSideContent}>
+                      <span className={styles.eventsSideTitle}>{event.title}</span>
+                      <span className={styles.eventsSideLocation}>
+                        <svg
+                          className={styles.eventsPinIcon}
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        {event.location}
+                      </span>
+                    </div>
                   </button>
                 );
               })}
             </div>
           </div>
         )}
-
-        <div
-          className={styles.eventsFooter}
-          style={
-            {
-              opacity: viewAllOpacity,
-              pointerEvents: interactable ? 'auto' : 'none',
-            } as CSSProperties
-          }
-        >
-          <Link href="/events" className={styles.eventsViewAll}>
-            View all events <span aria-hidden="true">→</span>
-          </Link>
-        </div>
       </div>
 
       {selected ? (
