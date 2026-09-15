@@ -261,6 +261,9 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
                     </svg>
                     {featured.location}
                   </p>
+                  {featured.description && (
+                    <p className={styles.eventsFeaturedDesc}>{featured.description}</p>
+                  )}
                   <span className={styles.eventsFeaturedRsvp}>
                     RSVP <span aria-hidden="true">→</span>
                   </span>
