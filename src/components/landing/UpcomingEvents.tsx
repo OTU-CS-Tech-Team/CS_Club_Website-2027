@@ -22,14 +22,6 @@ function easeOutQuart(t: number) {
   return 1 - Math.pow(1 - t, 4);
 }
 
-function easeInOutCubic(t: number) {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-}
-
-function smoothProgress(current: number, target: number, factor: number) {
-  return current + (target - current) * factor;
-}
-
 function formatDate(iso: string) {
   const d = new Date(`${iso}T12:00:00`);
   return {
@@ -42,69 +34,40 @@ function formatDate(iso: string) {
 
 export default function UpcomingEvents({ events }: UpcomingEventsProps) {
   const [selected, setSelected] = useState<ClubEvent | null>(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [displayProgress, setDisplayProgress] = useState(0);
-  const [interactable, setInteractable] = useState(false);
+  const [progress, setProgress] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
-  const displayProgressRef = useRef(0);
   const hasEvents = events.length > 0;
 
   const featured = hasEvents ? events[0] : null;
   const sideEvents = hasEvents ? events.slice(1, 3) : [];
+  const interactable = progress >= 0.7;
 
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
 
     const reduceMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
+      '(prefers-reduced-motion: reduce)',
     ).matches;
     if (reduceMotion) {
-      setScrollProgress(1);
-      setDisplayProgress(1);
-      setInteractable(true);
+      setProgress(1);
       return;
     }
 
     let raf = 0;
-    let animating = false;
-
-    const animate = () => {
-      const target = scrollProgress;
-      const current = displayProgressRef.current;
-      const next = smoothProgress(current, target, 0.08);
-
-      if (Math.abs(next - current) > 0.0005) {
-        displayProgressRef.current = next;
-        setDisplayProgress(next);
-        animating = true;
-        raf = window.requestAnimationFrame(animate);
-      } else {
-        displayProgressRef.current = target;
-        setDisplayProgress(target);
-        animating = false;
-      }
-    };
-
     const update = () => {
+      raf = 0;
       const total = section.offsetHeight - window.innerHeight;
-      if (total <= 0) {
-        setScrollProgress(1);
-        setInteractable(true);
-        return;
-      }
-      const raw = clamp(-section.getBoundingClientRect().top / total, 0, 1);
-      setScrollProgress(raw);
-      setInteractable(raw >= 0.98);
-
-      if (!animating) {
-        animating = true;
-        raf = window.requestAnimationFrame(animate);
-      }
+      const next =
+        total <= 0
+          ? 1
+          : clamp(-section.getBoundingClientRect().top / total, 0, 1);
+      setProgress((prev) => (Math.abs(prev - next) < 0.002 ? prev : next));
     };
 
     const onScroll = () => {
-      update();
+      if (raf) return;
+      raf = window.requestAnimationFrame(update);
     };
 
     update();
@@ -115,29 +78,17 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
     };
-  }, [scrollProgress]);
+  }, []);
 
-  const p = displayProgress;
+  const featuredOpacity = easeOutQuart(clamp((progress - 0.05) / 0.28, 0, 1));
+  const featuredY = 28 * (1 - featuredOpacity);
+  const featuredScale = 0.97 + 0.03 * featuredOpacity;
 
-  const chapterOpacity = easeOutExpo(clamp(p / 0.15, 0, 1));
-  const chapterY = 12 * (1 - easeOutExpo(clamp(p / 0.15, 0, 1)));
+  const row1Opacity = easeOutExpo(clamp((progress - 0.28) / 0.22, 0, 1));
+  const row1X = 40 * (1 - row1Opacity);
 
-  const upNextOpacity = easeOutExpo(clamp((p - 0.12) / 0.2, 0, 1));
-  const upNextY = 32 * (1 - easeOutExpo(clamp((p - 0.12) / 0.22, 0, 1)));
-  const underlineScale = easeInOutCubic(clamp((p - 0.25) / 0.18, 0, 1));
-
-  const featuredOpacity = easeOutQuart(clamp((p - 0.38) / 0.28, 0, 1));
-  const featuredY = 6 * (1 - easeOutQuart(clamp((p - 0.38) / 0.28, 0, 1)));
-  const featuredScale = 0.97 + 0.03 * easeOutQuart(clamp((p - 0.38) / 0.28, 0, 1));
-
-  const row1Opacity = easeOutExpo(clamp((p - 0.62) / 0.16, 0, 1));
-  const row1X = 48 * (1 - easeOutExpo(clamp((p - 0.62) / 0.18, 0, 1)));
-
-  const row2Opacity = easeOutExpo(clamp((p - 0.72) / 0.16, 0, 1));
-  const row2X = 48 * (1 - easeOutExpo(clamp((p - 0.72) / 0.18, 0, 1)));
-
-  const viewAllOpacity = easeOutExpo(clamp((p - 0.88) / 0.12, 0, 1));
-  const viewAllY = 8 * (1 - easeOutExpo(clamp((p - 0.88) / 0.12, 0, 1)));
+  const row2Opacity = easeOutExpo(clamp((progress - 0.42) / 0.22, 0, 1));
+  const row2X = 40 * (1 - row2Opacity);
 
   return (
     <section
@@ -146,56 +97,24 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
       aria-labelledby="upcoming-heading"
     >
       <div className={styles.eventsFrame}>
-        <p
-          className={styles.chapterIndex}
-          style={
-            {
-              opacity: chapterOpacity,
-              transform: `translateY(${chapterY}px)`,
-            } as CSSProperties
-          }
-        >
+        <p className={styles.chapterIndex}>
           <span>02</span>
           <span className={styles.chapterIndexRule} aria-hidden="true" />
           <span>Events</span>
         </p>
 
         <div className={styles.eventsHeader}>
-          <div
-            className={styles.eventsUpNextWrap}
-            style={
-              {
-                opacity: upNextOpacity,
-                transform: `translateY(${upNextY}px)`,
-              } as CSSProperties
-            }
-          >
+          <div className={styles.eventsUpNextWrap}>
             <h2 id="upcoming-heading" className={styles.eventsUpNext}>
               Up next
             </h2>
             <span
               className={styles.eventsUpNextUnderline}
-              style={
-                {
-                  transform: `scaleX(${underlineScale})`,
-                  transformOrigin: 'left center',
-                } as CSSProperties
-              }
               aria-hidden="true"
             />
           </div>
 
-          <Link
-            href="/events"
-            className={styles.eventsViewAll}
-            style={
-              {
-                opacity: viewAllOpacity,
-                transform: `translateY(${viewAllY}px)`,
-                pointerEvents: interactable ? 'auto' : 'none',
-              } as CSSProperties
-            }
-          >
+          <Link href="/events" className={styles.eventsViewAll}>
             View all <span aria-hidden="true">→</span>
           </Link>
         </div>
@@ -228,7 +147,7 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
                 style={
                   {
                     opacity: featuredOpacity,
-                    transform: `translateY(${featuredY}%) scale(${featuredScale})`,
+                    transform: `translateY(${featuredY}px) scale(${featuredScale})`,
                     pointerEvents: interactable ? 'auto' : 'none',
                   } as CSSProperties
                 }
@@ -242,7 +161,10 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
                     {formatDate(featured.date).day}
                   </span>
                 </div>
-                <span className={styles.eventsFeaturedDivider} aria-hidden="true" />
+                <span
+                  className={styles.eventsFeaturedDivider}
+                  aria-hidden="true"
+                />
                 <div className={styles.eventsFeaturedContent}>
                   <h3 className={styles.eventsFeaturedTitle}>{featured.title}</h3>
                   <p className={styles.eventsFeaturedLocation}>
@@ -261,9 +183,11 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
                     </svg>
                     {featured.location}
                   </p>
-                  {featured.description && (
-                    <p className={styles.eventsFeaturedDesc}>{featured.description}</p>
-                  )}
+                  {featured.description ? (
+                    <p className={styles.eventsFeaturedDesc}>
+                      {featured.description}
+                    </p>
+                  ) : null}
                   <span className={styles.eventsFeaturedRsvp}>
                     RSVP <span aria-hidden="true">→</span>
                   </span>

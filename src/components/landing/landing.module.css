@@ -432,7 +432,7 @@
 
 .eventsChapter {
   width: 100%;
-  height: 140vh;
+  height: 125vh;
   color: #18181b;
   background: #f5f5f4;
 }
@@ -480,7 +480,7 @@
   height: 4px;
   background: #18181b;
   border-radius: 2px;
-  will-change: transform;
+  transform-origin: left center;
 }
 
 .eventsViewAll {
@@ -787,33 +787,26 @@
 .archiveChapter {
   position: relative;
   width: 100%;
-  height: 160vh;
-  background: #000;
-  overflow: hidden;
-}
-
-.archiveWash {
-  position: absolute;
-  inset: 0;
+  height: 125vh;
   background: #e6e6fa;
-  z-index: 0;
-  will-change: transform;
+  overflow: clip;
 }
 
 .archiveFrame {
   position: sticky;
   top: 0;
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
-  gap: clamp(2rem, 4vw, 4rem);
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.35fr);
+  gap: clamp(1.25rem, 3vw, 2.75rem);
   align-items: center;
-  justify-content: center;
   width: 100%;
-  max-width: 80rem;
+  max-width: 92rem;
   height: 100dvh;
   margin: 0 auto;
-  padding: clamp(2rem, 5vw, 5rem) clamp(1.5rem, 5vw, 4rem);
+  padding: clamp(1rem, 3vh, 2.25rem) clamp(1rem, 3.5vw, 3rem);
   box-sizing: border-box;
+  overflow: hidden;
+  background: #e6e6fa;
   z-index: 1;
 }
 
@@ -822,7 +815,8 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  will-change: transform, opacity;
+  min-width: 0;
+  max-width: 34rem;
 }
 
 .archiveChapterIndex {
@@ -848,8 +842,8 @@
 
 .archiveHeadline {
   margin: 0 0 1rem;
-  max-width: 18ch;
-  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  max-width: 16ch;
+  font-size: clamp(1.55rem, 2.8vw, 2.35rem);
   font-weight: 600;
   line-height: 1.18;
   letter-spacing: -0.03em;
@@ -863,6 +857,7 @@
 
 .archiveSubline {
   margin: 0 0 1.5rem;
+  max-width: 34em;
   font-size: 0.92rem;
   line-height: 1.5;
   color: #1b003f;
@@ -882,7 +877,6 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   text-decoration: none;
-  will-change: transform, opacity;
   transition:
     background 240ms cubic-bezier(0.4, 0, 0.2, 1),
     color 240ms cubic-bezier(0.4, 0, 0.2, 1),
@@ -900,18 +894,24 @@
 .archiveStripWrap {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
-  gap: 1.25rem;
-  will-change: transform, opacity;
+  gap: 1rem;
+  min-width: 0;
+  width: 100%;
 }
 
 .archiveStrip {
   position: relative;
   display: flex;
   align-items: flex-start;
-  gap: 1.25rem;
-  padding: 1.75rem 2rem 2.25rem 2rem;
+  justify-content: space-evenly;
+  gap: clamp(0.75rem, 1.8vw, 1.45rem);
+  width: 100%;
+  min-height: min(52vh, 28rem);
+  box-sizing: border-box;
+  padding: clamp(1.6rem, 3vw, 2.4rem) clamp(1.25rem, 2.4vw, 2.1rem)
+    clamp(1.85rem, 3.2vw, 2.6rem);
   background-color: #b8894a;
   background-image:
     radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
@@ -923,13 +923,13 @@
       rgba(0, 0, 0, 0.03) 2px,
       rgba(0, 0, 0, 0.03) 4px
     );
-  border: 14px solid #3d2314;
+  border: 16px solid #3d2314;
   border-radius: 6px;
   box-shadow:
     inset 0 0 50px rgba(0, 0, 0, 0.12),
     inset 0 0 0 3px #5c3d28,
     0 16px 40px rgba(0, 0, 0, 0.24);
-  overflow: visible;
+  overflow: hidden;
 }
 
 .archiveShimmer {
@@ -951,7 +951,8 @@
 }
 
 @keyframes shimmerMove {
-  0%, 100% {
+  0%,
+  100% {
     background-position: 100% 0;
   }
   50% {
@@ -963,8 +964,12 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  width: clamp(6rem, 10vw, 8.5rem);
-  padding: 0.5rem 0.5rem 0.85rem;
+  flex: 1 1 0;
+  width: auto;
+  max-width: 11rem;
+  min-width: 0;
+  align-self: center;
+  padding: 0.65rem 0.65rem 1rem;
   background: #fefefe;
   color: #1a1a1a;
   text-decoration: none;
@@ -972,7 +977,6 @@
     0 4px 12px rgba(0, 0, 0, 0.25),
     0 1px 3px rgba(0, 0, 0, 0.15);
   transform: translateY(var(--drop-y, 0)) rotate(var(--tilt, 0deg));
-  will-change: transform, opacity, box-shadow;
   transition:
     transform 340ms cubic-bezier(0.34, 1.56, 0.64, 1),
     box-shadow 340ms cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -985,7 +989,7 @@
 }
 
 .archivePolaroidHovered {
-  transform: translateY(-14px) rotate(0deg) scale(1.06);
+  transform: translateY(-10px) rotate(0deg) scale(1.05);
   box-shadow:
     0 8px 20px rgba(0, 0, 0, 0.3),
     0 2px 6px rgba(0, 0, 0, 0.15);
@@ -993,8 +997,7 @@
 }
 
 .archivePolaroidCropped {
-  margin-right: -3rem;
-  clip-path: inset(0 3rem 0 0);
+  opacity: 1;
 }
 
 .archivePin {
@@ -1039,7 +1042,7 @@
 }
 
 .archivePolaroidYear {
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   font-weight: 600;
   line-height: 1.2;
   color: #1a1a1a;
@@ -1048,15 +1051,19 @@
 .archivePolaroidAward {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.25rem;
-  font-size: 0.62rem;
+  max-width: 100%;
+  font-size: 0.68rem;
   font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
   color: #71717a;
 }
 
 .archiveTrophyIcon {
-  width: 0.72rem;
-  height: 0.72rem;
+  width: 0.82rem;
+  height: 0.82rem;
   color: #d4a800;
 }
 
@@ -1103,6 +1110,7 @@
 .archiveHint {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
   margin: 0;
   font-size: 0.82rem;
@@ -1494,16 +1502,12 @@
     height: auto;
   }
 
-  .archiveWash {
-    position: relative;
-    transform: none !important;
-  }
-
   .archiveFrame {
     position: relative;
     top: auto;
     grid-template-columns: 1fr;
     height: auto;
+    overflow: visible;
     padding: 2.5rem clamp(1.25rem, 5vw, 4rem);
     background: #e6e6fa;
   }
@@ -1512,6 +1516,7 @@
     order: 2;
     align-items: center;
     text-align: center;
+    max-width: none;
   }
 
   .archiveHeadline {
@@ -1520,21 +1525,23 @@
 
   .archiveStripWrap {
     order: 1;
-    align-items: center;
+    align-items: stretch;
     margin-bottom: 1.5rem;
   }
 
   .archiveStrip {
-    gap: 0.65rem;
-    padding: 1rem 1rem 1.5rem;
+    gap: 0.55rem;
+    padding: 1rem 0.85rem 1.35rem;
+    overflow: hidden;
   }
 
   .archivePolaroid {
-    width: 5.5rem;
+    max-width: none;
   }
 
   .archivePolaroidCropped {
-    display: none;
+    clip-path: none;
+    margin-right: 0;
   }
 
   .archiveHint {
@@ -1558,15 +1565,11 @@
     height: auto;
   }
 
-  .archiveWash {
-    position: relative;
-    transform: none !important;
-  }
-
   .archiveFrame {
     position: relative;
     top: auto;
     height: auto;
+    overflow: visible;
     background: #e6e6fa;
   }
 }
