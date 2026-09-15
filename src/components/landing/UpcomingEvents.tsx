@@ -18,47 +18,39 @@ function easeOutCubic(t: number) {
   return 1 - (1 - t) ** 3;
 }
 
-function formatSheetDate(iso: string) {
+function formatDate(iso: string) {
   const d = new Date(`${iso}T12:00:00`);
   return {
     month: new Intl.DateTimeFormat('en-US', { month: 'short' })
       .format(d)
       .toUpperCase(),
     day: new Intl.DateTimeFormat('en-US', { day: 'numeric' }).format(d),
+    weekday: new Intl.DateTimeFormat('en-US', { weekday: 'short' })
+      .format(d)
+      .toUpperCase(),
   };
 }
-
-/** Each sheet starts entering after the previous one is partly in. */
-const CARD_START = [0.04, 0.18, 0.32, 0.46] as const;
-const CARD_SPAN = 0.22;
-
-const TILTS = [-1.8, 1.5, 1.2, -1.4] as const;
-
-const FLY_FROM = [
-  { x: -48, y: 90, rot: -10 },
-  { x: 52, y: 110, rot: 12 },
-  { x: -40, y: 100, rot: -8 },
-  { x: 44, y: 120, rot: 9 },
-] as const;
 
 export default function UpcomingEvents({ events }: UpcomingEventsProps) {
   const [selected, setSelected] = useState<ClubEvent | null>(null);
   const [progress, setProgress] = useState(0);
+  const [interactable, setInteractable] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const hasEvents = events.length > 0;
 
-  useEffect(() => {
-    if (!hasEvents) {
-      setProgress(1);
-      return;
-    }
+  const featured = hasEvents ? events[0] : null;
+  const sideEvents = hasEvents ? events.slice(1, 3) : [];
 
+  useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
 
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduceMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
     if (reduceMotion) {
       setProgress(1);
+      setInteractable(true);
       return;
     }
 
@@ -68,10 +60,12 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
       const total = section.offsetHeight - window.innerHeight;
       if (total <= 0) {
         setProgress(1);
+        setInteractable(true);
         return;
       }
       const next = clamp(-section.getBoundingClientRect().top / total, 0, 1);
       setProgress((prev) => (Math.abs(prev - next) < 0.001 ? prev : next));
+      setInteractable(next >= 1);
     };
 
     const onScroll = () => {
@@ -87,90 +81,158 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
     };
-  }, [hasEvents]);
+  }, []);
+
+  const chapterOpacity = easeOutCubic(clamp(progress / 0.2, 0, 1));
+  const upNextOpacity = easeOutCubic(clamp((progress - 0.2) / 0.25, 0, 1));
+  const upNextY = 24 * (1 - easeOutCubic(clamp((progress - 0.2) / 0.25, 0, 1)));
+  const underlineWidth = easeOutCubic(clamp((progress - 0.3) / 0.15, 0, 1)) * 100;
+
+  const featuredOpacity = easeOutCubic(clamp((progress - 0.45) / 0.25, 0, 1));
+  const featuredY = 8 * (1 - easeOutCubic(clamp((progress - 0.45) / 0.25, 0, 1)));
+
+  const row1Opacity = easeOutCubic(clamp((progress - 0.7) / 0.1, 0, 1));
+  const row1X = 40 * (1 - easeOutCubic(clamp((progress - 0.7) / 0.1, 0, 1)));
+  const row2Opacity = easeOutCubic(clamp((progress - 0.78) / 0.1, 0, 1));
+  const row2X = 40 * (1 - easeOutCubic(clamp((progress - 0.78) / 0.1, 0, 1)));
+
+  const viewAllOpacity = easeOutCubic(clamp((progress - 0.9) / 0.1, 0, 1));
 
   return (
     <section
       ref={sectionRef}
-      className={`${styles.eventsChapter} ${hasEvents ? styles.eventsChapterScroll : ''}`}
+      className={styles.eventsChapter}
       aria-labelledby="upcoming-heading"
     >
       <div className={styles.eventsFrame}>
-        <p className={styles.chapterIndex}>
+        <p
+          className={styles.chapterIndex}
+          style={{ opacity: chapterOpacity } as CSSProperties}
+        >
           <span>02</span>
           <span className={styles.chapterIndexRule} aria-hidden="true" />
           <span>Events</span>
         </p>
-        <div className={styles.sectionHead}>
-          <h2 id="upcoming-heading" className={styles.sectionTitle}>
-            Upcoming events
+
+        <div
+          className={styles.eventsUpNextWrap}
+          style={
+            {
+              opacity: upNextOpacity,
+              transform: `translateY(${upNextY}px)`,
+            } as CSSProperties
+          }
+        >
+          <h2 id="upcoming-heading" className={styles.eventsUpNext}>
+            Up next
           </h2>
-          <Link href="/events" className={styles.textLink}>
-            View all events
-          </Link>
+          <span
+            className={styles.eventsUpNextUnderline}
+            style={{ width: `${underlineWidth}%` } as CSSProperties}
+            aria-hidden="true"
+          />
         </div>
 
         {!hasEvents ? (
-          <div className={styles.calEmptyWrap}>
-            <div className={`${styles.calSheet} ${styles.calEmptyNote}`} role="status">
-              <span className={styles.calBind} aria-hidden="true">
-                <span />
-                <span />
-                <span />
-                <span />
-              </span>
-              <p className={styles.calEmptyTitle}>Currently no upcoming events!</p>
-              <p className={styles.calEmptyBody}>
-                Come back later for whatever&apos;s next.
+          <div className={styles.eventsEmptyBody}>
+            <div className={styles.eventsEmptyCard}>
+              <p className={styles.eventsEmptyTitle}>
+                Nothing on the calendar right now
               </p>
+              <p className={styles.eventsEmptyText}>
+                Join our Discord to get pinged when something drops.
+              </p>
+              <a
+                href="https://discord.com/invite/J9AyT8XADz"
+                target="_blank"
+                rel="noreferrer noopener"
+                className={styles.eventsEmptyCta}
+              >
+                Join Discord
+              </a>
             </div>
           </div>
         ) : (
-          <div className={styles.calGrid}>
-            {events.map((event, index) => {
-              const { month, day } = formatSheetDate(event.date);
-              const start = CARD_START[Math.min(index, CARD_START.length - 1)];
-              const local = easeOutCubic(clamp((progress - start) / CARD_SPAN, 0, 1));
-              const from = FLY_FROM[Math.min(index, FLY_FROM.length - 1)];
-              const tilt = TILTS[Math.min(index, TILTS.length - 1)];
-              const style = {
-                '--card-opacity': String(local),
-                '--card-x': `${from.x * (1 - local)}px`,
-                '--card-y': `${from.y * (1 - local)}px`,
-                '--card-rot': `${from.rot * (1 - local)}deg`,
-                '--sheet-tilt': `${tilt}deg`,
-              } as CSSProperties;
+          <div className={styles.eventsBody}>
+            {featured && (
+              <button
+                type="button"
+                className={styles.eventsFeatured}
+                style={
+                  {
+                    opacity: featuredOpacity,
+                    transform: `translateY(${featuredY}%)`,
+                    pointerEvents: interactable ? 'auto' : 'none',
+                  } as CSSProperties
+                }
+                onClick={() => setSelected(featured)}
+              >
+                <div className={styles.eventsFeaturedDate}>
+                  <span className={styles.eventsFeaturedMonth}>
+                    {formatDate(featured.date).month}
+                  </span>
+                  <span className={styles.eventsFeaturedDay}>
+                    {formatDate(featured.date).day}
+                  </span>
+                </div>
+                <h3 className={styles.eventsFeaturedTitle}>{featured.title}</h3>
+                <p className={styles.eventsFeaturedLocation}>
+                  {featured.time} · {featured.location}
+                </p>
+                <span className={styles.eventsFeaturedRsvp}>RSVP</span>
+              </button>
+            )}
 
-              return (
-                <div key={event.id} className={styles.calSlot} style={style}>
+            <div className={styles.eventsSideCol}>
+              {sideEvents.map((event, idx) => {
+                const rowOpacity = idx === 0 ? row1Opacity : row2Opacity;
+                const rowX = idx === 0 ? row1X : row2X;
+                return (
                   <button
+                    key={event.id}
                     type="button"
-                    className={styles.calSheet}
+                    className={styles.eventsSideRow}
+                    style={
+                      {
+                        opacity: rowOpacity,
+                        transform: `translateX(${rowX}px)`,
+                        pointerEvents: interactable ? 'auto' : 'none',
+                      } as CSSProperties
+                    }
                     onClick={() => setSelected(event)}
                   >
-                    <span className={styles.calBind} aria-hidden="true">
-                      <span />
-                      <span />
-                      <span />
-                      <span />
+                    <span className={styles.eventsSideDateChip}>
+                      {formatDate(event.date).month} {formatDate(event.date).day}
                     </span>
-                    <span className={styles.calMonth}>{month}</span>
-                    <span className={styles.calDay}>{day}</span>
-                    <span className={styles.calTitle}>{event.title}</span>
-                    <span className={styles.calMeta}>
-                      {event.time} · {event.location}
+                    <span className={styles.eventsSideTitle}>{event.title}</span>
+                    <span className={styles.eventsSideLocation}>
+                      {event.location}
                     </span>
-                    <span className={styles.calRule} aria-hidden="true" />
-                    <span className={styles.calBody}>{event.description}</span>
                   </button>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         )}
+
+        <div
+          className={styles.eventsFooter}
+          style={
+            {
+              opacity: viewAllOpacity,
+              pointerEvents: interactable ? 'auto' : 'none',
+            } as CSSProperties
+          }
+        >
+          <Link href="/events" className={styles.eventsViewAll}>
+            View all events <span aria-hidden="true">→</span>
+          </Link>
+        </div>
       </div>
 
-      {selected ? <EventModal event={selected} onClose={() => setSelected(null)} /> : null}
+      {selected ? (
+        <EventModal event={selected} onClose={() => setSelected(null)} />
+      ) : null}
     </section>
   );
 }

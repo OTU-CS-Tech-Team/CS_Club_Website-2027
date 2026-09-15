@@ -1,18 +1,11 @@
-import { Caveat } from 'next/font/google';
 import Hero from '@/components/landing/Hero';
-import HackHiveExhibition from '@/components/landing/HackHiveExhibition';
+import HackHiveArchivePostcard from '@/components/landing/HackHiveArchivePostcard';
 import HackHiveSneakPeek from '@/components/landing/HackHiveSneakPeek';
 import UpcomingEvents from '@/components/landing/UpcomingEvents';
 import { getFeaturedProjects } from '@/data/hackhive';
 import { events, getUpcomingEvents } from '@/data/landing';
 import { getPublishedEvents } from '@/lib/content';
 import styles from '@/components/landing/landing.module.css';
-
-const caveat = Caveat({
-  subsets: ['latin'],
-  weight: ['400', '600', '700'],
-  display: 'swap',
-});
 
 export const dynamic = 'force-dynamic';
 
@@ -28,12 +21,7 @@ export default async function HomePage() {
       <Hero />
       <UpcomingEvents events={upcoming} />
       <HackHiveSneakPeek />
-      <div className={styles.shell}>
-        <HackHiveExhibition
-          projects={projects}
-          handwrittenClass={caveat.className}
-        />
-      </div>
+      <HackHiveArchivePostcard projects={projects} />
     </div>
   );
 }
