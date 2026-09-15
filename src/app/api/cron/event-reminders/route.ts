@@ -1,14 +1,21 @@
+import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendEventEmail } from '@/lib/email';
 import { toDateString, toTimeString } from '@/lib/dbEvents';
 
+function verifyBearerToken(authHeader: string | null, secret: string | undefined): boolean {
+  if (!authHeader || !secret) return false;
+  const expected = `Bearer ${secret}`;
+  if (authHeader.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(authHeader, 'utf8'), Buffer.from(expected, 'utf8'));
+}
+
 // Runs on a schedule (see vercel.json) — Vercel Cron sends
 // "Authorization: Bearer $CRON_SECRET" automatically, which is what keeps
 // this from being a public "email everyone" endpoint.
 export async function GET(request: Request) {
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyBearerToken(request.headers.get('authorization'), process.env.CRON_SECRET)) {
     return new Response(null, { status: 401 });
   }
 

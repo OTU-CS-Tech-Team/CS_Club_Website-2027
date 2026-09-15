@@ -44,12 +44,22 @@ async function findPendingSubscriber(email: string) {
   return data?.id ?? null;
 }
 
+function escapeHtml(text: string) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 async function sendMailingVerifyEmail(subscriberId: string, email: string, name: string) {
   const confirmUrl = mailingVerifyUrl({ subscriberId });
+  const safeName = escapeHtml(name);
   const html = `
     <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:24px;">
       <h1 style="font-size:20px;color:#111;">Confirm your mailing list signup</h1>
-      <p style="color:#444;line-height:1.5;">Hi ${name.replace(/</g, '')}, click the link below to join the CS Club mailing list. You will not receive newsletters until you confirm.</p>
+      <p style="color:#444;line-height:1.5;">Hi ${safeName}, click the link below to join the CS Club mailing list. You will not receive newsletters until you confirm.</p>
       <p><a href="${confirmUrl}" style="color:#111;font-weight:700;">Click here to confirm</a></p>
     </div>`;
   const text = `Confirm your mailing list signup\n\nHi ${name},\n\nConfirm here: ${confirmUrl}\n\nOTU Computer Science Club`;

@@ -5,7 +5,8 @@ import * as THREE from 'three';
 import styles from './landing.module.css';
 
 const CLIP_SRC =
-  'https://efkbzaxczglgyfsaynjw.supabase.co/storage/v1/object/public/hero/Adobe%20Express%20-%20CS_CLUB_Recap.mp4';
+  process.env.NEXT_PUBLIC_HERO_RECAP_URL ||
+  '/hero/clips/recap.mp4';
 const STACK_RADIUS = 0.16;
 
 type HeroCanvasProps = {
