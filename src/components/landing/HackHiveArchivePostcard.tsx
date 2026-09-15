@@ -14,20 +14,36 @@ function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
 
-function easeOutCubic(t: number) {
-  return 1 - (1 - t) ** 3;
+function easeOutExpo(t: number) {
+  return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
 }
 
-const POLAROID_TILTS = [-6, 2, -4, 5] as const;
+function easeOutQuart(t: number) {
+  return 1 - Math.pow(1 - t, 4);
+}
+
+function easeOutBack(t: number) {
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+}
+
+function smoothProgress(current: number, target: number, factor: number) {
+  return current + (target - current) * factor;
+}
+
+const POLAROID_TILTS = [-7, 3, -4, 6] as const;
 const POLAROID_YEARS = ["'24", "'25", "'26", "'26"] as const;
 
 export default function HackHiveArchivePostcard({
   projects,
 }: HackHiveArchivePostcardProps) {
-  const [progress, setProgress] = useState(0);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [displayProgress, setDisplayProgress] = useState(0);
   const [interactable, setInteractable] = useState(false);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
+  const displayProgressRef = useRef(0);
 
   const polaroids = projects.slice(0, 4);
 
@@ -39,28 +55,51 @@ export default function HackHiveArchivePostcard({
       '(prefers-reduced-motion: reduce)'
     ).matches;
     if (reduceMotion) {
-      setProgress(1);
+      setScrollProgress(1);
+      setDisplayProgress(1);
       setInteractable(true);
       return;
     }
 
     let raf = 0;
+    let animating = false;
+
+    const animate = () => {
+      const target = scrollProgress;
+      const current = displayProgressRef.current;
+      const next = smoothProgress(current, target, 0.065);
+
+      if (Math.abs(next - current) > 0.0005) {
+        displayProgressRef.current = next;
+        setDisplayProgress(next);
+        animating = true;
+        raf = window.requestAnimationFrame(animate);
+      } else {
+        displayProgressRef.current = target;
+        setDisplayProgress(target);
+        animating = false;
+      }
+    };
+
     const update = () => {
-      raf = 0;
       const total = section.offsetHeight - window.innerHeight;
       if (total <= 0) {
-        setProgress(1);
+        setScrollProgress(1);
         setInteractable(true);
         return;
       }
-      const next = clamp(-section.getBoundingClientRect().top / total, 0, 1);
-      setProgress((prev) => (Math.abs(prev - next) < 0.001 ? prev : next));
-      setInteractable(next >= 0.9);
+      const raw = clamp(-section.getBoundingClientRect().top / total, 0, 1);
+      setScrollProgress(raw);
+      setInteractable(raw >= 0.92);
+
+      if (!animating) {
+        animating = true;
+        raf = window.requestAnimationFrame(animate);
+      }
     };
 
     const onScroll = () => {
-      if (raf) return;
-      raf = window.requestAnimationFrame(update);
+      update();
     };
 
     update();
@@ -71,20 +110,30 @@ export default function HackHiveArchivePostcard({
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
     };
-  }, []);
+  }, [scrollProgress]);
 
-  const lavenderRise = easeOutCubic(clamp((progress - 0.25) / 0.2, 0, 1));
+  const p = displayProgress;
 
-  const stripOpacity = easeOutCubic(clamp((progress - 0.25) / 0.2, 0, 1));
-  const stripScale = 0.97 + 0.03 * easeOutCubic(clamp((progress - 0.25) / 0.2, 0, 1));
+  const lavenderRise = easeOutExpo(clamp((p - 0.08) / 0.22, 0, 1));
 
-  const polaroidBase = 0.45;
-  const polaroidSpan = 0.3 / 4;
+  const stripOpacity = easeOutQuart(clamp((p - 0.22) / 0.2, 0, 1));
+  const stripScale = 0.94 + 0.06 * easeOutQuart(clamp((p - 0.22) / 0.24, 0, 1));
+  const stripY = 20 * (1 - easeOutQuart(clamp((p - 0.22) / 0.24, 0, 1)));
 
-  const copyOpacity = easeOutCubic(clamp((progress - 0.75) / 0.15, 0, 1));
-  const copyY = 16 * (1 - easeOutCubic(clamp((progress - 0.75) / 0.15, 0, 1)));
+  const chapterOpacity = easeOutExpo(clamp((p - 0.68) / 0.14, 0, 1));
+  const chapterY = 10 * (1 - easeOutExpo(clamp((p - 0.68) / 0.14, 0, 1)));
 
-  const shimmerOpacity = easeOutCubic(clamp((progress - 0.9) / 0.1, 0, 1));
+  const headlineOpacity = easeOutExpo(clamp((p - 0.72) / 0.14, 0, 1));
+  const headlineY = 18 * (1 - easeOutExpo(clamp((p - 0.72) / 0.16, 0, 1)));
+
+  const sublineOpacity = easeOutExpo(clamp((p - 0.78) / 0.12, 0, 1));
+  const sublineY = 12 * (1 - easeOutExpo(clamp((p - 0.78) / 0.14, 0, 1)));
+
+  const ctaOpacity = easeOutExpo(clamp((p - 0.84) / 0.12, 0, 1));
+  const ctaY = 10 * (1 - easeOutExpo(clamp((p - 0.84) / 0.14, 0, 1)));
+
+  const shimmerOpacity = easeOutExpo(clamp((p - 0.88) / 0.12, 0, 1));
+  const hintOpacity = easeOutExpo(clamp((p - 0.92) / 0.08, 0, 1));
 
   return (
     <section
@@ -99,30 +148,53 @@ export default function HackHiveArchivePostcard({
       />
 
       <div className={styles.archiveFrame}>
-        <div
-          className={styles.archiveCopy}
-          style={
-            {
-              opacity: copyOpacity,
-              transform: `translateY(${copyY}px)`,
-            } as CSSProperties
-          }
-        >
-          <p className={styles.archiveChapterIndex}>
+        <div className={styles.archiveCopy}>
+          <p
+            className={styles.archiveChapterIndex}
+            style={
+              {
+                opacity: chapterOpacity,
+                transform: `translateY(${chapterY}px)`,
+              } as CSSProperties
+            }
+          >
             <span>04</span>
             <span className={styles.archiveIndexRule} aria-hidden="true" />
             <span>Archive</span>
           </p>
-          <h2 id="archive-heading" className={styles.archiveHeadline}>
+          <h2
+            id="archive-heading"
+            className={styles.archiveHeadline}
+            style={
+              {
+                opacity: headlineOpacity,
+                transform: `translateY(${headlineY}px)`,
+              } as CSSProperties
+            }
+          >
             See how 3&nbsp;a.m. <em>ideas</em> became first-place <em>builds</em>.
           </h2>
-          <p className={styles.archiveSubline}>
+          <p
+            className={styles.archiveSubline}
+            style={
+              {
+                opacity: sublineOpacity,
+                transform: `translateY(${sublineY}px)`,
+              } as CSSProperties
+            }
+          >
             A peek at HackHive &apos;24 · &apos;25 · &apos;26 — the rest is in the museum.
           </p>
           <Link
             href="/hackhive"
             className={styles.archiveCta}
-            style={{ pointerEvents: interactable ? 'auto' : 'none' } as CSSProperties}
+            style={
+              {
+                opacity: ctaOpacity,
+                transform: `translateY(${ctaY}px)`,
+                pointerEvents: interactable ? 'auto' : 'none',
+              } as CSSProperties
+            }
           >
             Explore the archive <span aria-hidden="true">→</span>
           </Link>
@@ -133,7 +205,7 @@ export default function HackHiveArchivePostcard({
           style={
             {
               opacity: stripOpacity,
-              transform: `scale(${stripScale})`,
+              transform: `translateY(${stripY}px) scale(${stripScale})`,
             } as CSSProperties
           }
         >
@@ -144,11 +216,15 @@ export default function HackHiveArchivePostcard({
               aria-hidden="true"
             />
             {polaroids.map((project, idx) => {
-              const pinProgress = easeOutCubic(
-                clamp((progress - (polaroidBase + idx * polaroidSpan)) / 0.08, 0, 1)
-              );
-              const dropY = 12 * (1 - pinProgress);
-              const pinSquash = 1 - 0.15 * (1 - pinProgress);
+              const baseDelay = 0.38;
+              const stagger = 0.08;
+              const pinStart = baseDelay + idx * stagger;
+              
+              const pinProgress = easeOutBack(clamp((p - pinStart) / 0.14, 0, 1));
+              const dropY = 18 * (1 - pinProgress);
+              const pinSquash = 0.7 + 0.3 * pinProgress;
+              const polaroidOpacity = easeOutQuart(clamp((p - pinStart) / 0.1, 0, 1));
+              
               const tilt = POLAROID_TILTS[idx % POLAROID_TILTS.length];
               const year = POLAROID_YEARS[idx % POLAROID_YEARS.length];
               const isLast = idx === 3;
@@ -158,16 +234,13 @@ export default function HackHiveArchivePostcard({
                 <Link
                   key={project.id}
                   href="/hackhive"
-                  className={`${styles.archivePolaroid} ${isLast ? styles.archivePolaroidCropped : ''}`}
+                  className={`${styles.archivePolaroid} ${isLast ? styles.archivePolaroidCropped : ''} ${isHovered ? styles.archivePolaroidHovered : ''}`}
                   style={
                     {
                       '--tilt': `${tilt}deg`,
-                      opacity: pinProgress,
-                      transform: isHovered
-                        ? `translateY(-12px) rotate(0deg) scale(1.08)`
-                        : `translateY(${dropY}px) rotate(${tilt}deg)`,
+                      '--drop-y': `${dropY}px`,
+                      opacity: polaroidOpacity,
                       pointerEvents: interactable ? 'auto' : 'none',
-                      zIndex: isHovered ? 20 : 1,
                     } as CSSProperties
                   }
                   tabIndex={interactable ? 0 : -1}
@@ -221,7 +294,7 @@ export default function HackHiveArchivePostcard({
           </div>
           <p
             className={styles.archiveHint}
-            style={{ opacity: shimmerOpacity } as CSSProperties}
+            style={{ opacity: hintOpacity } as CSSProperties}
           >
             <span className={styles.archiveHintStar} aria-hidden="true">✦</span>
             Hover a polaroid to peek

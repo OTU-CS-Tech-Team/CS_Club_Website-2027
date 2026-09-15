@@ -14,8 +14,20 @@ function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
 
-function easeOutCubic(t: number) {
-  return 1 - (1 - t) ** 3;
+function easeOutExpo(t: number) {
+  return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+}
+
+function easeOutQuart(t: number) {
+  return 1 - Math.pow(1 - t, 4);
+}
+
+function easeInOutCubic(t: number) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function smoothProgress(current: number, target: number, factor: number) {
+  return current + (target - current) * factor;
 }
 
 function formatDate(iso: string) {
@@ -30,9 +42,11 @@ function formatDate(iso: string) {
 
 export default function UpcomingEvents({ events }: UpcomingEventsProps) {
   const [selected, setSelected] = useState<ClubEvent | null>(null);
-  const [progress, setProgress] = useState(0);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [displayProgress, setDisplayProgress] = useState(0);
   const [interactable, setInteractable] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
+  const displayProgressRef = useRef(0);
   const hasEvents = events.length > 0;
 
   const featured = hasEvents ? events[0] : null;
@@ -46,28 +60,51 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
       '(prefers-reduced-motion: reduce)'
     ).matches;
     if (reduceMotion) {
-      setProgress(1);
+      setScrollProgress(1);
+      setDisplayProgress(1);
       setInteractable(true);
       return;
     }
 
     let raf = 0;
+    let animating = false;
+
+    const animate = () => {
+      const target = scrollProgress;
+      const current = displayProgressRef.current;
+      const next = smoothProgress(current, target, 0.08);
+
+      if (Math.abs(next - current) > 0.0005) {
+        displayProgressRef.current = next;
+        setDisplayProgress(next);
+        animating = true;
+        raf = window.requestAnimationFrame(animate);
+      } else {
+        displayProgressRef.current = target;
+        setDisplayProgress(target);
+        animating = false;
+      }
+    };
+
     const update = () => {
-      raf = 0;
       const total = section.offsetHeight - window.innerHeight;
       if (total <= 0) {
-        setProgress(1);
+        setScrollProgress(1);
         setInteractable(true);
         return;
       }
-      const next = clamp(-section.getBoundingClientRect().top / total, 0, 1);
-      setProgress((prev) => (Math.abs(prev - next) < 0.001 ? prev : next));
-      setInteractable(next >= 1);
+      const raw = clamp(-section.getBoundingClientRect().top / total, 0, 1);
+      setScrollProgress(raw);
+      setInteractable(raw >= 0.98);
+
+      if (!animating) {
+        animating = true;
+        raf = window.requestAnimationFrame(animate);
+      }
     };
 
     const onScroll = () => {
-      if (raf) return;
-      raf = window.requestAnimationFrame(update);
+      update();
     };
 
     update();
@@ -78,22 +115,29 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
     };
-  }, []);
+  }, [scrollProgress]);
 
-  const chapterOpacity = easeOutCubic(clamp(progress / 0.2, 0, 1));
-  const upNextOpacity = easeOutCubic(clamp((progress - 0.2) / 0.25, 0, 1));
-  const upNextY = 24 * (1 - easeOutCubic(clamp((progress - 0.2) / 0.25, 0, 1)));
-  const underlineWidth = easeOutCubic(clamp((progress - 0.3) / 0.15, 0, 1)) * 100;
+  const p = displayProgress;
 
-  const featuredOpacity = easeOutCubic(clamp((progress - 0.45) / 0.25, 0, 1));
-  const featuredY = 8 * (1 - easeOutCubic(clamp((progress - 0.45) / 0.25, 0, 1)));
+  const chapterOpacity = easeOutExpo(clamp(p / 0.15, 0, 1));
+  const chapterY = 12 * (1 - easeOutExpo(clamp(p / 0.15, 0, 1)));
 
-  const row1Opacity = easeOutCubic(clamp((progress - 0.7) / 0.1, 0, 1));
-  const row1X = 40 * (1 - easeOutCubic(clamp((progress - 0.7) / 0.1, 0, 1)));
-  const row2Opacity = easeOutCubic(clamp((progress - 0.78) / 0.1, 0, 1));
-  const row2X = 40 * (1 - easeOutCubic(clamp((progress - 0.78) / 0.1, 0, 1)));
+  const upNextOpacity = easeOutExpo(clamp((p - 0.12) / 0.2, 0, 1));
+  const upNextY = 32 * (1 - easeOutExpo(clamp((p - 0.12) / 0.22, 0, 1)));
+  const underlineScale = easeInOutCubic(clamp((p - 0.25) / 0.18, 0, 1));
 
-  const viewAllOpacity = easeOutCubic(clamp((progress - 0.9) / 0.1, 0, 1));
+  const featuredOpacity = easeOutQuart(clamp((p - 0.38) / 0.28, 0, 1));
+  const featuredY = 6 * (1 - easeOutQuart(clamp((p - 0.38) / 0.28, 0, 1)));
+  const featuredScale = 0.97 + 0.03 * easeOutQuart(clamp((p - 0.38) / 0.28, 0, 1));
+
+  const row1Opacity = easeOutExpo(clamp((p - 0.62) / 0.16, 0, 1));
+  const row1X = 48 * (1 - easeOutExpo(clamp((p - 0.62) / 0.18, 0, 1)));
+
+  const row2Opacity = easeOutExpo(clamp((p - 0.72) / 0.16, 0, 1));
+  const row2X = 48 * (1 - easeOutExpo(clamp((p - 0.72) / 0.18, 0, 1)));
+
+  const viewAllOpacity = easeOutExpo(clamp((p - 0.88) / 0.12, 0, 1));
+  const viewAllY = 8 * (1 - easeOutExpo(clamp((p - 0.88) / 0.12, 0, 1)));
 
   return (
     <section
@@ -104,7 +148,12 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
       <div className={styles.eventsFrame}>
         <p
           className={styles.chapterIndex}
-          style={{ opacity: chapterOpacity } as CSSProperties}
+          style={
+            {
+              opacity: chapterOpacity,
+              transform: `translateY(${chapterY}px)`,
+            } as CSSProperties
+          }
         >
           <span>02</span>
           <span className={styles.chapterIndexRule} aria-hidden="true" />
@@ -126,7 +175,12 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
             </h2>
             <span
               className={styles.eventsUpNextUnderline}
-              style={{ width: `${underlineWidth}%` } as CSSProperties}
+              style={
+                {
+                  transform: `scaleX(${underlineScale})`,
+                  transformOrigin: 'left center',
+                } as CSSProperties
+              }
               aria-hidden="true"
             />
           </div>
@@ -137,6 +191,7 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
             style={
               {
                 opacity: viewAllOpacity,
+                transform: `translateY(${viewAllY}px)`,
                 pointerEvents: interactable ? 'auto' : 'none',
               } as CSSProperties
             }
@@ -173,7 +228,7 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
                 style={
                   {
                     opacity: featuredOpacity,
-                    transform: `translateY(${featuredY}%)`,
+                    transform: `translateY(${featuredY}%) scale(${featuredScale})`,
                     pointerEvents: interactable ? 'auto' : 'none',
                   } as CSSProperties
                 }
