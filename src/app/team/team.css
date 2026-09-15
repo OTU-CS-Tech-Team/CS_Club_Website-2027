@@ -614,12 +614,6 @@
   font-size: 0.65rem;
 }
 
-/* Image Rotation Fix */
-
-.rameen-card img:first-of-type {
-  transform: rotate(90deg);
-}
-
 /* Base Card Avatar Image */
 
 .teamCard > img:first-of-type {
