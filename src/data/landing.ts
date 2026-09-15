@@ -37,7 +37,7 @@ export const events: ClubEvent[] = [
     id: 'git-workshop',
     title: 'Git, but for real',
     description:
-      'Branches, rebase vs merge, and how not to lose a weekend to a bad pull. Optional — this one sits past the landing-page cap of three.',
+      'Branches, rebase vs merge, and how not to lose a weekend to a bad pull.',
     date: '2026-10-22',
     time: '6:00 PM – 7:30 PM',
     location: 'SIRC 3110',

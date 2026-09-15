@@ -430,11 +430,176 @@
   content: ' →';
 }
 
+.eventsChapter {
+  width: 100%;
+  color: var(--ink);
+  background: var(--canvas);
+}
+
+.eventsChapterScroll {
+  height: 200vh;
+}
+
+.eventsFrame {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-height: 100dvh;
+  padding: 1.25rem clamp(1.25rem, 5vw, 4rem) 1.75rem;
+}
+
+.eventsChapterScroll .eventsFrame {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 .eventGrid {
   display: grid;
   grid-template-columns: 1.22fr 1fr 1fr;
   gap: 1rem;
   align-items: stretch;
+}
+
+.calGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.85rem, 1.8vw, 1.35rem);
+  flex: 1;
+  min-height: 0;
+  align-content: stretch;
+}
+
+.calSlot {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  opacity: var(--card-opacity, 1);
+  transform: translate3d(var(--card-x, 0), var(--card-y, 0), 0)
+    rotate(var(--card-rot, 0deg));
+  will-change: transform, opacity;
+}
+
+.calSheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 1.55rem 1.35rem 1.2rem;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #ffffff 96%, var(--canvas)) 0%,
+      #fff 42%,
+      color-mix(in srgb, #ffffff 94%, var(--ink)) 100%
+    );
+  color: var(--ink);
+  border: none;
+  border-radius: 10px 10px 12px 12px;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 6%, transparent),
+    0 10px 28px color-mix(in srgb, var(--ink) 12%, transparent);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transform: rotate(var(--sheet-tilt, 0deg));
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.calSheet:hover,
+.calSheet:focus-visible {
+  outline: none;
+  transform: rotate(0deg) translateY(-3px);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
+    0 16px 34px color-mix(in srgb, var(--ink) 16%, transparent);
+}
+
+.calBind {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  height: 0.72rem;
+  padding: 0 1.1rem;
+  border-radius: 10px 10px 0 0;
+  background: color-mix(in srgb, var(--ink) 7%, #fff);
+}
+
+.calBind span {
+  width: 0.34rem;
+  height: 0.34rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 18%, #fff);
+  box-shadow: inset 0 1px 1px color-mix(in srgb, var(--ink) 18%, transparent);
+}
+
+.calMonth {
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.48;
+}
+
+.calDay {
+  margin: 0.05rem 0 0.55rem;
+  font-size: clamp(2.6rem, 5vw, 3.6rem);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+}
+
+.calTitle {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin: 0 0 0.4rem;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.calMeta {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  opacity: 0.58;
+}
+
+.calRule {
+  display: block;
+  width: 100%;
+  height: 1px;
+  margin: 0.85rem 0 0.75rem;
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.calBody {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  opacity: 0.62;
 }
 
 .eventGridFill {
@@ -448,6 +613,40 @@
   margin: 0;
   font-size: 1rem;
   line-height: 1.5;
+}
+
+.calEmptyWrap {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 0.5rem 0 1.25rem;
+}
+
+.calEmptyNote {
+  width: min(100%, 28rem);
+  height: auto;
+  min-height: 14rem;
+  padding: 2.25rem 1.75rem 1.75rem;
+  transform: rotate(-1.4deg);
+  cursor: default;
+  pointer-events: none;
+}
+
+.calEmptyTitle {
+  margin: 0.85rem 0 0.75rem;
+  font-size: clamp(1.35rem, 2.6vw, 1.85rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.calEmptyBody {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.45;
+  opacity: 0.62;
 }
 
 .exhibitionIntro {
@@ -788,6 +987,40 @@
     grid-template-columns: 1fr;
   }
 
+  .eventsChapterScroll {
+    height: auto;
+  }
+
+  .eventsChapterScroll .eventsFrame {
+    position: relative;
+    top: auto;
+    height: auto;
+    overflow: visible;
+    min-height: 0;
+    padding-bottom: 2.5rem;
+  }
+
+  .calGrid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    flex: none;
+  }
+
+  .calSlot {
+    opacity: 1;
+    transform: none;
+  }
+
+  .calSheet {
+    min-height: 16rem;
+    transform: none;
+  }
+
+  .calSheet:hover,
+  .calSheet:focus-visible {
+    transform: translateY(-2px);
+  }
+
   .eventCardFeatured {
     grid-column: auto;
   }
@@ -795,6 +1028,28 @@
   .eventCard,
   .eventCardFeatured {
     min-height: 14rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eventsChapterScroll {
+    height: auto;
+  }
+
+  .eventsChapterScroll .eventsFrame {
+    position: relative;
+    top: auto;
+    height: auto;
+    overflow: visible;
+  }
+
+  .calSlot {
+    opacity: 1;
+    transform: none;
+  }
+
+  .calSheet {
+    transform: none;
   }
 }
 
