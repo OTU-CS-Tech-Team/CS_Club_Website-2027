@@ -277,6 +277,7 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
     const section = sectionRef.current;
     if (!host || !section || clips.length === 0) return;
 
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let disposed = false;
     let frameId = 0;
     let travel = 0;
@@ -368,13 +369,15 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
 
     const setSize = () => {
       const width = host.clientWidth;
-      const height = Math.max(host.clientHeight, 1);
+      const height = host.clientHeight;
+      if (width < 8 || height < 8) return;
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
     };
 
     const scrollProgress = () => {
+      if (reduceMotion) return 1;
       const totalScroll = section.offsetHeight - window.innerHeight;
       if (totalScroll <= 0) return 0;
       return clamp(-section.getBoundingClientRect().top / totalScroll, 0, 1);
@@ -387,8 +390,8 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
     };
 
     const layout = (progress: number, dt: number) => {
-      const film = smoothstep(0.03, 0.5, progress);
-      const loopOn = smoothstep(0.5, 0.66, progress);
+      const film = reduceMotion ? 1 : smoothstep(0.03, 0.5, progress);
+      const loopOn = reduceMotion ? 1 : smoothstep(0.5, 0.66, progress);
       const mid = (VISIBLE - 1) / 2;
       const pitchConcert = PHOTO_W * 1.14;
       const pitchFilm = PHOTO_W * 1.006;
@@ -433,7 +436,7 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
       grain.scale.set((viewWidth() / 12) * 1.6, ((viewWidth() / camera.aspect) / 8) * 1.6, 1);
     };
 
-    let shownProgress = 0;
+    let shownProgress = reduceMotion ? 1 : 0;
 
     const tick = (now: number) => {
       if (disposed) return;
@@ -442,7 +445,7 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
       lastTime = now;
 
       const progress = scrollProgress();
-      shownProgress += (progress - shownProgress) * 0.085;
+      shownProgress += (progress - shownProgress) * (reduceMotion ? 1 : 0.085);
       grainMat.uniforms.uTime.value = now * 0.001;
 
       layout(shownProgress, dt);
@@ -451,6 +454,7 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
 
     const resizeObserver = new ResizeObserver(setSize);
     setSize();
+    window.requestAnimationFrame(setSize);
     resizeObserver.observe(host);
     window.addEventListener('resize', setSize);
     layout(scrollProgress(), 0);
@@ -479,5 +483,11 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
     };
   }, [sectionRef, clips]);
 
-  return <div ref={hostRef} className="absolute inset-0 h-full w-full" />;
+  return (
+    <div
+      ref={hostRef}
+      className="absolute inset-0 h-full min-h-[36vh] w-full"
+      style={{ minHeight: '36vh' }}
+    />
+  );
 }
