@@ -79,6 +79,9 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
   const holdTriggeredRef = useRef(false);
   const holdUntilRef = useRef(0);
   const holdScrollYRef = useRef(0);
+  /** Peak progress — forward-only, never resets for this page load. */
+  const maxProgressRef = useRef(0);
+  const settledRef = useRef(false);
 
   // Last side card: start 0.18 + idx*0.1, duration 0.18 → done at that sum.
   const lastFlyInDone =
@@ -101,16 +104,32 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
     let raf = 0;
     const update = () => {
       raf = 0;
+
+      // Cards already landed this session — stay fully visible forever
+      // (scroll-up / back to chapter 1 must not blank the section).
+      if (settledRef.current) {
+        setProgress((prev) => (prev === 1 ? prev : 1));
+        return;
+      }
+
       const total = section.offsetHeight - window.innerHeight;
-      const next =
-        total <= 0
-          ? 1
-          : clamp(-section.getBoundingClientRect().top / total, 0, 1);
-      setProgress((prev) => (Math.abs(prev - next) < 0.002 ? prev : next));
+      const top = section.getBoundingClientRect().top;
+      const next = total <= 0 ? 1 : clamp(-top / total, 0, 1);
+      const latched = Math.max(maxProgressRef.current, next);
+      maxProgressRef.current = latched;
+
+      if (latched >= lastFlyInDone) {
+        settledRef.current = true;
+        setProgress(1);
+      } else {
+        setProgress((prev) =>
+          Math.abs(prev - latched) < 0.002 ? prev : latched,
+        );
+      }
 
       if (
         !holdTriggeredRef.current &&
-        next >= lastFlyInDone &&
+        latched >= lastFlyInDone &&
         next < 0.98
       ) {
         holdTriggeredRef.current = true;

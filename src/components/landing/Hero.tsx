@@ -1,9 +1,16 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import HeroCanvas from './HeroCanvas';
 import styles from './landing.module.css';
+
+function clamp(n: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, n));
+}
+
+/** When framed screens start forming (matches HeroCanvas smoothstep 0.12…). */
+const SCREENS_FORMING = 0.18;
 
 const socials = [
   {
@@ -46,6 +53,45 @@ const socials = [
 
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
+  const [laterIn, setLaterIn] = useState(false);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+      setLaterIn(true);
+      return;
+    }
+
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const total = section.offsetHeight - window.innerHeight;
+      const next =
+        total <= 0
+          ? 1
+          : clamp(-section.getBoundingClientRect().top / total, 0, 1);
+      // Follow scroll both ways so returning to the top eases the copy back out.
+      const show = next >= SCREENS_FORMING;
+      setLaterIn((prev) => (prev === show ? prev : show));
+    };
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      if (raf) window.cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, []);
 
   return (
     <section
@@ -68,21 +114,33 @@ export default function Hero() {
 
         <div className={styles.heroWelcome}>
           <h1 className={styles.heroWelcomeTitle}>
-            Welcome to Ontario Tech
+            Welcome to Ontario Tech University&apos;s
             <br />
             Computer Science Club
           </h1>
         </div>
 
-        <div className={styles.heroLater}>
+        <div
+          className={`${styles.heroLater} ${laterIn ? styles.heroLaterIn : ''}`}
+        >
           <p className={styles.heroLaterTitle}>connecting people through technology</p>
-          <p className={styles.heroLaterCaption}>
+          <p
+            className={`${styles.heroLaterCaption} ${styles.heroLaterFly} ${laterIn ? styles.heroLaterFlyOn : ''}`}
+            style={{ ['--fly-delay' as string]: '0ms' }}
+          >
             Home to HackHive, largest hackathon in the Durham Region.
           </p>
-          <Link href="/careers" className={styles.heroJoin}>
+          <Link
+            href="/careers"
+            className={`${styles.heroJoin} ${styles.heroLaterFly} ${laterIn ? styles.heroLaterFlyOn : ''}`}
+            style={{ ['--fly-delay' as string]: '140ms' }}
+          >
             Join us <span aria-hidden="true">›</span>
           </Link>
-          <ul className={styles.heroSocials}>
+          <ul
+            className={`${styles.heroSocials} ${styles.heroLaterFly} ${laterIn ? styles.heroLaterFlyOn : ''}`}
+            style={{ ['--fly-delay' as string]: '280ms' }}
+          >
             {socials.map((social) => (
               <li key={social.label}>
                 <a

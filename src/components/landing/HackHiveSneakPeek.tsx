@@ -1,14 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { hackhiveSneakPeekClips } from '@/data/landing';
 import HackHiveStripCanvas from './HackHiveStripCanvas';
+import styles from './landing.module.css';
 
 function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
 
+/** Film morph begins (matches HackHiveStripCanvas smoothstep start). */
+const FILM_FORMING = 0.1;
 /** Scroll progress where the film strip is fully assembled (matches canvas). */
 const FILM_ASSEMBLED = 0.88;
 
@@ -17,15 +20,20 @@ export default function HackHiveSneakPeek() {
   const holdTriggeredRef = useRef(false);
   const holdUntilRef = useRef(0);
   const holdScrollYRef = useRef(0);
+  const maxProgressRef = useRef(0);
+  const copySettledRef = useRef(false);
+  const [copyIn, setCopyIn] = useState(false);
 
-  // After the strip comes together, freeze scroll ~1s so the loop can start
-  // without skipping straight into chapter 4.
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduceMotion) return;
+    if (reduceMotion) {
+      copySettledRef.current = true;
+      setCopyIn(true);
+      return;
+    }
 
     let raf = 0;
 
@@ -38,11 +46,11 @@ export default function HackHiveSneakPeek() {
     const update = () => {
       raf = 0;
       const next = progressOf();
+      maxProgressRef.current = Math.max(maxProgressRef.current, next);
 
-      // Scrolled back above the chapter — allow the hold to fire again.
-      if (next < 0.2) {
-        holdTriggeredRef.current = false;
-        holdUntilRef.current = 0;
+      if (!copySettledRef.current && maxProgressRef.current >= FILM_FORMING) {
+        copySettledRef.current = true;
+        setCopyIn(true);
       }
 
       if (
@@ -139,41 +147,42 @@ export default function HackHiveSneakPeek() {
             >
               HackHive
             </h2>
-            <p className="mb-5 mt-3 text-[0.92rem] leading-relaxed text-zinc-100/70">
+            <p
+              className={`${styles.hackhiveFlyIn} ${copyIn ? styles.hackhiveFlyInOn : ''}`}
+              style={{ ['--fly-delay' as string]: '60ms' }}
+            >
               Ontario Tech’s very own hackathon, the largest in the Durham
               Region. A weekend to build with people from here and far beyond.
             </p>
             <Link
               href="#"
-              className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-[1.05rem] py-[0.72rem] text-[0.82rem] font-semibold tracking-[0.01em] no-underline hover:opacity-90"
-              style={{ color: '#111' }}
+              className={`${styles.hackhiveCtaFly} ${copyIn ? styles.hackhiveCtaFlyOn : ''}`}
+              style={{
+                color: '#111',
+                ['--fly-delay' as string]: '180ms',
+              }}
             >
               Learn more <span aria-hidden="true">›</span>
             </Link>
           </div>
 
-          <dl className="m-0 grid grid-cols-2 gap-x-8 gap-y-5 sm:min-w-[16rem] sm:shrink-0">
-            <div>
-              <dt className="m-0 text-[0.68rem] font-medium uppercase tracking-[0.14em] text-zinc-100/45">
-                Attendees · 2025
-              </dt>
-              <dd className="m-0 mt-1 text-[clamp(1.55rem,2.8vw,2.1rem)] font-medium tracking-[-0.03em] tabular-nums">
-                300+
-              </dd>
+          <dl
+            className={`${styles.hackhiveStats} ${copyIn ? styles.hackhiveStatsOn : ''}`}
+          >
+            <div className={styles.hackhiveStat} style={{ ['--pixel-delay' as string]: '0ms' }}>
+              <dt className={styles.hackhiveStatLabel}>Attendees · 2025</dt>
+              <dd className={styles.hackhiveStatValue}>300+</dd>
             </div>
-            <div>
-              <dt className="m-0 text-[0.68rem] font-medium uppercase tracking-[0.14em] text-zinc-100/45">
-                Applicants
-              </dt>
-              <dd className="m-0 mt-1 text-[clamp(1.55rem,2.8vw,2.1rem)] font-medium tracking-[-0.03em] tabular-nums">
-                500+
-              </dd>
+            <div className={styles.hackhiveStat} style={{ ['--pixel-delay' as string]: '120ms' }}>
+              <dt className={styles.hackhiveStatLabel}>Applicants</dt>
+              <dd className={styles.hackhiveStatValue}>500+</dd>
             </div>
-            <div className="col-span-2">
-              <dt className="m-0 text-[0.68rem] font-medium uppercase tracking-[0.14em] text-zinc-100/45">
-                Reach
-              </dt>
-              <dd className="m-0 mt-1 max-w-[22ch] text-[0.92rem] leading-snug text-zinc-100/70">
+            <div
+              className={`${styles.hackhiveStat} ${styles.hackhiveStatWide}`}
+              style={{ ['--pixel-delay' as string]: '240ms' }}
+            >
+              <dt className={styles.hackhiveStatLabel}>Reach</dt>
+              <dd className={styles.hackhiveStatReach}>
                 Applicants from all across the globe
               </dd>
             </div>

@@ -68,6 +68,14 @@ export default function HackHiveArchivePostcard({
 
   const polaroids = projects.slice(0, 4);
   const interactable = progress >= 0.82;
+  const maxProgressRef = useRef(0);
+  const settledRef = useRef(false);
+
+  // Last polaroid: start 0.06 + 3*0.18, duration 0.24 → done at 0.84
+  const lastFlyInDone =
+    polaroids.length > 0
+      ? 0.06 + (polaroids.length - 1) * 0.18 + 0.24
+      : 0.84;
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -77,6 +85,7 @@ export default function HackHiveArchivePostcard({
       '(prefers-reduced-motion: reduce)',
     ).matches;
     if (reduceMotion) {
+      settledRef.current = true;
       setProgress(1);
       return;
     }
@@ -84,12 +93,29 @@ export default function HackHiveArchivePostcard({
     let raf = 0;
     const update = () => {
       raf = 0;
+
+      // Notes already landed — stay pinned; scroll-up must not pull them off.
+      if (settledRef.current) {
+        setProgress((prev) => (prev === 1 ? prev : 1));
+        return;
+      }
+
       const total = section.offsetHeight - window.innerHeight;
       const next =
         total <= 0
           ? 1
           : clamp(-section.getBoundingClientRect().top / total, 0, 1);
-      setProgress((prev) => (Math.abs(prev - next) < 0.002 ? prev : next));
+      const latched = Math.max(maxProgressRef.current, next);
+      maxProgressRef.current = latched;
+
+      if (latched >= lastFlyInDone) {
+        settledRef.current = true;
+        setProgress(1);
+      } else {
+        setProgress((prev) =>
+          Math.abs(prev - latched) < 0.002 ? prev : latched,
+        );
+      }
     };
 
     const onScroll = () => {
@@ -105,7 +131,7 @@ export default function HackHiveArchivePostcard({
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
     };
-  }, []);
+  }, [lastFlyInDone]);
 
   const hintOpacity = easeOutQuart(clamp((progress - 0.75) / 0.2, 0, 1));
 

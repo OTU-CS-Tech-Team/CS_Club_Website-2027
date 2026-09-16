@@ -104,7 +104,7 @@
 
 .heroWelcomeTitle {
   margin: 0;
-  max-width: 16ch;
+  max-width: 20ch;
   font-size: clamp(2.1rem, 5.4vw, 4.4rem);
   font-weight: 500;
   line-height: 1.08;
@@ -118,11 +118,13 @@
   z-index: 2;
   width: min(22rem, 32vw);
   transform: translateY(-50%);
-  opacity: clamp(0, calc((var(--hero-p) - 0.54) / 0.2), 1);
+  opacity: 0;
   pointer-events: none;
+  transition: opacity 550ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.heroChapter[data-phase='stack'] .heroLater {
+.heroLaterIn {
+  opacity: 1;
   pointer-events: auto;
 }
 
@@ -140,6 +142,23 @@
   font-size: 0.92rem;
   line-height: 1.5;
   color: rgba(244, 244, 245, 0.68);
+}
+
+.heroLaterFly {
+  opacity: 0;
+  transform: translate3d(0, 1.15rem, 0);
+  transition:
+    opacity 620ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+  /* Exit immediately with the panel; stagger only on the way in. */
+  transition-delay: 0ms;
+  will-change: opacity, transform;
+}
+
+.heroLaterFlyOn {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition-delay: var(--fly-delay, 0ms);
 }
 
 .heroJoin {
@@ -200,6 +219,12 @@
   .heroLater {
     opacity: 1;
     pointer-events: auto;
+  }
+
+  .heroLaterFly {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }
 
@@ -1724,5 +1749,197 @@
   .sectionHead {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+/* —— Chapter 3 HackHive copy: fly-ins + pixel-forming stats —— */
+
+.hackhiveFlyIn {
+  margin: 0.75rem 0 1.25rem;
+  max-width: 28em;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: rgba(244, 244, 245, 0.7);
+  opacity: 0;
+  transform: translate3d(0, 1.1rem, 0);
+  transition:
+    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--fly-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.hackhiveFlyInOn {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.hackhiveCtaFly {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.72rem 1.05rem;
+  border-radius: 999px;
+  background: #f4f4f5;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  opacity: 0;
+  transform: translate3d(0, 1.15rem, 0);
+  transition:
+    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 200ms ease;
+  transition-delay: var(--fly-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.hackhiveCtaFly:hover {
+  filter: brightness(0.92);
+}
+
+.hackhiveCtaFlyOn {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.hackhiveStats {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem 2rem;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .hackhiveStats {
+    min-width: 16rem;
+    flex-shrink: 0;
+  }
+}
+
+.hackhiveStat {
+  margin: 0;
+}
+
+.hackhiveStatWide {
+  grid-column: 1 / -1;
+}
+
+.hackhiveStatLabel {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(244, 244, 245, 0.45);
+  opacity: 0;
+}
+
+.hackhiveStatValue {
+  margin: 0.25rem 0 0;
+  font-size: clamp(1.55rem, 2.8vw, 2.1rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: #f4f4f5;
+  opacity: 0;
+}
+
+.hackhiveStatReach {
+  margin: 0.25rem 0 0;
+  max-width: 22ch;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  color: rgba(244, 244, 245, 0.7);
+  opacity: 0;
+}
+
+.hackhiveStatsOn .hackhiveStatLabel {
+  animation: hackhivePixelLabel 620ms steps(7, end) both;
+  animation-delay: var(--pixel-delay, 0ms);
+}
+
+.hackhiveStatsOn .hackhiveStatValue {
+  animation: hackhivePixelForm 900ms steps(10, end) both;
+  animation-delay: var(--pixel-delay, 0ms);
+}
+
+.hackhiveStatsOn .hackhiveStatReach {
+  animation: hackhivePixelForm 860ms steps(9, end) both;
+  animation-delay: calc(var(--pixel-delay, 0ms) + 40ms);
+}
+
+@keyframes hackhivePixelForm {
+  0% {
+    opacity: 0;
+    transform: scale(1.12) translateY(0.35rem);
+    filter: blur(10px) contrast(3.2) brightness(1.9);
+    text-shadow:
+      3px 0 #fff,
+      -3px 0 #7dd3fc,
+      0 3px #f0abfc;
+    letter-spacing: 0.12em;
+  }
+  28% {
+    opacity: 0.55;
+    filter: blur(5px) contrast(2.4) brightness(1.45);
+    text-shadow:
+      2px 0 rgba(255, 255, 255, 0.7),
+      -2px 0 rgba(125, 211, 252, 0.55);
+    letter-spacing: 0.06em;
+  }
+  55% {
+    opacity: 0.9;
+    transform: scale(1.03) translateY(0.08rem);
+    filter: blur(2px) contrast(1.5);
+    text-shadow: 1px 0 rgba(255, 255, 255, 0.35);
+    letter-spacing: 0.01em;
+  }
+  78% {
+    opacity: 1;
+    filter: blur(0.5px);
+    text-shadow: none;
+    letter-spacing: -0.02em;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: none;
+    text-shadow: none;
+    letter-spacing: -0.03em;
+  }
+}
+
+@keyframes hackhivePixelLabel {
+  0% {
+    opacity: 0;
+    filter: blur(6px) contrast(2);
+    letter-spacing: 0.28em;
+  }
+  50% {
+    opacity: 0.65;
+    filter: blur(2px);
+    letter-spacing: 0.18em;
+  }
+  100% {
+    opacity: 1;
+    filter: none;
+    letter-spacing: 0.14em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hackhiveFlyIn,
+  .hackhiveCtaFly,
+  .hackhiveStatLabel,
+  .hackhiveStatValue,
+  .hackhiveStatReach {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    animation: none !important;
+    transition: none !important;
   }
 }

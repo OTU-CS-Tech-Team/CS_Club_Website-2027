@@ -286,6 +286,10 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
     let loopAmount = reduceMotion ? 1 : 0;
     let loopStartedAt = reduceMotion ? performance.now() : 0;
     const LOOP_FADE_MS = 1000;
+    // Forward-only scrub; once assembled, never rewind to the first four screens.
+    let maxProgress = reduceMotion ? 1 : 0;
+    let settled = reduceMotion;
+    const FILM_DONE = 0.88;
     const extraDisposers: Array<() => void> = [];
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -394,15 +398,11 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
     };
 
     const layout = (progress: number, dt: number, now: number) => {
-      // Scroll only assembles the strip. Once together, motion is automatic.
-      const film = reduceMotion ? 1 : smoothstep(0.04, 0.88, progress);
-      if (!reduceMotion && film < 0.5) {
-        // Scrubbed back into the concert phase — stop the loop for a clean replay.
-        loopStartedAt = 0;
-        loopAmount = 0;
-        travel = 0;
-      } else if (!reduceMotion && loopStartedAt === 0 && film >= 0.98) {
+      // Scroll only assembles the strip. Once together, stay assembled + looping.
+      const film = reduceMotion || settled ? 1 : smoothstep(0.04, FILM_DONE, progress);
+      if (!reduceMotion && loopStartedAt === 0 && film >= 0.98) {
         loopStartedAt = now;
+        settled = true;
       }
       if (loopStartedAt > 0) {
         loopAmount = reduceMotion
@@ -461,8 +461,15 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
       const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
-      const progress = scrollProgress();
-      shownProgress += (progress - shownProgress) * (reduceMotion ? 1 : 0.085);
+      const raw = scrollProgress();
+      maxProgress = Math.max(maxProgress, raw);
+      if (settled || maxProgress >= FILM_DONE) {
+        settled = true;
+        shownProgress = 1;
+      } else {
+        // Ease toward peak progress only — never scrub backward.
+        shownProgress += (maxProgress - shownProgress) * 0.085;
+      }
       grainMat.uniforms.uTime.value = now * 0.001;
 
       layout(shownProgress, dt, now);
