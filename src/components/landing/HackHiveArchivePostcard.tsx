@@ -26,6 +26,12 @@ function easeOutBack(t: number) {
 }
 
 const POLAROID_TILTS = [-7, 3, -4, 6] as const;
+const FLY_FROM = [
+  { x: -48, y: 110, rot: -18 },
+  { x: 36, y: 130, rot: 14 },
+  { x: -28, y: 120, rot: -12 },
+  { x: 52, y: 140, rot: 20 },
+] as const;
 
 function hackHiveYearLabel(year: number) {
   return `'${String(year).slice(-2)}`;
@@ -110,18 +116,17 @@ export default function HackHiveArchivePostcard({
       aria-labelledby="archive-heading"
     >
       <div className={styles.archiveFrame}>
+        <p className={styles.archiveChapterIndex}>
+          <span>04</span>
+          <span className={styles.archiveIndexRule} aria-hidden="true" />
+          <span>HackHive museum</span>
+        </p>
         <div className={styles.archiveCopy}>
-          <p className={styles.archiveChapterIndex}>
-            <span>04</span>
-            <span className={styles.archiveIndexRule} aria-hidden="true" />
-            <span>Archive</span>
-          </p>
           <h2 id="archive-heading" className={styles.archiveHeadline}>
             See how 3&nbsp;a.m. <em>ideas</em> became first-place <em>builds</em>.
           </h2>
           <p className={styles.archiveSubline}>
-            A peek at HackHive &apos;24 · &apos;25 · &apos;26 — the rest is in the
-            museum.
+            Peek into the history of HackHive &apos;26 &apos;25 &apos;24
           </p>
           <Link href="/hackhive" className={styles.archiveCta}>
             Explore HackHive museum <span aria-hidden="true">→</span>
@@ -131,11 +136,14 @@ export default function HackHiveArchivePostcard({
         <div className={styles.archiveStripWrap}>
           <div className={styles.archiveStrip}>
             {polaroids.map((project, idx) => {
-              // Stickies only — board + copy are already on screen.
-              const start = 0.08 + idx * 0.16;
-              const local = easeOutBack(clamp((progress - start) / 0.22, 0, 1));
-              const dropY = 56 * (1 - local);
-              const pinSquash = 0.65 + 0.35 * local;
+              // One-by-one pin throws as you scroll through the chapter.
+              const start = 0.06 + idx * 0.18;
+              const local = easeOutBack(clamp((progress - start) / 0.24, 0, 1));
+              const from = FLY_FROM[idx % FLY_FROM.length];
+              const dropY = from.y * (1 - local);
+              const flyX = from.x * (1 - local);
+              const flyRot = from.rot * (1 - local);
+              const pinSquash = 0.55 + 0.45 * local;
               const tilt = POLAROID_TILTS[idx % POLAROID_TILTS.length];
               const year = hackHiveYearLabel(project.year);
               const award = archiveAwardLabel(project);
@@ -151,6 +159,8 @@ export default function HackHiveArchivePostcard({
                     {
                       '--tilt': `${tilt}deg`,
                       '--drop-y': `${dropY}px`,
+                      '--fly-x': `${flyX}px`,
+                      '--fly-rot': `${tilt + flyRot}deg`,
                       opacity: local,
                       pointerEvents: interactable ? 'auto' : 'none',
                     } as CSSProperties

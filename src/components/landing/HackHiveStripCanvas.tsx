@@ -282,6 +282,10 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
     let frameId = 0;
     let travel = 0;
     let lastTime = performance.now();
+    // Loop is time-based after the strip assembles — not a second scroll phase.
+    let loopAmount = reduceMotion ? 1 : 0;
+    let loopStartedAt = reduceMotion ? performance.now() : 0;
+    const LOOP_FADE_MS = 1000;
     const extraDisposers: Array<() => void> = [];
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -389,9 +393,22 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
       return visibleHeight * camera.aspect;
     };
 
-    const layout = (progress: number, dt: number) => {
-      const film = reduceMotion ? 1 : smoothstep(0.03, 0.5, progress);
-      const loopOn = reduceMotion ? 1 : smoothstep(0.5, 0.66, progress);
+    const layout = (progress: number, dt: number, now: number) => {
+      // Scroll only assembles the strip. Once together, motion is automatic.
+      const film = reduceMotion ? 1 : smoothstep(0.04, 0.88, progress);
+      if (!reduceMotion && film < 0.5) {
+        // Scrubbed back into the concert phase — stop the loop for a clean replay.
+        loopStartedAt = 0;
+        loopAmount = 0;
+        travel = 0;
+      } else if (!reduceMotion && loopStartedAt === 0 && film >= 0.98) {
+        loopStartedAt = now;
+      }
+      if (loopStartedAt > 0) {
+        loopAmount = reduceMotion
+          ? 1
+          : smoothstep(0, 1, (now - loopStartedAt) / LOOP_FADE_MS);
+      }
       const mid = (VISIBLE - 1) / 2;
       const pitchConcert = PHOTO_W * 1.14;
       const pitchFilm = PHOTO_W * 1.006;
@@ -405,12 +422,12 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
       const heightFit = (visibleH * 0.94) / overlayH;
       const fit = Math.min(heightFit, widthFit * 1.16);
 
-      travel += dt * 0.20 * loopOn;
+      travel += dt * 0.20 * loopAmount;
       const cycle = unique * pitchFilm;
       if (cycle > 0) travel %= cycle;
 
       strip.scale.setScalar(fit);
-      strip.position.x = lerp(0, -travel * fit, loopOn);
+      strip.position.x = lerp(0, -travel * fit, loopAmount);
 
       frames.forEach((item, index) => {
         const concertX =
@@ -448,7 +465,7 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
       shownProgress += (progress - shownProgress) * (reduceMotion ? 1 : 0.085);
       grainMat.uniforms.uTime.value = now * 0.001;
 
-      layout(shownProgress, dt);
+      layout(shownProgress, dt, now);
       renderer.render(scene, camera);
     };
 
@@ -457,7 +474,7 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
     window.requestAnimationFrame(setSize);
     resizeObserver.observe(host);
     window.addEventListener('resize', setSize);
-    layout(scrollProgress(), 0);
+    layout(scrollProgress(), 0, performance.now());
     frameId = window.requestAnimationFrame(tick);
 
     return () => {

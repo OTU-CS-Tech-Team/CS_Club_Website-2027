@@ -1,12 +1,35 @@
 .header {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 40;
   background: #fff;
   border-bottom: 1px solid #ececec;
+  transform: translateY(0);
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 
 .headerHome {
   border-bottom: none;
+}
+
+.headerVisible {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.headerHidden {
+  transform: translateY(-100%);
+  pointer-events: none;
+}
+
+.peekZone {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 39;
+  height: 3.25rem;
 }
 
 .bar {

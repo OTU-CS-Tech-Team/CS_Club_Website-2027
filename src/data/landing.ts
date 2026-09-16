@@ -67,10 +67,17 @@ export const news: NewsItem[] = [
 // Last year's recap (unlisted YouTube). Plays on the homepage when scrolled into view.
 export const recapYoutubeId = 'jjOVJi_N3zg';
 
+// Chapter 3 film strip — HackHive event photos (looped by HackHiveStripCanvas)
 export const hackhiveSneakPeekClips: HackHiveClip[] = [
-  { id: 'neuro-detect', src: '/projects/neuro-detect.png', type: 'image' },
-  { id: 'doug', src: '/projects/doug-the-poker-bot.png', type: 'image' },
-  { id: 'lockblock', src: '/projects/lockblock.png', type: 'image' },
-  { id: 'cutos', src: '/projects/cutos.png', type: 'image' },
-  { id: 'flash-ai', src: '/projects/flash-ai.png', type: 'image' },
+  { id: 'pitch-mic', src: '/hackhive/filmstrip/pitch-mic.jpg', type: 'image' },
+  { id: 'lecture-row', src: '/hackhive/filmstrip/lecture-row.jpg', type: 'image' },
+  { id: 'checkin-desk', src: '/hackhive/filmstrip/checkin-desk.jpg', type: 'image' },
+  { id: 'hallway', src: '/hackhive/filmstrip/hallway.jpg', type: 'image' },
+  { id: 'demo-laptop', src: '/hackhive/filmstrip/demo-laptop.jpg', type: 'image' },
+  { id: 'study-pair', src: '/hackhive/filmstrip/study-pair.jpg', type: 'image' },
+  { id: 'sci-hallway', src: '/hackhive/filmstrip/sci-hallway.jpg', type: 'image' },
+  { id: 'lecture-focus', src: '/hackhive/filmstrip/lecture-focus.jpg', type: 'image' },
+  { id: 'noodles', src: '/hackhive/filmstrip/noodles.jpg', type: 'image' },
+  { id: 'pastries', src: '/hackhive/filmstrip/pastries.jpg', type: 'image' },
+  { id: 'lecture-record', src: '/hackhive/filmstrip/lecture-record.jpg', type: 'image' },
 ];

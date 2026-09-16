@@ -154,12 +154,16 @@ export default function Navbar({
   const [isSignedIn, setIsSignedIn] = useState(signedIn);
   const [isAdminUser, setIsAdminUser] = useState(isAdmin);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [scrolledAway, setScrolledAway] = useState(false);
+  const [peekOpen, setPeekOpen] = useState(false);
 
   const visibleSections = [
     ...sections,
     ...(isAdminUser ? [adminSection] : []),
     ...(isSignedIn ? [accountSection] : []),
   ];
+
+  const navRevealed = !scrolledAway || peekOpen;
 
   useEffect(() => {
     setIsSignedIn(signedIn);
@@ -195,7 +199,32 @@ export default function Navbar({
 
   useEffect(() => {
     setOpenId(null);
+    setPeekOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const threshold = 48;
+    let raf = 0;
+
+    const update = () => {
+      raf = 0;
+      const away = window.scrollY > threshold;
+      setScrolledAway((prev) => (prev === away ? prev : away));
+      if (!away) setPeekOpen(false);
+    };
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      if (raf) window.cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, []);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -235,6 +264,11 @@ export default function Navbar({
     closeTimer.current = window.setTimeout(() => setOpenId(null), 180);
   }
 
+  function handleNavLeave() {
+    scheduleClose();
+    if (scrolledAway) setPeekOpen(false);
+  }
+
   async function handleSignOut() {
     const supabase = createClient();
     setIsSignedIn(false);
@@ -245,97 +279,117 @@ export default function Navbar({
   }
 
   return (
-    <header
-      className={`${styles.header} ${pathname === '/' ? styles.headerHome : ''}`}
-      ref={rootRef}
-      onMouseLeave={scheduleClose}
-      onMouseEnter={cancelClose}
-    >
-      <nav className={styles.bar} aria-label="Primary">
-        <Link href="/" className={styles.brand} aria-label="CS Club home">
-          <img
-            src="/cs-club-mark.png"
-            alt=""
-            width={36}
-            height={36}
-            className={styles.brandMark}
-          />
-        </Link>
+    <>
+      {scrolledAway ? (
+        <div
+          className={styles.peekZone}
+          aria-hidden="true"
+          onMouseEnter={() => setPeekOpen(true)}
+        />
+      ) : null}
+      <header
+        className={`${styles.header} ${pathname === '/' ? styles.headerHome : ''} ${
+          navRevealed ? styles.headerVisible : styles.headerHidden
+        }`}
+        ref={rootRef}
+        onMouseLeave={handleNavLeave}
+        onMouseEnter={() => {
+          cancelClose();
+          if (scrolledAway) setPeekOpen(true);
+        }}
+      >
+        <nav className={styles.bar} aria-label="Primary">
+          <Link href="/" className={styles.brand} aria-label="CS Club home">
+            <img
+              src="/cs-club-mark.png"
+              alt=""
+              width={36}
+              height={36}
+              className={styles.brandMark}
+            />
+          </Link>
 
-        <div className={styles.items}>
-          {visibleSections.map((section) => {
-            const isOpen = openId === section.id;
-            const panelId = `${navId}-${section.id}-panel`;
+          <div className={styles.items}>
+            {visibleSections.map((section) => {
+              const isOpen = openId === section.id;
+              const panelId = `${navId}-${section.id}-panel`;
 
-            return (
-              <div key={section.id} className={styles.item}>
-                <button
-                  type="button"
-                  className={`${styles.trigger} ${isOpen ? styles.triggerOpen : ''}`}
-                  aria-expanded={isOpen}
-                  aria-controls={panelId}
-                  onMouseEnter={() => openSectionMenu(section.id)}
-                  onClick={() => {
-                    const canHover =
-                      typeof window !== 'undefined' &&
-                      window.matchMedia('(hover: hover)').matches;
-                    if (canHover) {
-                      openSectionMenu(section.id);
-                      return;
-                    }
-                    setOpenId((current) => (current === section.id ? null : section.id));
-                  }}
-                >
-                  {section.label}
-                  <Chevron />
-                </button>
-                {isOpen ? (
-                  <div
-                    className={styles.banner}
-                    id={panelId}
-                    role="region"
-                    aria-label={`${section.label} pages`}
-                    onMouseEnter={cancelClose}
+              return (
+                <div key={section.id} className={styles.item}>
+                  <button
+                    type="button"
+                    className={`${styles.trigger} ${isOpen ? styles.triggerOpen : ''}`}
+                    aria-expanded={isOpen}
+                    aria-controls={panelId}
+                    onMouseEnter={() => openSectionMenu(section.id)}
+                    onClick={() => {
+                      const canHover =
+                        typeof window !== 'undefined' &&
+                        window.matchMedia('(hover: hover)').matches;
+                      if (canHover) {
+                        openSectionMenu(section.id);
+                        return;
+                      }
+                      setOpenId((current) =>
+                        current === section.id ? null : section.id,
+                      );
+                    }}
                   >
-                    <div className={styles.meta}>
-                      <span>NAV/{section.label.toUpperCase()}</span>
+                    {section.label}
+                    <Chevron />
+                  </button>
+                  {isOpen ? (
+                    <div
+                      className={styles.banner}
+                      id={panelId}
+                      role="region"
+                      aria-label={`${section.label} pages`}
+                      onMouseEnter={cancelClose}
+                    >
+                      <div className={styles.meta}>
+                        <span>NAV/{section.label.toUpperCase()}</span>
+                      </div>
+                      <div className={styles.links}>
+                        {section.links.map((link) => (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            className={styles.link}
+                            prefetch={link.prefetch}
+                            onClick={() => setOpenId(null)}
+                          >
+                            <span className={styles.linkTitle}>
+                              {link.label}
+                              {link.arrow ? <ArrowIcon /> : null}
+                            </span>
+                            <span className={styles.linkCopy}>{link.description}</span>
+                          </Link>
+                        ))}
+                      </div>
                     </div>
-                    <div className={styles.links}>
-                      {section.links.map((link) => (
-                        <Link
-                          key={link.href}
-                          href={link.href}
-                          className={styles.link}
-                          prefetch={link.prefetch}
-                          onClick={() => setOpenId(null)}
-                        >
-                          <span className={styles.linkTitle}>
-                            {link.label}
-                            {link.arrow ? <ArrowIcon /> : null}
-                          </span>
-                          <span className={styles.linkCopy}>{link.description}</span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
 
-        <div className={styles.actions}>
-          {isSignedIn ? (
-            <button type="button" className={styles.actionButton} onClick={handleSignOut}>
-              Sign out
-            </button>
-          ) : (
-            <Link href="/login" className={styles.actionLink}>
-              Log in
-            </Link>
-          )}
-        </div>
-      </nav>
-    </header>
+          <div className={styles.actions}>
+            {isSignedIn ? (
+              <button
+                type="button"
+                className={styles.actionButton}
+                onClick={handleSignOut}
+              >
+                Sign out
+              </button>
+            ) : (
+              <Link href="/login" className={styles.actionLink}>
+                Log in
+              </Link>
+            )}
+          </div>
+        </nav>
+      </header>
+    </>
   );
 }
