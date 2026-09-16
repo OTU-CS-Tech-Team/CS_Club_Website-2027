@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import { isAdmin } from '@/lib/admin';
 import { createClient } from '@/lib/supabase/server';
 import './globals.css';
@@ -33,6 +34,7 @@ export default async function RootLayout({
       <body suppressHydrationWarning>
         <Navbar signedIn={signedIn} isAdmin={admin} />
         <main>{children}</main>
+        <Footer />
       </body>
     </html>
   );

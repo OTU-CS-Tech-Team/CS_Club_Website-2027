@@ -13,7 +13,7 @@ export default async function HomePage() {
   const dbEvents = await getPublishedEvents();
   // Prefer published DB events so the modal gets one-click RSVP; fall back
   // to sample cards only when the calendar is empty.
-  const upcoming = getUpcomingEvents(dbEvents.length ? dbEvents : events, 4);
+  const upcoming = getUpcomingEvents(dbEvents.length ? dbEvents : events, 5);
   const projects = getFeaturedProjects();
 
   return (
