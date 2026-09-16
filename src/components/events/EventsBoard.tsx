@@ -6,7 +6,7 @@ import Link from 'next/link';
 import type { ClubEvent } from '@/types/landing';
 import EventCard from '@/components/landing/EventCard';
 import EventModal from '@/components/landing/EventModal';
-import styles from '@/components/landing/landing.module.css';
+import styles from '@/components/events/events.module.css';
 
 type EventsBoardProps = {
   upcoming: ClubEvent[];
