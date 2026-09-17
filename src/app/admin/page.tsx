@@ -135,12 +135,12 @@ export default async function AdminPage() {
           .in('event_id', eventIds),
         adminClient
           .from('event_guests')
-          .select('id, event_id, name, email, confirmed')
+          .select('id, event_id, name, email, student_id, confirmed')
           .in('event_id', eventIds),
+        // All stamps, not just current events: stamps from deleted events have a null event_id but still count toward passport points.
         adminClient
           .from('passport_stamps')
-          .select('event_id, user_id')
-          .in('event_id', eventIds),
+          .select('event_id, user_id, points'),
       ]);
 
       const attendanceError = memberResult.error ?? guestResult.error ?? stampResult.error;
@@ -151,7 +151,13 @@ export default async function AdminPage() {
         });
         attendanceLoadError = 'RSVP information could not be loaded. Refresh the page and try again.';
       } else {
-        const memberRows = memberResult.data ?? [];
+        const stamps = stampResult.data ?? [];
+        const rsvpKeys = new Set((memberResult.data ?? []).map((rsvp) => `${rsvp.event_id}:${rsvp.user_id}`));
+        const loadedEventIds = new Set(eventIds);
+        const walkIns = stamps
+          .filter((stamp) => stamp.event_id && loadedEventIds.has(stamp.event_id) && !rsvpKeys.has(`${stamp.event_id}:${stamp.user_id}`))
+          .map((stamp) => ({ event_id: stamp.event_id as string, user_id: stamp.user_id, year_of_study: null }));
+        const memberRows = [...(memberResult.data ?? []), ...walkIns];
         const memberIds = Array.from(new Set(memberRows.map((row) => row.user_id)));
         const profileResult = memberIds.length
           ? await adminClient.from('profiles').select('id, full_name, email').in('id', memberIds)
@@ -165,9 +171,11 @@ export default async function AdminPage() {
           attendanceLoadError = 'RSVP information could not be loaded. Refresh the page and try again.';
         } else {
           const profiles = new Map((profileResult.data ?? []).map((profile) => [profile.id, profile]));
-          const attendedMembers = new Set(
-            (stampResult.data ?? []).map((stamp) => `${stamp.event_id}:${stamp.user_id}`),
-          );
+          const attendedMembers = new Set(stamps.map((stamp) => `${stamp.event_id}:${stamp.user_id}`));
+          const pointsByUser = new Map<string, number>();
+          for (const stamp of stamps) {
+            pointsByUser.set(stamp.user_id, (pointsByUser.get(stamp.user_id) ?? 0) + stamp.points);
+          }
 
           attendees = [
             ...memberRows.map((rsvp): EventAttendee => {
@@ -177,7 +185,9 @@ export default async function AdminPage() {
                 event_id: rsvp.event_id,
                 name: profile?.full_name || profile?.email || 'Member',
                 email: profile?.email ?? '',
+                student_id: null,
                 year_of_study: rsvp.year_of_study,
+                points: pointsByUser.get(rsvp.user_id) ?? 0,
                 kind: 'member',
                 status: attendedMembers.has(`${rsvp.event_id}:${rsvp.user_id}`) ? 'attended' : 'confirmed',
               };
@@ -187,7 +197,9 @@ export default async function AdminPage() {
               event_id: guest.event_id,
               name: guest.name || guest.email || 'Guest',
               email: guest.email ?? '',
+              student_id: guest.student_id ?? null,
               year_of_study: null,
+              points: null,
               kind: 'guest',
               status: guest.confirmed ? 'confirmed' : 'pending',
             })),
