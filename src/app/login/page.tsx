@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { ALLOWED_EMAIL_DOMAIN, EMAIL_DOMAIN_MESSAGE, isAllowedAuthEmail } from '@/lib/authEmail';
 
 type Mode = 'signin' | 'signup';
 
@@ -15,9 +16,40 @@ export default function LoginPage() {
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // The OAuth callback bounces back here with ?error=... when sign-in is refused.
+  useEffect(() => {
+    const reason = new URLSearchParams(window.location.search).get('error');
+    if (reason === 'sso') setStatus('Google sign-in did not complete. Try again.');
+    if (reason === 'domain') setStatus(EMAIL_DOMAIN_MESSAGE);
+  }, []);
+
+  async function handleGoogle() {
+    setStatus('');
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath())}`,
+        // Nudges Google to show Ontario Tech accounts first; the real check is server-side.
+        queryParams: { hd: ALLOWED_EMAIL_DOMAIN },
+      },
+    });
+    if (error) {
+      setStatus(error.message);
+      setLoading(false);
+    }
+    // On success the browser leaves for Google, so nothing to reset here.
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus('');
+
+    if (mode === 'signup' && !isAllowedAuthEmail(email)) {
+      setStatus(EMAIL_DOMAIN_MESSAGE);
+      return;
+    }
+
     setLoading(true);
 
     if (mode === 'signup') {
@@ -64,6 +96,11 @@ export default function LoginPage() {
           ? 'Create your account to start your member passport.'
           : 'Sign in to see your member passport.'}
       </p>
+
+      <button type="button" className="oauth-button" onClick={handleGoogle} disabled={loading}>
+        <span aria-hidden="true">G</span> Continue with Google
+      </button>
+      <p className="auth-divider">or use your email</p>
 
       <form className="auth-form" onSubmit={handleSubmit}>
         <label>
