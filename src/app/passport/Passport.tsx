@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useState, type ReactNode } from 'react';
 import PassportQr from './PassportQr';
+import AvatarUpload from './AvatarUpload';
 import styles from './passport.module.css';
 
 type Stamp = { id: string; label: string; points: number; awarded_at: string };
@@ -28,18 +29,33 @@ function tierFor(points: number) {
   return { tier: TIERS[index], next: TIERS[index + 1] };
 }
 
-function Avatar({ size }: { size: 'ring' | 'large' }) {
-  return <span className={size === 'ring' ? styles.avatarRing : styles.avatarLarge} role="img" aria-label="Profile picture" />;
+// No photo (or one that won't load) -> the CSS placeholder art stays, rather
+// than a broken image showing its alt text over the card.
+function Avatar({ size, src }: { size: 'ring' | 'large'; src?: string | null }) {
+  const [failed, setFailed] = useState(false);
+  const className = size === 'ring' ? styles.avatarRing : styles.avatarLarge;
+
+  if (!src || failed) return <span className={className} role="img" aria-label="Profile picture" />;
+
+  return (
+    <img
+      className={className}
+      src={src}
+      alt="Profile picture"
+      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
+    />
+  );
 }
 
-function Header({ title, subtitle, tall }: { title: string; subtitle: string; tall?: boolean }) {
+function Header({ title, subtitle, tall, avatarUrl }: { title: string; subtitle: string; tall?: boolean; avatarUrl?: string | null }) {
   return (
     <header className={tall ? styles.headerTall : styles.header}>
       <div className={styles.nameStack}>
         <h1>{title}</h1>
         <p>{subtitle}</p>
       </div>
-      {tall ? null : <Avatar size="ring" />}
+      {tall ? null : <Avatar size="ring" src={avatarUrl} />}
     </header>
   );
 }
@@ -63,7 +79,7 @@ function Dialog({ label, onClose, className, children }: { label: string; onClos
   );
 }
 
-export default function Passport({ name, stamps, initialQrDataUrl }: { name: string; stamps: Stamp[]; initialQrDataUrl: string }) {
+export default function Passport({ name, stamps, initialQrDataUrl, avatarUrl }: { name: string; stamps: Stamp[]; initialQrDataUrl: string; avatarUrl: string | null }) {
   const [flipped, setFlipped] = useState(false);
   const [certificate, setCertificate] = useState<Stamp | null>(null);
   const [eventsOpen, setEventsOpen] = useState(false);
@@ -78,8 +94,9 @@ export default function Passport({ name, stamps, initialQrDataUrl }: { name: str
     <div className={styles.page}>
       <div className={`${styles.flipper} ${flipped ? styles.flipped : ''}`}>
         <article className={`${styles.card} ${styles.front}`} inert={flipped} aria-label="Passport profile">
-          <Header title="WELCOME" subtitle={name} />
-          <div className={styles.photoFrame}><Avatar size="large" /></div>
+          <Header title="WELCOME" subtitle={name} avatarUrl={avatarUrl} />
+          <div className={styles.photoFrame}><Avatar size="large" src={avatarUrl} /></div>
+          <AvatarUpload />
           <section className={styles.glassPanel} aria-labelledby="stats-heading">
             <h2 id="stats-heading" className={styles.panelTitle}>Your Stats</h2>
             <dl className={styles.stats}>
@@ -116,7 +133,7 @@ export default function Passport({ name, stamps, initialQrDataUrl }: { name: str
           ) : null}
           {/* Stays mounted under the certificate so the QR keeps refreshing its token. */}
           <div className={styles.checkinView} hidden={Boolean(certificate)}>
-            <Header title="//Check-In//" subtitle="scan this at the event" />
+            <Header title="//Check-In//" subtitle="scan this at the event" avatarUrl={avatarUrl} />
             <div className={styles.photoFrame}>
               <PassportQr className={styles.qr} initialQrDataUrl={initialQrDataUrl} />
             </div>

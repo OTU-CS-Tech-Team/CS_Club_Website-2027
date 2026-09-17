@@ -109,6 +109,27 @@
   border: 2px solid #fff;
 }
 
+/* Uploaded photos fill the same shapes as the placeholder art. */
+.avatarRing,
+.avatarLarge {
+  object-fit: cover;
+}
+
+.avatarUpload {
+  display: grid;
+  gap: 0.4rem;
+  justify-items: center;
+}
+
+.avatarUploadError {
+  margin: 0;
+  max-width: 22rem;
+  color: #ffd9d9;
+  font-family: var(--terminal);
+  font-size: 1rem;
+  text-align: center;
+}
+
 .photoFrame {
   display: grid;
   place-items: center;
