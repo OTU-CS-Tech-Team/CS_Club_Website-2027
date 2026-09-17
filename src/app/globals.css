@@ -116,19 +116,6 @@ main {
   cursor: not-allowed;
 }
 
-.stamp-list {
-  padding-left: 1.25rem;
-}
-
-.stamp-list li {
-  margin-bottom: 0.4rem;
-}
-
-.checkin-qr {
-  margin: 1.5rem 0;
-  max-width: 220px;
-}
-
 .scanner-video {
   width: 100%;
   max-width: 400px;

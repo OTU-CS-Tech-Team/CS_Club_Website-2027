@@ -1,0 +1,535 @@
+.page {
+  --gold: #f4b942;
+  --ink: #1a1225;
+  --night: #1b003f;
+  --lavender: #e6e6fa;
+  --terminal: var(--font-terminal), 'Courier New', monospace;
+  --pixel: var(--font-pixel), 'Courier New', monospace;
+  --glass-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.6),
+    inset 0 -1px 4px rgba(255, 255, 255, 0.25),
+    inset 0 4px 10px rgba(255, 255, 255, 0.4),
+    inset 0 -1px 1px rgba(51, 51, 51, 0.2);
+  display: grid;
+  justify-items: center;
+  min-height: 100dvh;
+  padding: clamp(1.25rem, 4vw, 2.5rem) 1rem 3rem;
+  background: linear-gradient(to bottom, #6495ed 37.5%, var(--lavender) 71%);
+}
+
+/* Flip card */
+.flipper {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: min(363px, 100%);
+}
+
+.card {
+  position: relative;
+  grid-area: 1 / 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  min-height: 804px;
+  padding: 14px 16px 88px;
+  border: 4px solid var(--ink);
+  border-radius: 6px;
+  background:
+    linear-gradient(rgba(27, 0, 63, 0.8), rgba(27, 0, 63, 0.8)),
+    url('/passport/halftone-card.jpg') center / 100% 100%;
+  box-shadow: 6px 6px 7px #000;
+  backface-visibility: hidden;
+  transition: transform 700ms cubic-bezier(0.2, 0.75, 0.2, 1);
+}
+
+.front { transform: perspective(1400px) rotateY(0deg); }
+.back { transform: perspective(1400px) rotateY(180deg); }
+.flipped .front { transform: perspective(1400px) rotateY(-180deg); }
+.flipped .back { transform: perspective(1400px) rotateY(0deg); }
+
+/* Header */
+.header,
+.headerTall {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 107px;
+  padding: 10px;
+  border: 3px solid var(--ink);
+  background: var(--gold);
+  box-shadow: 3px 3px 14px #000;
+}
+
+.headerTall {
+  justify-content: center;
+  min-height: 175px;
+  text-align: center;
+}
+
+.nameStack { min-width: 0; }
+
+.nameStack h1,
+.nameStack p {
+  margin: 0;
+  overflow: hidden;
+  color: #000;
+  font-family: var(--terminal);
+  font-weight: 400;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nameStack h1 { font-size: clamp(2.3rem, 11vw, 3rem); }
+.nameStack p { font-size: clamp(1.1rem, 5.3vw, 1.5rem); }
+.headerTall .nameStack h1 { font-size: clamp(2rem, 10vw, 2.4rem); }
+
+/* Avatar (placeholder art until profiles store photos) */
+.avatarRing,
+.avatarLarge {
+  flex: none;
+  display: block;
+  border-radius: 50%;
+  background: #ccc url('/passport/avatar-placeholder.png') 50% 51.4% / 150% auto no-repeat;
+}
+
+.avatarRing {
+  width: 60px;
+  height: 60px;
+  border: 3px solid var(--ink);
+}
+
+.avatarLarge {
+  width: 72%;
+  aspect-ratio: 1;
+  border: 2px solid #fff;
+}
+
+.photoFrame {
+  display: grid;
+  place-items: center;
+  width: min(280px, 100%);
+  aspect-ratio: 1;
+  border: 1px solid var(--gold);
+  border-radius: 16px;
+  background: var(--lavender);
+  box-shadow: 3px 3px 14px #000;
+}
+
+.qr {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  mix-blend-mode: multiply;
+}
+
+/* Glass panels */
+.glassPanel,
+.pillButton,
+.handlePill {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: var(--glass-shadow);
+  color: #fff;
+}
+
+.glassPanel {
+  width: 100%;
+  padding: 22px 16px 24px;
+  border-radius: 32px;
+}
+
+.panelTitle {
+  margin: 0 0 0.9rem;
+  font-family: var(--pixel);
+  font-size: 1rem;
+  font-weight: 400;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.stats {
+  margin: 0;
+  font-family: var(--pixel);
+  font-size: 15px;
+  line-height: 2.14;
+}
+
+.stats div { display: flex; flex-wrap: wrap; gap: 0 0.7em; }
+.stats dd { margin: 0; }
+
+.progressLabel {
+  margin: 0.8rem 0 0.45rem;
+  color: var(--lavender);
+  font-family: var(--terminal);
+  font-size: 1.15rem;
+  text-align: center;
+}
+
+.progressTrack {
+  display: flex;
+  height: 8px;
+  overflow: hidden;
+  border: 2px solid var(--ink);
+  background: #d9d9d9;
+}
+
+.progressFill {
+  background: #7ec850;
+  transition: width 600ms ease;
+}
+
+.statusPanel {
+  display: grid;
+  gap: 0.2rem;
+  padding: 18px 12px;
+  text-align: center;
+}
+
+.statusPanel .panelTitle { margin: 0; }
+
+.handle,
+.handlePill {
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--pixel);
+  font-size: 11px;
+  line-height: 1.6;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.handlePill {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 32px;
+  text-align: center;
+}
+
+/* Buttons */
+.pillButton {
+  min-width: 203px;
+  min-height: 50px;
+  padding: 0 1.2rem;
+  border-radius: 32px;
+  cursor: pointer;
+  font-family: var(--terminal);
+  font-size: 1.1rem;
+  transition: background 150ms ease;
+}
+
+.pillButton:hover { background: rgba(255, 255, 255, 0.16); }
+
+.bigButton,
+.yellowBlock {
+  width: 100%;
+  min-height: 94px;
+  border: 3px solid var(--ink);
+  border-radius: 32px;
+  background: var(--gold);
+  box-shadow: 4px 5px 14px #000;
+  color: #000;
+}
+
+.bigButton {
+  cursor: pointer;
+  font-family: var(--pixel);
+  font-size: 20px;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.bigButton:hover,
+.closeButton:hover,
+.eventsList button:hover {
+  transform: translate(-1px, -2px);
+}
+
+.bigButton:active,
+.closeButton:active,
+.eventsList button:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 4px #000;
+}
+
+.pillButton:focus-visible,
+.bigButton:focus-visible,
+.clubButton:focus-visible,
+.closeButton:focus-visible,
+.eventsList button:focus-visible,
+.socialIcons a:focus-visible,
+.websiteLink:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+.clubButton {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: 63px;
+  height: 58px;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid #fff;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 150ms ease;
+}
+
+.clubButton:hover { transform: rotate(-4deg) scale(1.06); }
+
+.clubButton img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Certificate */
+.certificate,
+.checkinView {
+  display: contents;
+}
+
+.checkinView[hidden] { display: none; }
+
+.certificate > * { animation: rise 420ms ease both; }
+
+.trophy {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
+}
+
+/* the exported trophy has wide transparent margins, so oversize it and crop */
+.trophy img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 520px;
+  max-width: none;
+  margin: -260px 0 0 -260px;
+  image-rendering: pixelated;
+  filter: drop-shadow(3px 3px 10px #000);
+  animation: bob 2.8s ease-in-out infinite;
+}
+
+.yellowBlock {
+  display: grid;
+  place-content: center;
+  gap: 0.45rem;
+  padding: 14px 16px;
+  text-align: center;
+}
+
+.yellowBlock strong {
+  font-family: var(--terminal);
+  font-size: 1.9rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.yellowBlock span {
+  font-family: var(--pixel);
+  font-size: 11px;
+}
+
+.yellowBlock small {
+  font-family: var(--terminal);
+  font-size: 1.1rem;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Pop-ups */
+.backdrop {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(10, 4, 28, 0.55);
+  animation: fade 160ms ease both;
+}
+
+.popup {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 2rem);
+  border: 3px solid var(--ink);
+  border-radius: 6px;
+  background:
+    linear-gradient(to bottom, rgba(100, 149, 237, 0.82) 38%, rgba(230, 230, 250, 0.82) 71%),
+    url('/passport/halftone-popup.jpg') center / 100% 100%;
+  box-shadow: 4px 4px 4px #000;
+  animation: rise 200ms ease both;
+}
+
+.closeButton {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 99px;
+  height: 30px;
+  border: 2px solid var(--ink);
+  background: var(--gold);
+  box-shadow: 3px 3px 4.7px #000;
+  color: #000;
+  cursor: pointer;
+  font-family: var(--pixel);
+  font-size: 11px;
+}
+
+.eventsPopup {
+  width: min(311px, 100%);
+  height: min(673px, calc(100dvh - 2rem));
+  padding: 56px 12px 16px 15px;
+}
+
+.eventsTitle {
+  margin: 0 0 12px;
+  color: #fff;
+  font-family: var(--terminal);
+  font-size: 4rem;
+  font-weight: 400;
+  line-height: 1;
+  text-align: center;
+}
+
+.eventsList {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  margin: 0;
+  padding: 2px 10px 16px 0;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-width: thin;
+}
+
+.eventsList button {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  min-height: 80px;
+  padding: 10px 14px;
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  background: var(--gold);
+  box-shadow: 4px 5px 14px #000;
+  color: #000;
+  cursor: pointer;
+  font-family: var(--terminal);
+  text-align: center;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.eventsList button span {
+  font-size: 2.2rem;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.eventsList button small { font-size: 1.05rem; }
+
+.emptyEvents {
+  margin: 1rem 0 0;
+  color: var(--night);
+  font-family: var(--terminal);
+  font-size: 1.4rem;
+  text-align: center;
+}
+
+.socialPopup {
+  align-items: center;
+  width: min(274px, 100%);
+  padding: 72px 16px 24px;
+  text-align: center;
+}
+
+.socialTitle {
+  margin: 0 0 18px;
+  color: #fff;
+  font-family: var(--pixel);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.socialIcons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.socialIcons a {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  transition: transform 150ms ease;
+}
+
+.socialIcons a:hover,
+.websiteLink:hover { transform: translateY(-3px); }
+
+.socialIcons img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.socialCaption {
+  margin: 10px 0 14px;
+  color: #564f89;
+  font-family: var(--terminal);
+  font-size: 1.25rem;
+}
+
+.websiteLink {
+  display: grid;
+  justify-items: center;
+  text-decoration: none;
+  transition: transform 150ms ease;
+}
+
+.websiteLink img {
+  width: 89px;
+  height: 69px;
+  object-fit: contain;
+}
+
+.websiteLink .socialCaption { margin: 4px 0 0; }
+
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 400px) {
+  .card { min-height: 0; }
+  .stats { font-size: 13px; }
+  .bigButton { font-size: 17px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .certificate > *,
+  .trophy img,
+  .backdrop,
+  .popup { animation: none; transition: none; }
+}
