@@ -1,10 +1,12 @@
 import type { ClubEvent } from '@/types/landing';
 import styles from './landing.module.css';
+import { useHoverSound } from '@/hooks/useHoverSound';
 
 type EventCardProps = {
   event: ClubEvent;
   featured?: boolean;
   onSelect: (event: ClubEvent) => void;
+  playHoverSound?: boolean;
 };
 
 function formatDate(iso: string) {
@@ -14,12 +16,15 @@ function formatDate(iso: string) {
   }).format(new Date(`${iso}T12:00:00`));
 }
 
-export default function EventCard({ event, featured, onSelect }: EventCardProps) {
+export default function EventCard({ event, featured, onSelect, playHoverSound = false }: EventCardProps) {
+  const playHover = useHoverSound();
+
   return (
     <button
       type="button"
       className={`${styles.eventCard} ${featured ? styles.eventCardFeatured : ''}`}
       onClick={() => onSelect(event)}
+      onMouseEnter={playHoverSound ? playHover : undefined}
     >
       <div className={styles.eventMeta}>
         <span className={styles.chip}>{formatDate(event.date)}</span>
