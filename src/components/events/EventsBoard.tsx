@@ -6,7 +6,7 @@ import Link from 'next/link';
 import type { ClubEvent } from '@/types/landing';
 import EventCard from '@/components/landing/EventCard';
 import EventModal from '@/components/landing/EventModal';
-import styles from '@/components/landing/landing.module.css';
+import styles from '@/components/events/events.module.css';
 
 type EventsBoardProps = {
   upcoming: ClubEvent[];
@@ -35,7 +35,7 @@ export default function EventsBoard({ upcoming, past }: EventsBoardProps) {
         {upcoming.length > 0 ? (
           <div className={styles.eventGridFill}>
             {upcoming.map((event) => (
-              <EventCard key={event.id} event={event} onSelect={setSelected} />
+              <EventCard key={event.id} event={event} onSelect={setSelected} playClickSound />
             ))}
           </div>
         ) : (
@@ -52,7 +52,7 @@ export default function EventsBoard({ upcoming, past }: EventsBoardProps) {
         {past.length > 0 ? (
           <div className={styles.eventGridFill}>
             {past.map((event) => (
-              <EventCard key={event.id} event={event} onSelect={setSelected} />
+              <EventCard key={event.id} event={event} onSelect={setSelected} playClickSound />
             ))}
           </div>
         ) : (
@@ -60,7 +60,9 @@ export default function EventsBoard({ upcoming, past }: EventsBoardProps) {
         )}
       </section>
 
-      {selected ? <EventModal event={selected} onClose={() => setSelected(null)} /> : null}
+      {selected ? (
+        <EventModal event={selected} onClose={() => setSelected(null)} playClickSound />
+      ) : null}
     </>
   );
 }

@@ -43,6 +43,13 @@ export default function TeamPage() {
   const hasDepts = selectedDepts.length > 0;
   const showAdvisors = selected.includes("advisors");
   const deptCount = Math.max(selectedUpperDepts.length, selectedLowerDepts.length);
+  // Only draw a stem into a department column if something above it is actually
+  // visible to connect from (or it's grouped with a sibling department) —
+  // otherwise isolating one department via "Only" leaves a stem dangling above its heading.
+  const showTreeAbove = showPresidents || showVPs;
+  const upperTierActive = showTreeAbove || selectedUpperDepts.length > 1;
+  const lowerTierActive =
+    selectedUpperDepts.length > 0 || showTreeAbove || selectedLowerDepts.length > 1;
 
   // Keep each visible department and its connector on the same grid track.
   const getDeptColumn = (id: string) => {
@@ -147,7 +154,7 @@ export default function TeamPage() {
             className={`dept-row dept-count-${deptCount} upper-count-${selectedUpperDepts.length} lower-count-${selectedLowerDepts.length}`}
           >
             {selectedUpperDepts.length > 1 && <div className="branch-line-main"></div>}
-            {selectedUpperDepts.length > 0 &&
+            {upperTierActive &&
               selectedUpperDepts.map((id, index) => (
                 <span
                   key={id}
@@ -160,9 +167,11 @@ export default function TeamPage() {
               <div className={`lower-tier-connector lower-count-${selectedLowerDepts.length}`}>
                 {(selectedUpperDepts.length > 0 || showVPs || showPresidents) && <span className="lower-tier-in" />}
                 {selectedLowerDepts.length > 1 && <span className="lower-tier-bar" />}
-                <div className="lower-tier-stems">
-                  {selectedLowerDepts.map((id) => <span key={id} />)}
-                </div>
+                {lowerTierActive && (
+                  <div className="lower-tier-stems">
+                    {selectedLowerDepts.map((id) => <span key={id} />)}
+                  </div>
+                )}
               </div>
             )}
 
@@ -173,7 +182,7 @@ export default function TeamPage() {
             >
               <div className="heading-v-wrapper">
                 <h2>Tech Team</h2>
-                <span className="v-stem-bottom"></span>
+                {upperTierActive && <span className="v-stem-bottom"></span>}
               </div>
 
               <MemberCard member={teamData.tech[0]} />
@@ -215,7 +224,7 @@ export default function TeamPage() {
             >
               <div className="heading-v-wrapper">
                 <h2>Marketing Team</h2>
-                <span className="v-stem-bottom"></span>
+                {upperTierActive && <span className="v-stem-bottom"></span>}
               </div>
 
               <MemberCard member={teamData.marketing[0]} />
@@ -266,7 +275,7 @@ export default function TeamPage() {
             >
               <div className="heading-v-wrapper">
                 <h2>Logistics Team</h2>
-                <span className="v-stem-bottom"></span>
+                {lowerTierActive && <span className="v-stem-bottom"></span>}
               </div>
 
               <MemberCard member={teamData.logistics[0]} />
@@ -295,7 +304,7 @@ export default function TeamPage() {
             >
               <div className="heading-v-wrapper">
                 <h2>Events Team</h2>
-                <span className="v-stem-bottom"></span>
+                {upperTierActive && <span className="v-stem-bottom"></span>}
               </div>
 
               <MemberCard member={teamData.events[0]} />
@@ -347,7 +356,7 @@ export default function TeamPage() {
             >
               <div className="heading-v-wrapper">
                 <h2>Sponsors Team</h2>
-                <span className="v-stem-bottom"></span>
+                {lowerTierActive && <span className="v-stem-bottom"></span>}
               </div>
 
               <MemberCard member={teamData.sponsors[0]} />
@@ -374,7 +383,6 @@ export default function TeamPage() {
 
         {/* Advisors Section */}
         <div className={showAdvisors ? "advisors-tree" : "hidden"}>
-          {(hasDepts || showVPs || showPresidents) && <div className="advisors-in-line" />}
           <h2>Advisors</h2>
           <div className="advisors-fanout"><span /><span /><span /><span /><span /></div>
           <div className="Advisors">

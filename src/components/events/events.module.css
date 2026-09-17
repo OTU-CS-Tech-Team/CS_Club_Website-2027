@@ -1,0 +1,328 @@
+.landing {
+  --canvas: #e6e6fa;
+  --canvas-soft: #f2f0fb;
+  --ink: #1b003f;
+  --ink-soft: rgba(27, 0, 63, 0.55);
+  --accent: #6a3df5;
+  --line: rgba(27, 0, 63, 0.16);
+  width: 100%;
+  background: linear-gradient(160deg, var(--canvas-soft), var(--canvas) 55%);
+  color: var(--ink);
+  min-height: calc(100dvh - 3.5rem);
+  padding: clamp(2rem, 5vw, 4.5rem) clamp(1.25rem, 5vw, 5rem)
+    clamp(3rem, 7vw, 6rem);
+}
+
+.landing a {
+  color: inherit;
+}
+
+.shell {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+/* Header */
+
+.pageHeader {
+  position: relative;
+  padding-bottom: 2.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.pageHeader::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--ink) 0%, var(--accent) 55%, transparent 100%);
+}
+
+.pageHeader .headline {
+  margin-bottom: 0;
+}
+
+.kicker {
+  display: none;
+}
+
+.headline {
+  margin: 0 0 0.7rem;
+  font-size: clamp(1.65rem, 3.2vw, 3.15rem);
+  font-weight: 700;
+  line-height: 1.14;
+  letter-spacing: -0.03em;
+}
+
+/* Sections */
+
+.section {
+  padding: 3.25rem 0;
+  animation: eventsFadeUp 0.5s ease both;
+}
+
+.section + .section {
+  border-top: 1px dashed var(--line);
+}
+
+.section > .backLink {
+  margin-bottom: 0.85rem;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+  padding: 0.45rem 0.9rem 0.45rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.backLink:hover,
+.backLink:focus-visible {
+  background: var(--ink);
+  color: var(--canvas);
+  transform: translateX(-2px);
+  outline: none;
+}
+
+.backLink::before {
+  content: '←';
+  transition: transform 0.18s ease;
+}
+
+.backLink:hover::before {
+  transform: translateX(-2px);
+}
+
+.sectionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.sectionTitle {
+  position: relative;
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.sectionTitle::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.2em;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* Past events read as an archive, not a duplicate of the upcoming grid */
+
+.section[aria-labelledby='past-events-heading'] .sectionTitle::before {
+  background: transparent;
+  border: 2px solid var(--ink-soft);
+}
+
+.section[aria-labelledby='past-events-heading'] .sectionTitle {
+  color: var(--ink-soft);
+}
+
+/* Card grid — EventCard itself is a shared component styled by
+   landing.module.css, so its internals are reached structurally here
+   (button > meta row > chips, h3, p) instead of by class name. */
+
+.eventGridFill {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+  gap: 1.1rem;
+  align-items: stretch;
+}
+
+.eventGridFill > button {
+  --bracket: var(--accent);
+  position: relative;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(27, 0, 63, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease,
+    background 0.2s ease;
+  animation: eventsFadeUp 0.5s ease both;
+}
+
+/* A quiet viewfinder-corner "focus lock", rather than a loud hover glow */
+
+.eventGridFill > button::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  background-image: linear-gradient(to right, var(--bracket) 2px, transparent 2px),
+    linear-gradient(to bottom, var(--bracket) 2px, transparent 2px),
+    linear-gradient(to left, var(--bracket) 2px, transparent 2px),
+    linear-gradient(to bottom, var(--bracket) 2px, transparent 2px),
+    linear-gradient(to left, var(--bracket) 2px, transparent 2px),
+    linear-gradient(to top, var(--bracket) 2px, transparent 2px),
+    linear-gradient(to right, var(--bracket) 2px, transparent 2px),
+    linear-gradient(to top, var(--bracket) 2px, transparent 2px);
+  background-repeat: no-repeat;
+  background-size: 13px 13px;
+  background-position: top left, top left, top right, top right, bottom right,
+    bottom right, bottom left, bottom left;
+  opacity: 0;
+  transition: opacity 0.2s ease, inset 0.2s ease;
+  pointer-events: none;
+}
+
+.eventGridFill > button:hover,
+.eventGridFill > button:focus-visible {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: var(--line);
+  box-shadow: 0 8px 18px -12px rgba(27, 0, 63, 0.3);
+  transform: translateY(-4px);
+  color: var(--ink);
+  outline: none;
+}
+
+.eventGridFill > button:hover::before,
+.eventGridFill > button:focus-visible::before {
+  opacity: 1;
+  inset: 5px;
+}
+
+.eventGridFill > button:nth-child(1) { animation-delay: 0.02s; }
+.eventGridFill > button:nth-child(2) { animation-delay: 0.06s; }
+.eventGridFill > button:nth-child(3) { animation-delay: 0.1s; }
+.eventGridFill > button:nth-child(4) { animation-delay: 0.14s; }
+.eventGridFill > button:nth-child(5) { animation-delay: 0.18s; }
+.eventGridFill > button:nth-child(6) { animation-delay: 0.22s; }
+
+.eventGridFill > button > div > span {
+  background: rgba(106, 61, 245, 0.1);
+  border-color: transparent;
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.02em;
+}
+
+.eventGridFill > button:hover > div > span {
+  background: rgba(106, 61, 245, 0.16);
+}
+
+.eventGridFill > button > h3 {
+  transition: color 0.18s ease;
+}
+
+.eventGridFill > button > p {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--ink-soft);
+}
+
+.eventGridFill > button > p::before {
+  content: '📍';
+  font-size: 0.8em;
+}
+
+/* Archived (past) cards: same layout, quieter surface */
+
+.section[aria-labelledby='past-events-heading'] .eventGridFill > button {
+  --bracket: var(--ink-soft);
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--line);
+  box-shadow: none;
+}
+
+.section[aria-labelledby='past-events-heading'] .eventGridFill > button::after {
+  content: 'Past';
+  position: absolute;
+  top: 0.8rem;
+  right: 0.9rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.section[aria-labelledby='past-events-heading'] .eventGridFill > button > h3,
+.section[aria-labelledby='past-events-heading'] .eventGridFill > button > p {
+  color: var(--ink-soft);
+}
+
+.section[aria-labelledby='past-events-heading'] .eventGridFill > button > div > span {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+}
+
+.section[aria-labelledby='past-events-heading'] .eventGridFill > button:hover {
+  border-color: var(--ink-soft);
+  transform: none;
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Empty state */
+
+.emptyCopy {
+  margin: 0;
+  padding: 2.5rem 1.5rem;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  font-size: 0.98rem;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+@keyframes eventsFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section,
+  .eventGridFill > button {
+    animation: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .landing {
+    padding: 1.75rem 1rem 3rem;
+  }
+
+  .sectionHead {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .eventGridFill {
+    grid-template-columns: 1fr;
+  }
+}

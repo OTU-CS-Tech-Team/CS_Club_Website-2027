@@ -14,7 +14,7 @@ export const presidents: TeamMember[] = [
     },
     {
         Image: "/Images/Abdul.png",
-        name: "Abdul",
+        name: "Abdul Muquit",
         role: "Co-President",
         link: "https://www.linkedin.com/in/abdul-muqit-afzal/",
     },
@@ -23,7 +23,7 @@ export const presidents: TeamMember[] = [
 export const vicePresidents: TeamMember[] = [
     {
         Image: "/Images/Samad.jpg",
-        name: "Ata-us-Samad",
+        name: "Samad",
         role: "Vice-President",
         link: "https://www.linkedin.com/in/samadaku/",
     },
@@ -174,31 +174,31 @@ export const advisors: TeamMember[] = [
     {
         Image: "/Images/Kevin.jpg",
         name: "Kevin",
-        role: "Advisor",
+        role: "Executive Advisor",
         link: "https://www.linkedin.com/in/kevintheinnovator/",
     },
     {
         Image: "/Images/Wasay.jpg",
         name: "Wasay",
-        role: "Advisor",
+        role: "Executive Advisor",
         link: "https://www.linkedin.com/in/wasayaamir/",
     },
     {
         Image: "/Images/Taha.jpg",
         name: "Taha",
-        role: "Advisor",
+        role: "Executive Advisor",
         link: "https://www.linkedin.com/in/taha-rana-haha/",
     },
     {
         Image: "/Images/Hayden.jpg",
         name: "Hayden",
-        role: "Advisor",
+        role: "Executive Advisor",
         link: "https://www.linkedin.com/in/haydenpmac/",
     },
     {
         Image: "/Images/Edrees.jpg",
         name: "Edrees",
-        role: "Advisor",
+        role: "Technical Advisor",
         link: "https://www.linkedin.com/in/edrees-amiri/",
     },
 ];
