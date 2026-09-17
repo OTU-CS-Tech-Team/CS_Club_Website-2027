@@ -37,6 +37,39 @@ function torontoDateValue(value?: string | null) {
   return `${get('year')}-${get('month')}-${get('day')}`;
 }
 
+const ATTENDEE_CSV_HEADER = ['Event', 'Date', 'Location', 'Name', 'Email', 'Student ID', 'Year of study', 'Type', 'Status', 'Profile points'];
+
+function attendeeCsvRow(attendee: EventAttendee, event: ManagedEvent | undefined): string[] {
+  return [
+    event?.title ?? '',
+    event?.date ?? '',
+    event?.location ?? '',
+    attendee.name,
+    attendee.email,
+    attendee.student_id ?? '',
+    attendee.year_of_study ?? '',
+    attendee.kind,
+    attendee.status,
+    attendee.points === null ? '' : String(attendee.points),
+  ];
+}
+
+function downloadCsv(filename: string, header: string[], rows: string[][]) {
+  const escapeCell = (value: string) => (/[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value);
+  const csv = [header, ...rows].map((row) => row.map(escapeCell).join(',')).join('\r\n');
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function csvFileName(base: string) {
+  const slug = base.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return `${slug || 'export'}.csv`;
+}
+
 function auditLabel(createdBy: string | null | undefined, creatorEmails: Record<string, string>, updatedAt?: string) {
   const creatorEmail = createdBy ? creatorEmails[createdBy] : null;
   const owner = creatorEmail ? `Created by ${creatorEmail}` : 'Created by unavailable account';
@@ -516,13 +549,22 @@ function RsvpDialog({
               <div><strong>{pending}</strong><span>Awaiting confirmation</span></div>
             </div>
             {sortedAttendees.length ? (
+              <button
+                className={styles.textButton}
+                type="button"
+                onClick={() => downloadCsv(csvFileName(`${event.title}-attendance`), ATTENDEE_CSV_HEADER, sortedAttendees.map((attendee) => attendeeCsvRow(attendee, event)))}
+              >
+                Export CSV
+              </button>
+            ) : null}
+            {sortedAttendees.length ? (
               <div className={styles.rsvpRoster} aria-label={`RSVPs for ${event.title}`}>
                 {sortedAttendees.map((attendee) => (
                   <article className={styles.rsvpRow} key={attendee.id}>
                     <div className={styles.rsvpIdentity}>
                       <strong>{attendee.name}</strong>
                       <span>{attendee.email || 'Email unavailable'}</span>
-                      <small>{attendee.kind === 'member' ? ['Member', attendee.year_of_study].filter(Boolean).join(' · ') : 'Guest'}</small>
+                      <small>{attendee.kind === 'member' ? ['Member', attendee.year_of_study, `${attendee.points ?? 0} pts`].filter(Boolean).join(' · ') : ['Guest', attendee.student_id].filter(Boolean).join(' · ')}</small>
                     </div>
                     <span className={attendee.status === 'attended' ? styles.rsvpAttended : attendee.status === 'pending' ? styles.rsvpPending : styles.rsvpConfirmed}>
                       {attendee.status === 'attended' ? 'Attended' : attendee.status === 'pending' ? 'Awaiting confirmation' : 'RSVP’d'}
@@ -535,6 +577,56 @@ function RsvpDialog({
         )}
       </section>
     </div>
+  );
+}
+
+function EventMetrics({ events, attendees, loadError }: { events: ManagedEvent[]; attendees: EventAttendee[]; loadError: string }) {
+  if (loadError) return <section className={styles.collection}><p className={styles.error} role="alert">{loadError}</p></section>;
+
+  const attended = attendees.filter((attendee) => attendee.status === 'attended');
+  const totalRsvps = attendees.filter((attendee) => attendee.status !== 'pending').length;
+  const showRate = totalRsvps ? Math.round((attended.length / totalRsvps) * 100) : 0;
+  const uniqueAttendees = new Set(attended.map((attendee) => attendee.email || attendee.id)).size;
+
+  const attendedByEvent = new Map<string, number>();
+  for (const attendee of attended) attendedByEvent.set(attendee.event_id, (attendedByEvent.get(attendee.event_id) ?? 0) + 1);
+  const topEvents = events
+    .map((event) => ({ event, count: attendedByEvent.get(event.id) ?? 0 }))
+    .filter((row) => row.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+
+  return (
+    <section className={styles.collection} aria-labelledby="metrics-heading">
+      <div className={styles.collectionHead}>
+        <div><p className={styles.kicker}>Attendance overview</p><h2 id="metrics-heading">Metrics across all events</h2></div>
+        {attendees.length ? (
+          <button
+            className={styles.textButton}
+            type="button"
+            onClick={() => downloadCsv('attendance-all-events.csv', ATTENDEE_CSV_HEADER, attendees.map((attendee) => attendeeCsvRow(attendee, eventsById.get(attendee.event_id))))}
+          >
+            Export all CSV
+          </button>
+        ) : null}
+      </div>
+      <div className={styles.rsvpSummary} aria-label="Attendance summary">
+        <div><strong>{attended.length}</strong><span>Total check-ins</span></div>
+        <div><strong>{uniqueAttendees}</strong><span>Unique attendees</span></div>
+        <div><strong>{showRate}%</strong><span>Show-up rate</span></div>
+      </div>
+      {topEvents.length ? (
+        <div className={styles.scrollList} aria-label="Most-attended events">
+          {topEvents.map(({ event, count }) => (
+            <article className={styles.item} key={event.id}>
+              <div className={styles.itemBody}><p className={styles.itemMeta}>{event.date}</p><h3>{event.title}</h3></div>
+              <div className={styles.itemControls}><span className={styles.statusLive}>{count} attended</span></div>
+            </article>
+          ))}
+        </div>
+      ) : <p className={styles.empty}>No check-ins recorded yet.</p>}
+    </section>
   );
 }
 
@@ -631,6 +723,7 @@ export default function AdminDashboard({
       </nav>
       {notice ? <div className={styles.notification} role={notice.ok ? 'status' : 'alert'}><span className={styles.notificationMark} aria-hidden="true">{notice.ok ? '•' : '!'}</span><span>{notice.message}</span><button type="button" onClick={() => setNotice(null)} aria-label="Dismiss notification">×</button></div> : null}
       {tab === 'events' ? <main className={styles.workspace}>
+        <EventMetrics events={events} attendees={attendees} loadError={loadErrors.attendance} />
         <section className={styles.collection} aria-labelledby="events-list-heading">
           <div className={styles.collectionHead}>
             <div><p className={styles.kicker}>Calendar inventory</p><h2 id="events-list-heading">All events</h2><span>{filteredEvents.length} shown</span></div>
