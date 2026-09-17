@@ -8,13 +8,6 @@ export type ClubEvent = {
   images: string[];
 };
 
-export type NewsItem = {
-  id: string;
-  title: string;
-  body: string;
-  postedOn: string;
-};
-
 export type HackHiveClip = {
   id: string;
   src: string;

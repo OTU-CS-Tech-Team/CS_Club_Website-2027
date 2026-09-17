@@ -1,6 +1,7 @@
 import Hero from '@/components/landing/Hero';
 import HackHiveArchivePostcard from '@/components/landing/HackHiveArchivePostcard';
 import HackHiveSneakPeek from '@/components/landing/HackHiveSneakPeek';
+import LandingScrollReset from '@/components/landing/LandingScrollReset';
 import UpcomingEvents from '@/components/landing/UpcomingEvents';
 import { getFeaturedProjects } from '@/data/hackhive';
 import { events, getUpcomingEvents } from '@/data/landing';
@@ -18,6 +19,7 @@ export default async function HomePage() {
 
   return (
     <div className={styles.landing}>
+      <LandingScrollReset />
       <Hero />
       <UpcomingEvents events={upcoming} />
       <HackHiveSneakPeek />

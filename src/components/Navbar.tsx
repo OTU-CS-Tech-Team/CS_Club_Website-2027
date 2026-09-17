@@ -204,13 +204,31 @@ export default function Navbar({
 
   useEffect(() => {
     const threshold = 48;
+    const directionThreshold = 2;
     let raf = 0;
+    let lastY = window.scrollY;
 
     const update = () => {
       raf = 0;
-      const away = window.scrollY > threshold;
-      setScrolledAway((prev) => (prev === away ? prev : away));
-      if (!away) setPeekOpen(false);
+      const y = window.scrollY;
+      const delta = y - lastY;
+      lastY = y;
+
+      if (y <= threshold) {
+        setScrolledAway(false);
+        setPeekOpen(false);
+        return;
+      }
+
+      setScrolledAway(true);
+
+      // Reverse from down → up: reveal the bar. Keep scrolling down: hide it.
+      // Near-zero delta (paused) leaves the current peek state alone.
+      if (delta < -directionThreshold) {
+        setPeekOpen(true);
+      } else if (delta > directionThreshold) {
+        setPeekOpen(false);
+      }
     };
 
     const onScroll = () => {

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { hackhiveSneakPeekClips } from '@/data/landing';
+import { useChapterScrollGate } from '@/hooks/useChapterScrollGate';
 import HackHiveStripCanvas from './HackHiveStripCanvas';
 import styles from './landing.module.css';
 
@@ -12,26 +13,31 @@ function clamp(n: number, min: number, max: number) {
 
 /** Film morph begins (matches HackHiveStripCanvas smoothstep start). */
 const FILM_FORMING = 0.1;
-/** Scroll progress where the film strip is fully assembled (matches canvas). */
+/** Film fully assembled (matches HackHiveStripCanvas FILM_DONE). */
 const FILM_ASSEMBLED = 0.88;
 
 export default function HackHiveSneakPeek() {
   const sectionRef = useRef<HTMLElement>(null);
-  const holdTriggeredRef = useRef(false);
-  const holdUntilRef = useRef(0);
-  const holdScrollYRef = useRef(0);
   const maxProgressRef = useRef(0);
   const copySettledRef = useRef(false);
   const [copyIn, setCopyIn] = useState(false);
+
+  useChapterScrollGate(sectionRef, FILM_ASSEMBLED);
 
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
 
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduceMotion) {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const staticLayout = window.matchMedia('(max-width: 860px)');
+
+    const showFinished = () => {
       copySettledRef.current = true;
       setCopyIn(true);
+    };
+
+    if (reduceMotion.matches || staticLayout.matches) {
+      showFinished();
       return;
     }
 
@@ -52,99 +58,53 @@ export default function HackHiveSneakPeek() {
         copySettledRef.current = true;
         setCopyIn(true);
       }
-
-      if (
-        !holdTriggeredRef.current &&
-        next >= FILM_ASSEMBLED &&
-        next < 0.98
-      ) {
-        holdTriggeredRef.current = true;
-        holdScrollYRef.current = window.scrollY;
-        holdUntilRef.current = performance.now() + 1000;
-      }
     };
 
     const onScroll = () => {
-      if (performance.now() < holdUntilRef.current) {
-        if (Math.abs(window.scrollY - holdScrollYRef.current) > 0.5) {
-          window.scrollTo(0, holdScrollYRef.current);
-        }
-        return;
-      }
       if (raf) return;
       raf = window.requestAnimationFrame(update);
     };
 
-    const freezeScroll = (event: Event) => {
-      if (performance.now() >= holdUntilRef.current) return;
-      event.preventDefault();
-      if (Math.abs(window.scrollY - holdScrollYRef.current) > 0.5) {
-        window.scrollTo(0, holdScrollYRef.current);
-      }
-    };
-
-    const freezeKeys = (event: KeyboardEvent) => {
-      if (performance.now() >= holdUntilRef.current) return;
-      const keys = [
-        'ArrowDown',
-        'ArrowUp',
-        'PageDown',
-        'PageUp',
-        ' ',
-        'Spacebar',
-        'Home',
-        'End',
-      ];
-      if (!keys.includes(event.key)) return;
-      event.preventDefault();
-      if (Math.abs(window.scrollY - holdScrollYRef.current) > 0.5) {
-        window.scrollTo(0, holdScrollYRef.current);
+    const onBreakpoint = () => {
+      if (reduceMotion.matches || staticLayout.matches) {
+        showFinished();
       }
     };
 
     update();
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
-    window.addEventListener('wheel', freezeScroll, { passive: false });
-    window.addEventListener('touchmove', freezeScroll, { passive: false });
-    window.addEventListener('keydown', freezeKeys);
+    reduceMotion.addEventListener('change', onBreakpoint);
+    staticLayout.addEventListener('change', onBreakpoint);
     return () => {
       if (raf) window.cancelAnimationFrame(raf);
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
-      window.removeEventListener('wheel', freezeScroll);
-      window.removeEventListener('touchmove', freezeScroll);
-      window.removeEventListener('keydown', freezeKeys);
+      reduceMotion.removeEventListener('change', onBreakpoint);
+      staticLayout.removeEventListener('change', onBreakpoint);
     };
   }, []);
 
   return (
     <section
       ref={sectionRef}
-      className="h-[200vh] bg-black text-zinc-100 motion-reduce:h-dvh"
-      style={{ background: '#000', color: '#f4f4f5' }}
+      className={styles.sneakChapter}
       aria-labelledby="hackhive-sneak-heading"
     >
-      <div className="sticky top-0 flex h-dvh flex-col overflow-hidden px-[clamp(1.25rem,5vw,4rem)] pb-6 pt-5">
-        <p className="mb-3 flex items-center gap-3 text-[0.72rem] font-medium uppercase tracking-[0.16em] text-zinc-100/70">
+      <div className={styles.sneakSticky}>
+        <p className={styles.sneakIndex}>
           <span>03</span>
-          <span className="block h-px w-9 bg-current opacity-55" aria-hidden="true" />
+          <span className={styles.sneakIndexRule} aria-hidden="true" />
           <span>HackHive</span>
         </p>
 
-        <div
-          className="relative min-h-[36vh] w-full flex-[1.9]"
-          style={{ minHeight: '36vh' }}
-        >
+        <div className={styles.sneakStage}>
           <HackHiveStripCanvas sectionRef={sectionRef} clips={hackhiveSneakPeekClips} />
         </div>
 
-        <div className="flex shrink-0 flex-col gap-8 pt-5 sm:flex-row sm:items-end sm:justify-between sm:gap-10">
-          <div className="flex max-w-md flex-col items-start">
-            <h2
-              id="hackhive-sneak-heading"
-              className="m-0 max-w-[16ch] text-[clamp(1.7rem,3.4vw,2.75rem)] font-medium leading-[1.15] tracking-[-0.04em]"
-            >
+        <div className={styles.sneakFooter}>
+          <div className={styles.sneakCopy}>
+            <h2 id="hackhive-sneak-heading" className={styles.sneakTitle}>
               HackHive
             </h2>
             <p
@@ -155,7 +115,7 @@ export default function HackHiveSneakPeek() {
               Region. A weekend to build with people from here and far beyond.
             </p>
             <Link
-              href="#"
+              href="/hackhive"
               className={`${styles.hackhiveCtaFly} ${copyIn ? styles.hackhiveCtaFlyOn : ''}`}
               style={{
                 color: '#111',

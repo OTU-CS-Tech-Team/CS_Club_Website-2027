@@ -1,4 +1,4 @@
-import type { ClubEvent, HackHiveClip, NewsItem } from '@/types/landing';
+import type { ClubEvent, HackHiveClip } from '@/types/landing';
 
 export { getPastEvents, getUpcomingEvents } from '@/lib/eventSchedule';
 
@@ -54,18 +54,6 @@ export const events: ClubEvent[] = [
     images: ['/events/career.svg'],
   },
 ];
-
-export const news: NewsItem[] = [
-  {
-    id: 'workshop-note',
-    title: 'LeetCode & Algorithm Workshop',
-    body: 'Join us for our LeetCode Workshop, an essential session for students preparing for technical job interviews. Led by Dr. Ali, the workshop will introduce key problem-solving strategies and common patterns found in coding interviews. Students will gain practical experience by walking through real LeetCode-style questions and learning effective approaches to algorithms. The event is open to all CS and Software Engineering students, with walk-ins encouraged. Join us to strengthen your skills, build confidence, and prepare for future opportunities in tech.',
-    postedOn: '2025-11-13',
-  },
-];
-
-// Last year's recap (unlisted YouTube). Plays on the homepage when scrolled into view.
-export const recapYoutubeId = 'jjOVJi_N3zg';
 
 // Chapter 3 film strip — HackHive event photos (looped by HackHiveStripCanvas)
 export const hackhiveSneakPeekClips: HackHiveClip[] = [

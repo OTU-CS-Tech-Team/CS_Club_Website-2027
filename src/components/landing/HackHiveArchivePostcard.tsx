@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { HackHiveProject } from '@/types/hackhive';
 import { getProjectHref } from '@/data/hackhive';
+import { useChapterScrollGate } from '@/hooks/useChapterScrollGate';
 import styles from './landing.module.css';
 
 type HackHiveArchivePostcardProps = {
@@ -77,16 +78,24 @@ export default function HackHiveArchivePostcard({
       ? 0.06 + (polaroids.length - 1) * 0.18 + 0.24
       : 0.84;
 
+  useChapterScrollGate(sectionRef, lastFlyInDone);
+
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
 
     const reduceMotion = window.matchMedia(
       '(prefers-reduced-motion: reduce)',
-    ).matches;
-    if (reduceMotion) {
+    );
+    const staticLayout = window.matchMedia('(max-width: 860px)');
+
+    const showFinished = () => {
       settledRef.current = true;
       setProgress(1);
+    };
+
+    if (reduceMotion.matches || staticLayout.matches) {
+      showFinished();
       return;
     }
 
@@ -123,13 +132,23 @@ export default function HackHiveArchivePostcard({
       raf = window.requestAnimationFrame(update);
     };
 
+    const onBreakpoint = () => {
+      if (reduceMotion.matches || staticLayout.matches) {
+        showFinished();
+      }
+    };
+
     update();
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
+    reduceMotion.addEventListener('change', onBreakpoint);
+    staticLayout.addEventListener('change', onBreakpoint);
     return () => {
       if (raf) window.cancelAnimationFrame(raf);
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
+      reduceMotion.removeEventListener('change', onBreakpoint);
+      staticLayout.removeEventListener('change', onBreakpoint);
     };
   }, [lastFlyInDone]);
 

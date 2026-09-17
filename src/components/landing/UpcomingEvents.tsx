@@ -9,6 +9,7 @@ import {
   subscribeLoggedIn,
 } from '@/app/mailing-list/actions';
 import type { ClubEvent } from '@/types/landing';
+import { useChapterScrollGate } from '@/hooks/useChapterScrollGate';
 import EventModal from './EventModal';
 import styles from './landing.module.css';
 
@@ -76,9 +77,6 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
   const featured = hasEvents ? events[0] : null;
   const sideEvents = hasEvents ? events.slice(1, 5) : [];
   const interactable = progress >= 0.55;
-  const holdTriggeredRef = useRef(false);
-  const holdUntilRef = useRef(0);
-  const holdScrollYRef = useRef(0);
   /** Peak progress — forward-only, never resets for this page load. */
   const maxProgressRef = useRef(0);
   const settledRef = useRef(false);
@@ -89,15 +87,24 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
       ? 0.18 + (sideEvents.length - 1) * 0.1 + 0.18
       : 0.28;
 
+  useChapterScrollGate(sectionRef, lastFlyInDone);
+
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
 
     const reduceMotion = window.matchMedia(
       '(prefers-reduced-motion: reduce)',
-    ).matches;
-    if (reduceMotion) {
+    );
+    const staticLayout = window.matchMedia('(max-width: 860px)');
+
+    const showFinished = () => {
+      settledRef.current = true;
       setProgress(1);
+    };
+
+    if (reduceMotion.matches || staticLayout.matches) {
+      showFinished();
       return;
     }
 
@@ -126,69 +133,30 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
           Math.abs(prev - latched) < 0.002 ? prev : latched,
         );
       }
-
-      if (
-        !holdTriggeredRef.current &&
-        latched >= lastFlyInDone &&
-        next < 0.98
-      ) {
-        holdTriggeredRef.current = true;
-        holdScrollYRef.current = window.scrollY;
-        holdUntilRef.current = performance.now() + 1000;
-      }
     };
 
     const onScroll = () => {
-      if (performance.now() < holdUntilRef.current) {
-        if (Math.abs(window.scrollY - holdScrollYRef.current) > 0.5) {
-          window.scrollTo(0, holdScrollYRef.current);
-        }
-        return;
-      }
       if (raf) return;
       raf = window.requestAnimationFrame(update);
     };
 
-    const freezeScroll = (event: Event) => {
-      if (performance.now() >= holdUntilRef.current) return;
-      event.preventDefault();
-      if (Math.abs(window.scrollY - holdScrollYRef.current) > 0.5) {
-        window.scrollTo(0, holdScrollYRef.current);
-      }
-    };
-
-    const freezeKeys = (event: KeyboardEvent) => {
-      if (performance.now() >= holdUntilRef.current) return;
-      const keys = [
-        'ArrowDown',
-        'ArrowUp',
-        'PageDown',
-        'PageUp',
-        ' ',
-        'Spacebar',
-        'Home',
-        'End',
-      ];
-      if (!keys.includes(event.key)) return;
-      event.preventDefault();
-      if (Math.abs(window.scrollY - holdScrollYRef.current) > 0.5) {
-        window.scrollTo(0, holdScrollYRef.current);
+    const onBreakpoint = () => {
+      if (reduceMotion.matches || staticLayout.matches) {
+        showFinished();
       }
     };
 
     update();
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
-    window.addEventListener('wheel', freezeScroll, { passive: false });
-    window.addEventListener('touchmove', freezeScroll, { passive: false });
-    window.addEventListener('keydown', freezeKeys);
+    reduceMotion.addEventListener('change', onBreakpoint);
+    staticLayout.addEventListener('change', onBreakpoint);
     return () => {
       if (raf) window.cancelAnimationFrame(raf);
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
-      window.removeEventListener('wheel', freezeScroll);
-      window.removeEventListener('touchmove', freezeScroll);
-      window.removeEventListener('keydown', freezeKeys);
+      reduceMotion.removeEventListener('change', onBreakpoint);
+      staticLayout.removeEventListener('change', onBreakpoint);
     };
   }, [lastFlyInDone]);
 
