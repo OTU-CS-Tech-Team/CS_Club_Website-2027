@@ -724,7 +724,7 @@
 
 .rsvpSummary {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
   margin: 1.4rem 0 1rem;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
@@ -797,6 +797,20 @@
   font-size: 0.68rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.rsvpRowActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Suggestions can be a paragraph, so let this one wrap. */
+.rsvpIdentity small.rsvpSuggestion {
+  margin-top: 0.25rem;
+  font-style: italic;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
 }
 
 .rsvpAttended,

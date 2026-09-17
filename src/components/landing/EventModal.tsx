@@ -6,6 +6,7 @@ import { isEventUpcoming } from '@/lib/eventSchedule';
 import EventSignupForm from './EventSignupForm';
 import DbEventRsvp from './DbEventRsvp';
 import styles from './landing.module.css';
+import formStyles from '../careers/careers.module.css';
 
 // Real DB events have a uuid id; the hardcoded sample events use plain
 // slugs like "leetcode-workshop" — that's how we tell them apart here.
@@ -90,19 +91,22 @@ export default function EventModal({ event, onClose }: EventModalProps) {
         tabIndex={-1}
       >
         <div className={styles.dialogTop}>
-          <h2 id={titleId} className={styles.dialogTitle}>
-            {event.title}
-          </h2>
+          <div>
+            <p className={formStyles.applyEyebrow}>Event</p>
+            <h2 id={titleId} className={formStyles.applyTitle}>
+              {event.title}
+            </h2>
+          </div>
           <button type="button" className={styles.close} onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
-        <ul className={styles.dialogFacts}>
-          <li className={styles.chip}>{formatDate(event.date)}</li>
-          <li className={styles.chip}>{event.time}</li>
-          <li className={styles.chip}>{event.location}</li>
-        </ul>
-        <p className={styles.dialogBody}>{event.description}</p>
+        <div className={formStyles.applyMeta}>
+          <span>{formatDate(event.date)}</span>
+          <span>{event.time}</span>
+          <span>{event.location}</span>
+        </div>
+        <p className={formStyles.applyDescription}>{event.description}</p>
         {event.images.length > 0 ? (
           <div className={styles.imageRow}>
             {event.images.map((src) => (
@@ -111,11 +115,14 @@ export default function EventModal({ event, onClose }: EventModalProps) {
           </div>
         ) : null}
         {isEventUpcoming(event) ? (
-          UUID_PATTERN.test(event.id) ? (
-            <DbEventRsvp eventId={event.id} />
-          ) : (
-            <EventSignupForm eventTitle={event.title} />
-          )
+          <div className={styles.rsvp}>
+            <p className={formStyles.applyEyebrow}>RSVP</p>
+            {UUID_PATTERN.test(event.id) ? (
+              <DbEventRsvp eventId={event.id} />
+            ) : (
+              <EventSignupForm eventTitle={event.title} />
+            )}
+          </div>
         ) : null}
       </div>
     </div>

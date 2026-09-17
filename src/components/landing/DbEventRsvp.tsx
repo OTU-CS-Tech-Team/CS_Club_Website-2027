@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { toggleRsvp, registerGuest, getLoggedInRsvpState } from '@/app/events/actions';
-import styles from './landing.module.css';
+import styles from '../careers/careers.module.css';
 
 // Logged-in: one RSVP button (name / email / student ID come from the account).
 // Signed-out: collect those three fields as a guest registration + confirmation email.
@@ -18,6 +18,7 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
   const [studentId, setStudentId] = useState('');
+  const [suggestions, setSuggestions] = useState('');
   const [guestStatus, setGuestStatus] = useState('');
   const [guestDone, setGuestDone] = useState(false);
 
@@ -73,7 +74,7 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
     setEmailWarning('');
     setPending(true);
     try {
-      const result = await toggleRsvp(eventId, true);
+      const result = await toggleRsvp(eventId, true, suggestions);
       setRsvped(true);
       if (result?.alreadyRegistered) {
         setEmailWarning("You've already RSVP'd!");
@@ -105,7 +106,13 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
     setEmailWarning('');
     setPending(true);
     try {
-      const result = await registerGuest(eventId, guestName, studentId, guestEmail);
+      const result = await registerGuest(
+        eventId,
+        guestName,
+        studentId,
+        guestEmail,
+        suggestions,
+      );
       setGuestDone(true);
       if (result.emailWarning) setEmailWarning(result.emailWarning);
     } catch (error) {
@@ -119,86 +126,113 @@ export default function DbEventRsvp({ eventId }: { eventId: string }) {
   if (status === 'signedOut') {
     if (guestDone) {
       return (
-        <div className={styles.form}>
-          <p className={styles.success}>
-            Check your email to confirm your RSVP. It does not count until you confirm.
-          </p>
+        <div className={styles.success}>
+          <h3>Check your email.</h3>
+          <p>Confirm your RSVP from the link we sent. It does not count until you confirm.</p>
           {emailWarning ? <p className={styles.formError}>{emailWarning}</p> : null}
         </div>
       );
     }
 
     return (
-      <form className={styles.form} onSubmit={handleGuestSubmit} noValidate>
-        <h3 className={styles.formTitle}>RSVP</h3>
-        <p style={{ margin: '0 0 0.75rem', fontSize: '0.85rem', opacity: 0.85 }}>
-          Not signed in — enter your name, student ID, and email.
-        </p>
-        <div className={styles.field}>
-          <label htmlFor={`guest-name-${eventId}`}>Name</label>
-          <input
-            id={`guest-name-${eventId}`}
-            value={guestName}
-            onChange={(event) => setGuestName(event.target.value)}
-            required
-          />
+      <form onSubmit={handleGuestSubmit} noValidate>
+        <p className={styles.note}>Not signed in? Enter your name, student ID, and email.</p>
+        <div className={styles.formGrid}>
+          <label>
+            Name
+            <input
+              name="name"
+              autoComplete="name"
+              value={guestName}
+              onChange={(event) => setGuestName(event.target.value)}
+              aria-required="true"
+            />
+          </label>
+          <label>
+            Student ID
+            <input
+              name="studentId"
+              inputMode="numeric"
+              placeholder="100123456"
+              value={studentId}
+              onChange={(event) => setStudentId(event.target.value)}
+              aria-required="true"
+            />
+          </label>
+          <label className={styles.fullWidth}>
+            Ontario Tech email
+            <input
+              type="email"
+              name="email"
+              autoComplete="email"
+              placeholder="first.last@ontariotechu.net"
+              value={guestEmail}
+              onChange={(event) => setGuestEmail(event.target.value)}
+              aria-required="true"
+            />
+          </label>
+          <label className={styles.fullWidth}>
+            Suggestions for future events (optional)
+            <textarea
+              name="suggestions"
+              rows={4}
+              maxLength={2000}
+              placeholder="Anything you'd love the club to run next..."
+              value={suggestions}
+              onChange={(event) => setSuggestions(event.target.value)}
+            />
+          </label>
         </div>
-        <div className={`${styles.field} ${styles.fieldWide}`}>
-          <label htmlFor={`guest-student-id-${eventId}`}>Student ID</label>
-          <input
-            id={`guest-student-id-${eventId}`}
-            value={studentId}
-            onChange={(event) => setStudentId(event.target.value)}
-            required
-          />
-        </div>
-        <div className={styles.field}>
-          <label htmlFor={`guest-email-${eventId}`}>Email</label>
-          <input
-            id={`guest-email-${eventId}`}
-            type="email"
-            value={guestEmail}
-            onChange={(event) => setGuestEmail(event.target.value)}
-            required
-          />
-        </div>
-        {guestStatus && <p className={styles.formError}>{guestStatus}</p>}
-        <div className={styles.formActions}>
-          <button type="submit" className={styles.cta} disabled={pending}>
-            {pending ? 'Sending…' : 'RSVP'}
-          </button>
-        </div>
+        {guestStatus ? (
+          <p className={styles.formError} role="alert">
+            {guestStatus}
+          </p>
+        ) : null}
+        <button type="submit" className={styles.submit} disabled={pending}>
+          {pending ? 'Sending...' : 'RSVP'} <span aria-hidden="true">→</span>
+        </button>
       </form>
     );
   }
 
   if (rsvped) {
     return (
-      <div className={styles.form}>
-        <h3 className={styles.formTitle}>You&apos;re going!</h3>
+      <div className={styles.success}>
+        <h3>You&apos;re going!</h3>
+        <p>See you there.</p>
         {emailWarning ? <p className={styles.formError}>{emailWarning}</p> : null}
         {rsvpError ? <p className={styles.formError}>{rsvpError}</p> : null}
-        <div className={styles.formActions}>
-          <button type="button" className={styles.cta} onClick={handleCancelRsvp} disabled={pending}>
-            Cancel RSVP
-          </button>
-        </div>
+        <button type="button" className={styles.submit} onClick={handleCancelRsvp} disabled={pending}>
+          {pending ? 'Cancelling...' : 'Cancel RSVP'}
+        </button>
       </div>
     );
   }
 
   return (
-    <div className={styles.form}>
-      <h3 className={styles.formTitle}>RSVP</h3>
-      <p style={{ margin: '0 0 0.75rem', fontSize: '0.85rem', opacity: 0.85 }}>
-        Signed in — one click uses your account details.
-      </p>
-      {rsvpError && <p className={styles.formError}>{rsvpError}</p>}
-      <div className={styles.formActions}>
-        <button type="button" className={styles.cta} onClick={handleRsvpClick} disabled={pending}>
-          {pending ? 'RSVPing…' : 'RSVP'}
-        </button>
+    <div>
+      <p className={styles.note}>You&apos;re signed in, so we use your account details.</p>
+      <div className={styles.formGrid}>
+        <label className={styles.fullWidth}>
+          Suggestions for future events (optional)
+          <textarea
+            name="suggestions"
+            rows={4}
+            maxLength={2000}
+            placeholder="Anything you'd love the club to run next..."
+            value={suggestions}
+            onChange={(event) => setSuggestions(event.target.value)}
+          />
+        </label>
       </div>
+      {rsvpError ? (
+        <p className={styles.formError} role="alert">
+          {rsvpError}
+        </p>
+      ) : null}
+      <button type="button" className={styles.submit} onClick={handleRsvpClick} disabled={pending}>
+        {pending ? 'RSVPing...' : 'RSVP'} <span aria-hidden="true">→</span>
+      </button>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import styles from './careers.module.css';
 
 const studyYears = ['First year', 'Second year', 'Third year', 'Fourth year', 'Graduate'];
 
-function YearSelect() {
+export function YearSelect() {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
   const [highlighted, setHighlighted] = useState('');

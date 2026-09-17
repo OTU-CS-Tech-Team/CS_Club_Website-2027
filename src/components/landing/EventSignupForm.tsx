@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { FormEvent, useState } from 'react';
-import styles from './landing.module.css';
+import { FormEvent, useState } from "react";
+import { YearSelect } from "../careers/CareerApplicationForm";
+import styles from "../careers/careers.module.css";
 
-export const YEARS = ['1st year', '2nd year', '3rd year', '4th year', 'Graduate'];
 const EMAIL_PATTERN = /@ontariotechu\.(net|ca)$/i;
 
 type EventSignupFormProps = {
@@ -11,85 +11,99 @@ type EventSignupFormProps = {
 };
 
 export default function EventSignupForm({ eventTitle }: EventSignupFormProps) {
-  const [error, setError] = useState('');
-  const [done, setDone] = useState<{ name: string; email: string } | null>(null);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState<{ name: string; email: string } | null>(
+    null,
+  );
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const first = String(data.get('firstName') ?? '').trim();
-    const last = String(data.get('lastName') ?? '').trim();
-    const email = String(data.get('email') ?? '').trim();
-    const year = String(data.get('year') ?? '').trim();
+    const first = String(data.get("firstName") ?? "").trim();
+    const last = String(data.get("lastName") ?? "").trim();
+    const email = String(data.get("email") ?? "").trim();
+    const year = String(data.get("year") ?? "").trim();
 
     if (!first || !last || !email || !year) {
-      setError('Fill in name, Ontario Tech email, and year of study.');
+      setError("Fill in name, Ontario Tech email, and year of study.");
       return;
     }
 
     if (!EMAIL_PATTERN.test(email)) {
-      setError('Use your Ontario Tech email (@ontariotechu.net or @ontariotechu.ca).');
+      setError(
+        "Use your Ontario Tech email (@ontariotechu.net or @ontariotechu.ca).",
+      );
       return;
     }
 
-    setError('');
+    setError("");
     setDone({ name: `${first} ${last}`, email });
   }
 
   if (done) {
     return (
-      <p className={styles.success}>
-        {done.name}, you’re on the sheet for {eventTitle}. We’ll write to {done.email}
-        . Nothing is stored on a server yet — this is the local confirmation.
-      </p>
+      <div className={styles.success}>
+        <h3>You&apos;re on the sheet.</h3>
+        <p>
+          {done.name}, you&apos;re signed up for {eventTitle}. We&apos;ll write
+          to {done.email}. Nothing is stored on a server yet. This is the local
+          confirmation.
+        </p>
+      </div>
     );
   }
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit} noValidate>
-      <h3 className={styles.formTitle}>Sign up sheet</h3>
-      <div className={styles.field}>
-        <label htmlFor="firstName">First name</label>
-        <input id="firstName" name="firstName" type="text" autoComplete="given-name" required />
+    <form onSubmit={handleSubmit} noValidate>
+      <div className={styles.formGrid}>
+        <label>
+          First name
+          <input
+            name="firstName"
+            autoComplete="given-name"
+            aria-required="true"
+          />
+        </label>
+        <label>
+          Last name
+          <input
+            name="lastName"
+            autoComplete="family-name"
+            aria-required="true"
+          />
+        </label>
+        <label className={styles.fullWidth}>
+          Ontario Tech email
+          <input
+            type="email"
+            name="email"
+            autoComplete="email"
+            placeholder="first.last@ontariotechu.net"
+            aria-required="true"
+          />
+        </label>
+        <label className={styles.fullWidth}>
+          Year of study
+          <YearSelect />
+        </label>
+        <label className={styles.fullWidth}>
+          Suggestions for future events (optional)
+          <textarea
+            name="suggestions"
+            rows={4}
+            maxLength={2000}
+            placeholder="Anything you'd love the club to run next..."
+          />
+        </label>
       </div>
-      <div className={styles.field}>
-        <label htmlFor="lastName">Last name</label>
-        <input id="lastName" name="lastName" type="text" autoComplete="family-name" required />
-      </div>
-      <div className={`${styles.field} ${styles.fieldWide}`}>
-        <label htmlFor="email">Ontario Tech email</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          placeholder="name@ontariotechu.net"
-          required
-        />
-      </div>
-      <div className={`${styles.field} ${styles.fieldWide}`}>
-        <label htmlFor="year">Year of study</label>
-        <select id="year" name="year" defaultValue="" required>
-          <option value="" disabled>
-            Select year
-          </option>
-          {YEARS.map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className={`${styles.field} ${styles.fieldWide}`}>
-        <label htmlFor="questions">Questions (optional)</label>
-        <textarea id="questions" name="questions" />
-      </div>
-      {error ? <p className={styles.formError}>{error}</p> : null}
-      <div className={styles.formActions}>
-        <button type="submit" className={styles.cta}>
-          Sign up
-        </button>
-      </div>
+      {error ? (
+        <p className={styles.formError} role="alert">
+          {error}
+        </p>
+      ) : null}
+      <button type="submit" className={styles.submit}>
+        Sign up <span aria-hidden="true">→</span>
+      </button>
     </form>
   );
 }

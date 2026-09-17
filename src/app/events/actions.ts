@@ -106,7 +106,11 @@ export async function getLoggedInRsvpState(eventId: string): Promise<{ rsvped: b
   return { rsvped: Boolean(guestId) };
 }
 
-export async function toggleRsvp(eventId: string, wantRsvp: boolean): Promise<RsvpResult | void> {
+export async function toggleRsvp(
+  eventId: string,
+  wantRsvp: boolean,
+  suggestions = '',
+): Promise<RsvpResult | void> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -118,14 +122,17 @@ export async function toggleRsvp(eventId: string, wantRsvp: boolean): Promise<Rs
 
   if (wantRsvp) {
     const admin = createAdminClient();
+    const rsvpRow = {
+      event_id: eventId,
+      user_id: user.id,
+      suggestions: suggestions.trim() || null,
+    };
     const email = user.email ? normalizeEmail(user.email) : '';
 
     if (email) {
       const existingGuestId = await findConfirmedGuest(eventId, email);
       if (existingGuestId) {
-        const { error: upgradeError } = await supabase
-          .from('event_rsvps')
-          .insert({ event_id: eventId, user_id: user.id });
+        const { error: upgradeError } = await supabase.from('event_rsvps').insert(rsvpRow);
         if (upgradeError && upgradeError.code !== '23505') {
           throw new Error(upgradeError.message || 'Could not RSVP — try again.');
         }
@@ -141,9 +148,7 @@ export async function toggleRsvp(eventId: string, wantRsvp: boolean): Promise<Rs
         .eq('confirmed', false);
     }
 
-    const { error } = await supabase
-      .from('event_rsvps')
-      .insert({ event_id: eventId, user_id: user.id });
+    const { error } = await supabase.from('event_rsvps').insert(rsvpRow);
 
     if (error) {
       if (error.code === '23505') {
@@ -234,10 +239,12 @@ export async function registerGuest(
   name: string,
   studentId: string,
   email: string,
+  suggestions = '',
 ): Promise<RsvpResult> {
   const trimmedName = name.trim();
   const trimmedStudentId = studentId.trim();
   const trimmedEmail = normalizeEmail(email);
+  const trimmedSuggestions = suggestions.trim() || null;
 
   if (!trimmedName || !trimmedStudentId || !trimmedEmail) {
     throw new Error('Name, student ID, and email are required.');
@@ -257,6 +264,11 @@ export async function registerGuest(
 
   const pendingId = await findPendingGuest(eventId, trimmedEmail);
   if (pendingId) {
+    // Re-submitting before confirming keeps the latest suggestions.
+    await admin
+      .from('event_guests')
+      .update({ suggestions: trimmedSuggestions })
+      .eq('id', pendingId);
     const mail = await sendGuestVerifyEmail({
       guestId: pendingId,
       eventId,
@@ -281,6 +293,7 @@ export async function registerGuest(
       name: trimmedName,
       student_id: trimmedStudentId,
       email: trimmedEmail,
+      suggestions: trimmedSuggestions,
       confirmed: false,
     })
     .select('id')
