@@ -1,4 +1,4 @@
-import type { ClubEvent, NewsItem } from '@/types/landing';
+import type { ClubEvent, HackHiveClip } from '@/types/landing';
 
 export { getPastEvents, getUpcomingEvents } from '@/lib/eventSchedule';
 
@@ -37,7 +37,7 @@ export const events: ClubEvent[] = [
     id: 'git-workshop',
     title: 'Git, but for real',
     description:
-      'Branches, rebase vs merge, and how not to lose a weekend to a bad pull. Optional — this one sits past the landing-page cap of three.',
+      'Branches, rebase vs merge, and how not to lose a weekend to a bad pull.',
     date: '2026-10-22',
     time: '6:00 PM – 7:30 PM',
     location: 'SIRC 3110',
@@ -55,14 +55,17 @@ export const events: ClubEvent[] = [
   },
 ];
 
-export const news: NewsItem[] = [
-  {
-    id: 'workshop-note',
-    title: 'LeetCode & Algorithm Workshop',
-    body: 'Join us for our LeetCode Workshop, an essential session for students preparing for technical job interviews. Led by Dr. Ali, the workshop will introduce key problem-solving strategies and common patterns found in coding interviews. Students will gain practical experience by walking through real LeetCode-style questions and learning effective approaches to algorithms. The event is open to all CS and Software Engineering students, with walk-ins encouraged. Join us to strengthen your skills, build confidence, and prepare for future opportunities in tech.',
-    postedOn: '2025-11-13',
-  },
+// Chapter 3 film strip — HackHive event photos (looped by HackHiveStripCanvas)
+export const hackhiveSneakPeekClips: HackHiveClip[] = [
+  { id: 'pitch-mic', src: '/hackhive/filmstrip/pitch-mic.jpg', type: 'image' },
+  { id: 'lecture-row', src: '/hackhive/filmstrip/lecture-row.jpg', type: 'image' },
+  { id: 'checkin-desk', src: '/hackhive/filmstrip/checkin-desk.jpg', type: 'image' },
+  { id: 'hallway', src: '/hackhive/filmstrip/hallway.jpg', type: 'image' },
+  { id: 'demo-laptop', src: '/hackhive/filmstrip/demo-laptop.jpg', type: 'image' },
+  { id: 'study-pair', src: '/hackhive/filmstrip/study-pair.jpg', type: 'image' },
+  { id: 'sci-hallway', src: '/hackhive/filmstrip/sci-hallway.jpg', type: 'image' },
+  { id: 'lecture-focus', src: '/hackhive/filmstrip/lecture-focus.jpg', type: 'image' },
+  { id: 'noodles', src: '/hackhive/filmstrip/noodles.jpg', type: 'image' },
+  { id: 'pastries', src: '/hackhive/filmstrip/pastries.jpg', type: 'image' },
+  { id: 'lecture-record', src: '/hackhive/filmstrip/lecture-record.jpg', type: 'image' },
 ];
-
-// Last year's recap (unlisted YouTube). Plays on the homepage when scrolled into view.
-export const recapYoutubeId = 'jjOVJi_N3zg';

@@ -45,3 +45,6 @@ pnpm-debug.log*
 *.sw?
 
 scripts/
+
+# Local hero recap — too large for git. Host in Supabase Storage.
+public/hero/clips/*.mp4
