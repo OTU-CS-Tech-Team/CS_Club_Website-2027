@@ -5,7 +5,7 @@ import { mintCheckinToken } from './actions';
 
 const REFRESH_MS = 5 * 60 * 1000; // matches checkin_tokens.expires_at (5 min)
 
-export default function PassportQr({ initialQrDataUrl }: { initialQrDataUrl: string }) {
+export default function PassportQr({ initialQrDataUrl, className }: { initialQrDataUrl: string; className?: string }) {
   const [qrDataUrl, setQrDataUrl] = useState(initialQrDataUrl);
 
   useEffect(() => {
@@ -18,10 +18,7 @@ export default function PassportQr({ initialQrDataUrl }: { initialQrDataUrl: str
   }, []);
 
   return (
-    <div className="checkin-qr">
-      <p>Show this to an exec to check in at an event — it refreshes every 5 minutes.</p>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={qrDataUrl} alt="Your check-in QR code" width={200} height={200} />
-    </div>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img className={className} src={qrDataUrl} alt="Your check-in QR code. Show this to an exec to check in — it refreshes every 5 minutes." width={200} height={200} />
   );
 }
