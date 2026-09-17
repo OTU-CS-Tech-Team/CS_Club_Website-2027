@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { ALLOWED_EMAIL_DOMAIN, EMAIL_DOMAIN_MESSAGE, isAllowedAuthEmail } from '@/lib/authEmail';
+import { subscribeGuest, subscribeLoggedIn } from '@/app/mailing-list/actions';
 
 type Mode = 'signin' | 'signup';
 
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState('');
+  const [alerts, setAlerts] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // The OAuth callback bounces back here with ?error=... when sign-in is refused.
@@ -60,16 +62,38 @@ export default function LoginPage() {
           emailRedirectTo: `${window.location.origin}/auth/confirm?next=/passport`,
         },
       });
-      setLoading(false);
       if (error) {
+        setLoading(false);
         setStatus(error.message);
         return;
       }
+
+      // Opt-in reuses the mailing list's own double opt-in: an account with a
+      // session owns its address already, otherwise it needs the confirm email.
+      let alertsFailed = false;
+      if (alerts) {
+        try {
+          if (data.session) await subscribeLoggedIn();
+          else await subscribeGuest(email.split('@')[0], email);
+        } catch {
+          alertsFailed = true;
+        }
+      }
+      setLoading(false);
+
       if (data.session) {
         router.push(nextPath());
         return;
       }
-      setStatus('Check your inbox to confirm your account, then sign in.');
+      setStatus(
+        [
+          'Check your inbox to confirm your account, then sign in.',
+          alerts && !alertsFailed ? 'A second email confirms your event alerts.' : '',
+          alertsFailed ? 'We could not sign you up for alerts — you can join from the home page.' : '',
+        ]
+          .filter(Boolean)
+          .join(' '),
+      );
       setMode('signin');
       return;
     }
@@ -122,9 +146,20 @@ export default function LoginPage() {
             minLength={6}
           />
         </label>
+        {mode === 'signup' ? (
+          <label className="auth-check">
+            <input
+              type="checkbox"
+              checked={alerts}
+              onChange={(event) => setAlerts(event.target.checked)}
+            />
+            Email me about upcoming events
+          </label>
+        ) : null}
         <button type="submit" disabled={loading}>
           {mode === 'signup' ? 'Create account' : 'Sign in'}
         </button>
+        <p className="auth-note">You&apos;ll stay signed in on this device.</p>
       </form>
 
       <button

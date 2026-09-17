@@ -533,3 +533,58 @@
   .backdrop,
   .popup { animation: none; transition: none; }
 }
+
+/* One-time alerts prompt for SSO members — fixed so it does not disturb the
+   card layout, and uses the same gold/pixel language as the passport buttons. */
+.alertsBanner {
+  position: fixed;
+  z-index: 60;
+  left: 50%;
+  bottom: clamp(0.75rem, 3vw, 1.5rem);
+  transform: translateX(-50%);
+  display: grid;
+  gap: 0.6rem;
+  justify-items: center;
+  width: min(24rem, calc(100% - 1.5rem));
+  padding: 0.85rem 1rem;
+  border: 2px solid #1a1225;
+  background: #f4b942;
+  box-shadow: 3px 3px 4.7px #000;
+  color: #000;
+  font-family: var(--font-pixel), 'Courier New', monospace;
+  font-size: 10px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.alertsBanner p {
+  margin: 0;
+}
+
+.alertsBannerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.alertsBannerActions button {
+  min-height: 30px;
+  padding: 0 0.7rem;
+  border: 2px solid #1a1225;
+  background: #fff;
+  box-shadow: 2px 2px 3px #0008;
+  color: #000;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+}
+
+.alertsBannerActions button:hover:not(:disabled) {
+  transform: translate(-1px, -2px);
+}
+
+.alertsBannerActions button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}

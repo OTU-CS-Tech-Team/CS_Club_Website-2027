@@ -1,8 +1,10 @@
 import { redirect } from 'next/navigation';
 import { Press_Start_2P, VT323 } from 'next/font/google';
 import { createClient } from '@/lib/supabase/server';
+import { getMailingListStatus } from '@/app/mailing-list/actions';
 import { mintCheckinToken } from './actions';
 import Passport from './Passport';
+import AlertsBanner from './AlertsBanner';
 
 const pixel = Press_Start_2P({ weight: '400', subsets: ['latin'], variable: '--font-pixel', display: 'swap' });
 const terminal = VT323({ weight: '400', subsets: ['latin'], variable: '--font-terminal', display: 'swap' });
@@ -37,8 +39,20 @@ export default async function PassportPage() {
     mintCheckinToken(),
   ]);
 
+  // Google members never saw the alerts checkbox on the signup form, so offer it here.
+  const signedInWithGoogle = (user.app_metadata?.providers as string[] | undefined)?.includes('google') ?? false;
+  let askAboutAlerts = false;
+  if (signedInWithGoogle) {
+    try {
+      askAboutAlerts = !(await getMailingListStatus()).subscribed;
+    } catch {
+      askAboutAlerts = false;
+    }
+  }
+
   return (
     <div className={`${pixel.variable} ${terminal.variable}`}>
+      {askAboutAlerts ? <AlertsBanner /> : null}
       <Passport
         name={shortName(profile?.full_name, profile?.email ?? user.email ?? 'member')}
         stamps={stamps ?? []}

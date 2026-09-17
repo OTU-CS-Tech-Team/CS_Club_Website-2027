@@ -109,6 +109,24 @@ main {
   font-size: 0.85rem;
 }
 
+.auth-check {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem !important;
+}
+
+.auth-check input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #111;
+}
+
+.auth-note {
+  margin: 0;
+  color: #666;
+  font-size: 0.8rem;
+}
+
 .auth-form {
   display: flex;
   flex-direction: column;
