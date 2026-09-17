@@ -1,6 +1,6 @@
 "use client";
 
-import { useHoverSound } from "@/hooks/useHoverSound";
+import { useClickSound } from "@/hooks/useClickSound";
 
 type TeamMemberProps = {
   image: string;
@@ -10,10 +10,10 @@ type TeamMemberProps = {
 };
 
 export default function TeamMemberCard(props: TeamMemberProps) {
-  const playHover = useHoverSound();
+  const playClick = useClickSound();
 
   return (
-    <div className="teamCard" onMouseEnter={playHover}>
+    <div className="teamCard" onClick={playClick}>
       <img src= {props.image} alt= {`Photo of ${props.name}`}/>
       <h3>{props.name}</h3>
       <span>{props.role}</span>

@@ -2,7 +2,7 @@
 
 import { useCallback, useRef } from "react";
 
-export function useHoverSound(src: string = "/sounds/hover_sound6.mp3") {
+export function useClickSound(src: string = "/sounds/hover_sound6.mp3") {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   return useCallback(() => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useHoverSound } from "@/hooks/useHoverSound";
+import { useClickSound } from "@/hooks/useClickSound";
 
 type FilterProps = {
   departments: { id: string; name: string }[];
@@ -9,7 +9,7 @@ type FilterProps = {
 };
 
 export default function DepartmentFilter({ departments, selected, onChange }: FilterProps) {
-  const playHover = useHoverSound();
+  const playClick = useClickSound();
   const allIds = departments.map((d) => d.id);
   const isAll = selected.length === allIds.length;
 
@@ -18,8 +18,10 @@ export default function DepartmentFilter({ departments, selected, onChange }: Fi
       <button
         type="button"
         className={`dept-pill ${isAll ? "active" : ""}`}
-        onClick={() => onChange(allIds)}
-        onMouseEnter={playHover}
+        onClick={() => {
+          playClick();
+          onChange(allIds);
+        }}
       >
         All
       </button>
@@ -28,8 +30,10 @@ export default function DepartmentFilter({ departments, selected, onChange }: Fi
           key={d.id}
           type="button"
           className={`dept-pill ${!isAll && selected.length === 1 && selected[0] === d.id ? "active" : ""}`}
-          onClick={() => onChange([d.id])}
-          onMouseEnter={playHover}
+          onClick={() => {
+            playClick();
+            onChange([d.id]);
+          }}
         >
           {d.name}
         </button>
