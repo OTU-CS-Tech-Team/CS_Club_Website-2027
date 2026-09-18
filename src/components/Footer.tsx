@@ -21,7 +21,7 @@ const columns = [
     title: 'events',
     links: [
       { href: '/events', label: 'upcoming events' },
-      { href: '/hackhive', label: 'hackhive museum' },
+      { href: '/hackhive', label: 'hackhive' },
     ],
   },
   {

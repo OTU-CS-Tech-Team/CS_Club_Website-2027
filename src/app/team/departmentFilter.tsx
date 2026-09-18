@@ -1,6 +1,6 @@
 "use client";
 
-import { useClickSound } from "@/hooks/useClickSound";
+import { useEffect, useRef, useState } from "react";
 
 type FilterProps = {
   departments: { id: string; name: string }[];
@@ -9,35 +9,85 @@ type FilterProps = {
 };
 
 export default function DepartmentFilter({ departments, selected, onChange }: FilterProps) {
-  const playClick = useClickSound();
-  const allIds = departments.map((d) => d.id);
-  const isAll = selected.length === allIds.length;
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filtered = departments.filter((d) =>
+    d.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  function toggle(id: string) {
+    if (selected.includes(id)) {
+      onChange(selected.filter((s) => s !== id));
+    } else {
+      onChange([...selected, id]);
+    }
+  }
+
+  function toggleOnly(id: string) {
+    const isOnly = selected.length === 1 && selected[0] === id;
+    if (isOnly) {
+      onChange(departments.map((d) => d.id));
+    } else {
+      onChange([id]);
+    }
+  }
 
   return (
-    <div className="dept-filter-pills">
-      <button
-        type="button"
-        className={`dept-pill ${isAll ? "active" : ""}`}
-        onClick={() => {
-          playClick();
-          onChange(allIds);
-        }}
-      >
-        All
+    <div className="dept-filter" ref={wrapperRef}>
+      <button className="dept-filter-toggle" onClick={() => setOpen((o) => !o)} type="button">
+        Filter Departments
+        {selected.length < departments.length ? ` (${selected.length})` : ""}
+        <span className="dept-filter-arrow">{open ? "▲" : "▼"}</span>
       </button>
-      {departments.map((d) => (
-        <button
-          key={d.id}
-          type="button"
-          className={`dept-pill ${!isAll && selected.length === 1 && selected[0] === d.id ? "active" : ""}`}
-          onClick={() => {
-            playClick();
-            onChange([d.id]);
-          }}
-        >
-          {d.name}
-        </button>
-      ))}
+
+      {open && (
+        <div className="dept-filter-panel">
+          <input
+            type="text"
+            className="dept-filter-search"
+            placeholder="Search departments..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <div className="dept-filter-list">
+            {filtered.length > 0 && (
+              <div className="dept-filter-header">
+                <span />
+                <span className="dept-filter-only-label">Only</span>
+              </div>
+            )}
+            {filtered.map((d) => (
+              <div key={d.id} className="dept-filter-row">
+                <label className="dept-filter-item">
+                  <input type="checkbox" checked={selected.includes(d.id)} onChange={() => toggle(d.id)} />
+                  {d.name}
+                </label>
+                <label className="dept-filter-only" title={`Show only ${d.name}`}>
+                  <input
+                    type="checkbox"
+                    checked={selected.length === 1 && selected[0] === d.id}
+                    onChange={() => toggleOnly(d.id)}
+                    aria-label={`Show only ${d.name}`}
+                  />
+                </label>
+              </div>
+            ))}
+            {filtered.length === 0 && <div className="dept-filter-empty">No matches</div>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

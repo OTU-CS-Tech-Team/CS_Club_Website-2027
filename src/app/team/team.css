@@ -47,8 +47,8 @@
 }
 
 .page h2 {
-  font-size: 1.9rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 600;
   margin: 0.5rem 0;
   color: var(--team-navy);
 }
@@ -227,7 +227,7 @@
 }
 
 .heading-v-wrapper h2 {
-  font-size: 1.5rem;
+  font-size: 1.15rem;
   font-weight: 700;
   margin: 0.15rem 0;
   color: var(--team-navy);
@@ -606,12 +606,18 @@
 
 .side-by-side-row .teamCard h3,
 .small-card-wrapper .teamCard h3 {
-  font-size: 1rem;
+  font-size: 0.78rem;
 }
 
 .side-by-side-row .teamCard span,
 .small-card-wrapper .teamCard span {
-  font-size: 0.82rem;
+  font-size: 0.65rem;
+}
+
+/* Image Rotation Fix */
+
+.rameen-card img:first-of-type {
+  transform: rotate(90deg);
 }
 
 /* Base Card Avatar Image */
@@ -629,14 +635,14 @@
 /* Member Name & Role */
 
 .teamCard h3 {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   margin: 0 0 0.2rem 0;
   color: var(--team-navy);
 }
 
 .teamCard span {
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   color: var(--team-purple);
   margin-bottom: 0.5rem;
 }
@@ -668,54 +674,130 @@
   display: none !important;
 }
 
-/* Pill Filter Bar */
+/* Dropdown Filter Bar */
 
 .top-bar {
   display: flex;
-  justify-content: center;
-  margin-bottom: 2.5rem;
+  justify-content: flex-start;
+  margin-bottom: 1rem;
 }
 
-.dept-filter-pills {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem;
+.dept-filter {
+  position: relative;
+  display: inline-block;
   text-align: left;
-  background: #fff;
-  border: 1px solid var(--team-border);
-  border-radius: 999px;
-  padding: 0.5rem;
-  box-shadow: 0 2px 8px var(--team-shadow);
 }
 
-.dept-pill {
-  font-size: 0.9rem;
-  font-weight: 600;
-  padding: 0.55rem 1.1rem;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  background: transparent;
+.dept-filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--team-border);
+  border-radius: 8px;
+  background: #fff;
   color: var(--team-navy);
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.dept-pill:hover {
+.dept-filter-toggle:hover {
   background: var(--team-lavender);
   border-color: var(--team-purple);
 }
 
-.dept-pill.active {
-  background: var(--team-navy);
-  border-color: var(--team-navy);
-  color: #fff;
+.dept-filter-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 220px;
+  background: #fff;
+  border: 1px solid var(--team-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px var(--team-shadow-hover);
+  padding: 0.5rem;
+  z-index: 20;
 }
 
-@media (max-width: 650px) {
-  .dept-filter-pills {
-    border-radius: 20px;
-  }
+.dept-filter-search {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--team-border);
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  box-sizing: border-box;
+}
+
+.dept-filter-search:focus {
+  outline: 2px solid var(--team-blue);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+
+.dept-filter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: 200px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.dept-filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0 0.1rem 0.2rem;
+}
+
+.dept-filter-only-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--team-purple);
+}
+
+.dept-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dept-filter-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.dept-filter-item:hover {
+  color: var(--team-purple);
+}
+
+.dept-filter-item input[type="checkbox"],
+.dept-filter-only input[type="checkbox"] {
+  accent-color: var(--team-blue);
+  flex-shrink: 0;
+}
+
+.dept-filter-only {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.dept-filter-empty {
+  font-size: 0.8rem;
+  color: var(--team-purple);
+  padding: 0.25rem;
 }
 
 /* Responsive breakpoint */
@@ -949,12 +1031,12 @@
 
 .side-by-side-row .teamCard h3,
 .small-card-wrapper .teamCard h3 {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
 }
 
 .side-by-side-row .teamCard span,
 .small-card-wrapper .teamCard span {
-  font-size: 0.9rem;
+  font-size: 0.78rem;
 }
 
 /* Keep centered vertical segments on the same exact center pixel. */
