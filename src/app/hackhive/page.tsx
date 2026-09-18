@@ -1,15 +1,10 @@
-import HackHiveMuseum from '@/components/museum/HackHiveMuseum';
-import { getArchiveCollections } from '@/data/hackhive';
+import HackHiveStory from '@/components/hackhive/HackHiveStory';
 
 export const metadata = {
-  title: 'HackHive Archive',
-  description: 'Museum archive of HackHive projects, year by year.',
+  title: 'HackHive',
+  description: 'The story, impact, and project archive of Ontario Tech\'s HackHive.',
 };
 
 export default function HackHivePage() {
-  return (
-    <div>
-      <HackHiveMuseum collections={getArchiveCollections()} />
-    </div>
-  );
+  return <HackHiveStory />;
 }

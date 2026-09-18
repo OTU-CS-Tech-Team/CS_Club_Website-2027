@@ -15,6 +15,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 type EventModalProps = {
   event: ClubEvent;
   onClose: () => void;
+  playClickSound?: boolean;
 };
 
 function formatDate(iso: string) {
@@ -26,7 +27,7 @@ function formatDate(iso: string) {
   }).format(new Date(`${iso}T12:00:00`));
 }
 
-export default function EventModal({ event, onClose }: EventModalProps) {
+export default function EventModal({ event, onClose, playClickSound = false }: EventModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
 
@@ -115,14 +116,11 @@ export default function EventModal({ event, onClose }: EventModalProps) {
           </div>
         ) : null}
         {isEventUpcoming(event) ? (
-          <div className={styles.rsvp}>
-            <p className={formStyles.applyEyebrow}>RSVP</p>
-            {UUID_PATTERN.test(event.id) ? (
-              <DbEventRsvp eventId={event.id} />
-            ) : (
-              <EventSignupForm eventTitle={event.title} />
-            )}
-          </div>
+          UUID_PATTERN.test(event.id) ? (
+            <DbEventRsvp eventId={event.id} playClickSound={playClickSound} />
+          ) : (
+            <EventSignupForm eventTitle={event.title} />
+          )
         ) : null}
       </div>
     </div>
