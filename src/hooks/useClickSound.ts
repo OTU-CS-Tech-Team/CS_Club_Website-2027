@@ -10,6 +10,6 @@ export function useClickSound(src: string = "/sounds/hover_sound6.mp3") {
       audioRef.current = new Audio(src);
     }
     audioRef.current.currentTime = 0;
-    audioRef.current.play().catch(() => {});
+    audioRef.current.play().catch((err) => console.warn('click sound blocked:', err));
   }, [src]);
 }

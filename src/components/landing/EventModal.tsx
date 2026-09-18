@@ -116,11 +116,14 @@ export default function EventModal({ event, onClose, playClickSound = false }: E
           </div>
         ) : null}
         {isEventUpcoming(event) ? (
-          UUID_PATTERN.test(event.id) ? (
-            <DbEventRsvp eventId={event.id} playClickSound={playClickSound} />
-          ) : (
-            <EventSignupForm eventTitle={event.title} />
-          )
+          <div className={styles.rsvp}>
+            <p className={formStyles.applyEyebrow}>RSVP</p>
+            {UUID_PATTERN.test(event.id) ? (
+              <DbEventRsvp eventId={event.id} playClickSound={playClickSound} />
+            ) : (
+              <EventSignupForm eventTitle={event.title} />
+            )}
+          </div>
         ) : null}
       </div>
     </div>
