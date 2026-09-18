@@ -4,7 +4,8 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { toggleRsvp, registerGuest, getLoggedInRsvpState } from '@/app/events/actions';
 import { useClickSound } from '@/hooks/useClickSound';
-import styles from './landing.module.css';
+// Styled to match the general member application form, not the landing forms.
+import styles from '../careers/careers.module.css';
 
 // Logged-in: one RSVP button (name / email / student ID come from the account).
 // Signed-out: collect those three fields as a guest registration + confirmation email.
