@@ -164,7 +164,7 @@ export default function HackHiveArchivePostcard({
         <p className={styles.archiveChapterIndex}>
           <span>04</span>
           <span className={styles.archiveIndexRule} aria-hidden="true" />
-          <span>HackHive museum</span>
+          <span>HackHive</span>
         </p>
         <div className={styles.archiveCopy}>
           <h2 id="archive-heading" className={styles.archiveHeadline}>
@@ -173,8 +173,8 @@ export default function HackHiveArchivePostcard({
           <p className={styles.archiveSubline}>
             Peek into the history of HackHive &apos;26 &apos;25 &apos;24
           </p>
-          <Link href="/hackhive" className={styles.archiveCta}>
-            Explore HackHive museum <span aria-hidden="true">→</span>
+          <Link href="/hackhive/archive" className={styles.archiveCta}>
+            Explore HackHive <span aria-hidden="true">→</span>
           </Link>
         </div>
 

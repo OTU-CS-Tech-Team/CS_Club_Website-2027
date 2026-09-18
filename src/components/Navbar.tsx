@@ -49,8 +49,8 @@ const sections: NavSection[] = [
       },
       {
         href: '/hackhive',
-        label: 'HackHive Museum',
-        description: 'Archive of HackHive projects, year by year',
+        label: 'HackHive',
+        description: 'The story, impact, and project archive',
       },
     ],
   },
