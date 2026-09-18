@@ -8,6 +8,7 @@ import { validateEventForm } from '@/lib/eventFormValidation';
 import {
   deleteEvent,
   deleteJob,
+  removeAttendee,
   saveEvent,
   saveJob,
   sendNewsletter,
@@ -37,7 +38,7 @@ function torontoDateValue(value?: string | null) {
   return `${get('year')}-${get('month')}-${get('day')}`;
 }
 
-const ATTENDEE_CSV_HEADER = ['Event', 'Date', 'Location', 'Name', 'Email', 'Student ID', 'Year of study', 'Type', 'Status', 'Profile points'];
+const ATTENDEE_CSV_HEADER = ['Event', 'Date', 'Location', 'Name', 'Email', 'Student ID', 'Year of study', 'Type', 'Status', 'Profile points', 'Suggestions'];
 
 function attendeeCsvRow(attendee: EventAttendee, event: ManagedEvent | undefined): string[] {
   return [
@@ -51,6 +52,7 @@ function attendeeCsvRow(attendee: EventAttendee, event: ManagedEvent | undefined
     attendee.kind,
     attendee.status,
     attendee.points === null ? '' : String(attendee.points),
+    attendee.suggestions ?? '',
   ];
 }
 
@@ -515,6 +517,7 @@ function RsvpDialog({
   loadError: string;
   onClose: () => void;
 }) {
+  const router = useRouter();
   useEffect(() => {
     const closeOnEscape = (keyboardEvent: KeyboardEvent) => {
       if (keyboardEvent.key === 'Escape') onClose();
@@ -526,10 +529,22 @@ function RsvpDialog({
   const confirmed = attendees.filter((attendee) => attendee.status !== 'pending').length;
   const attended = attendees.filter((attendee) => attendee.status === 'attended').length;
   const pending = attendees.filter((attendee) => attendee.status === 'pending').length;
+  const [removing, setRemoving] = useState('');
+  const [removeError, setRemoveError] = useState('');
   const statusOrder = { attended: 0, confirmed: 1, pending: 2 } as const;
   const sortedAttendees = [...attendees].sort((first, second) =>
     statusOrder[first.status] - statusOrder[second.status] || first.name.localeCompare(second.name),
   );
+
+  async function handleRemove(attendee: EventAttendee) {
+    if (!window.confirm(`Remove ${attendee.name} from ${event.title}?`)) return;
+    setRemoveError('');
+    setRemoving(attendee.id);
+    const result = await removeAttendee(attendee.id);
+    if (!result.ok) setRemoveError(result.message);
+    else router.refresh();
+    setRemoving('');
+  }
 
   return (
     <div className={styles.dialogBackdrop} role="presentation" onMouseDown={(mouseEvent) => { if (mouseEvent.target === mouseEvent.currentTarget) onClose(); }}>
@@ -548,6 +563,7 @@ function RsvpDialog({
               <div><strong>{attended}</strong><span>Attended</span></div>
               <div><strong>{pending}</strong><span>Awaiting confirmation</span></div>
             </div>
+            {removeError ? <p className={styles.error} role="alert">{removeError}</p> : null}
             {sortedAttendees.length ? (
               <button
                 className={styles.textButton}
@@ -565,10 +581,21 @@ function RsvpDialog({
                       <strong>{attendee.name}</strong>
                       <span>{attendee.email || 'Email unavailable'}</span>
                       <small>{attendee.kind === 'member' ? ['Member', attendee.year_of_study, `${attendee.points ?? 0} pts`].filter(Boolean).join(' · ') : ['Guest', attendee.student_id].filter(Boolean).join(' · ')}</small>
+                      {attendee.suggestions ? <small className={styles.rsvpSuggestion}>“{attendee.suggestions}”</small> : null}
                     </div>
-                    <span className={attendee.status === 'attended' ? styles.rsvpAttended : attendee.status === 'pending' ? styles.rsvpPending : styles.rsvpConfirmed}>
-                      {attendee.status === 'attended' ? 'Attended' : attendee.status === 'pending' ? 'Awaiting confirmation' : 'RSVP’d'}
-                    </span>
+                    <div className={styles.rsvpRowActions}>
+                      <span className={attendee.status === 'attended' ? styles.rsvpAttended : attendee.status === 'pending' ? styles.rsvpPending : styles.rsvpConfirmed}>
+                        {attendee.status === 'attended' ? 'Attended' : attendee.status === 'pending' ? 'Awaiting confirmation' : 'RSVP’d'}
+                      </span>
+                      <button
+                        className={styles.textButton}
+                        type="button"
+                        onClick={() => handleRemove(attendee)}
+                        disabled={Boolean(removing)}
+                      >
+                        {removing === attendee.id ? 'Removing…' : 'Remove'}
+                      </button>
+                    </div>
                   </article>
                 ))}
               </div>
@@ -581,44 +608,67 @@ function RsvpDialog({
 }
 
 function EventMetrics({ events, attendees, loadError }: { events: ManagedEvent[]; attendees: EventAttendee[]; loadError: string }) {
+  // 'all' or a single event id — scopes every tile, the list, and the export.
+  const [scope, setScope] = useState('all');
+
   if (loadError) return <section className={styles.collection}><p className={styles.error} role="alert">{loadError}</p></section>;
 
-  const attended = attendees.filter((attendee) => attendee.status === 'attended');
-  const totalRsvps = attendees.filter((attendee) => attendee.status !== 'pending').length;
-  const showRate = totalRsvps ? Math.round((attended.length / totalRsvps) * 100) : 0;
+  const scopedEvents = scope === 'all' ? events : events.filter((event) => event.id === scope);
+  const scoped = scope === 'all' ? attendees : attendees.filter((attendee) => attendee.event_id === scope);
+  const attended = scoped.filter((attendee) => attendee.status === 'attended');
+  const rsvps = scoped.filter((attendee) => attendee.status !== 'pending');
+  const showRate = rsvps.length ? Math.round((attended.length / rsvps.length) * 100) : 0;
   const uniqueAttendees = new Set(attended.map((attendee) => attendee.email || attendee.id)).size;
+  const suggestions = scoped.filter((attendee) => attendee.suggestions);
 
   const attendedByEvent = new Map<string, number>();
   for (const attendee of attended) attendedByEvent.set(attendee.event_id, (attendedByEvent.get(attendee.event_id) ?? 0) + 1);
-  const topEvents = events
+  const rankedEvents = scopedEvents
     .map((event) => ({ event, count: attendedByEvent.get(event.id) ?? 0 }))
     .filter((row) => row.count > 0)
     .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
+    .slice(0, scope === 'all' ? 5 : 1);
   const eventsById = new Map(events.map((event) => [event.id, event]));
+  const scopeLabel = scope === 'all' ? 'all events' : eventsById.get(scope)?.title ?? 'this event';
 
   return (
     <section className={styles.collection} aria-labelledby="metrics-heading">
       <div className={styles.collectionHead}>
-        <div><p className={styles.kicker}>Attendance overview</p><h2 id="metrics-heading">Metrics across all events</h2></div>
-        {attendees.length ? (
+        <div><p className={styles.kicker}>Attendance overview</p><h2 id="metrics-heading">Metrics for {scopeLabel}</h2><span>{rsvps.length} RSVP(s)</span></div>
+        {scoped.length ? (
           <button
             className={styles.textButton}
             type="button"
-            onClick={() => downloadCsv('attendance-all-events.csv', ATTENDEE_CSV_HEADER, attendees.map((attendee) => attendeeCsvRow(attendee, eventsById.get(attendee.event_id))))}
+            onClick={() => downloadCsv(
+              csvFileName(scope === 'all' ? 'attendance-all-events' : `${scopeLabel}-attendance`),
+              ATTENDEE_CSV_HEADER,
+              scoped.map((attendee) => attendeeCsvRow(attendee, eventsById.get(attendee.event_id))),
+            )}
           >
-            Export all CSV
+            {scope === 'all' ? 'Export all CSV' : 'Export CSV'}
           </button>
         ) : null}
       </div>
+      <div className={styles.filters}>
+        <div className={styles.filterRow}>
+          <label>
+            <span className={styles.srOnly}>Pull metrics from</span>
+            <select value={scope} onChange={(changeEvent) => setScope(changeEvent.target.value)}>
+              <option value="all">All events ({events.length})</option>
+              {events.map((event) => <option key={event.id} value={event.id}>{event.date} / {event.title}</option>)}
+            </select>
+          </label>
+        </div>
+      </div>
       <div className={styles.rsvpSummary} aria-label="Attendance summary">
-        <div><strong>{attended.length}</strong><span>Total check-ins</span></div>
+        <div><strong>{rsvps.length}</strong><span>RSVPs</span></div>
+        <div><strong>{attended.length}</strong><span>Check-ins</span></div>
         <div><strong>{uniqueAttendees}</strong><span>Unique attendees</span></div>
         <div><strong>{showRate}%</strong><span>Show-up rate</span></div>
       </div>
-      {topEvents.length ? (
-        <div className={styles.scrollList} aria-label="Most-attended events">
-          {topEvents.map(({ event, count }) => (
+      {rankedEvents.length ? (
+        <div className={styles.scrollList} aria-label="Attendance by event">
+          {rankedEvents.map(({ event, count }) => (
             <article className={styles.item} key={event.id}>
               <div className={styles.itemBody}><p className={styles.itemMeta}>{event.date}</p><h3>{event.title}</h3></div>
               <div className={styles.itemControls}><span className={styles.statusLive}>{count} attended</span></div>
@@ -626,6 +676,18 @@ function EventMetrics({ events, attendees, loadError }: { events: ManagedEvent[]
           ))}
         </div>
       ) : <p className={styles.empty}>No check-ins recorded yet.</p>}
+      {suggestions.length ? (
+        <div className={styles.scrollList} aria-label="Event suggestions">
+          {suggestions.map((attendee) => (
+            <article className={styles.item} key={`suggestion-${attendee.id}`}>
+              <div className={styles.itemBody}>
+                <p className={styles.itemMeta}>{eventsById.get(attendee.event_id)?.title ?? 'Event'} / {attendee.name}</p>
+                <p>{attendee.suggestions}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -666,7 +728,7 @@ export default function AdminDashboard({
   attendees: EventAttendee[];
   loadErrors: { events: string; jobs: string; attendance: string };
 }) {
-  const [tab, setTab] = useState<'events' | 'jobs' | 'newsletter'>('events');
+  const [tab, setTab] = useState<'events' | 'metrics' | 'jobs' | 'newsletter'>('events');
   const [editingEvent, setEditingEvent] = useState<ManagedEvent | null>(null);
   const [editingJob, setEditingJob] = useState<ClubJob | null>(null);
   const [eventEditorOpen, setEventEditorOpen] = useState(false);
@@ -718,12 +780,15 @@ export default function AdminDashboard({
       </header>
       <nav className={styles.tabs} aria-label="Dashboard sections">
         <button type="button" className={tab === 'events' ? styles.activeTab : ''} onClick={() => setTab('events')}>Events <span>{events.length}</span></button>
+        <button type="button" className={tab === 'metrics' ? styles.activeTab : ''} onClick={() => setTab('metrics')}>Metrics <span>{attendees.filter((attendee) => attendee.status !== 'pending').length}</span></button>
         <button type="button" className={tab === 'jobs' ? styles.activeTab : ''} onClick={() => setTab('jobs')}>Jobs <span>{jobs.length}</span></button>
         <button type="button" className={tab === 'newsletter' ? styles.activeTab : ''} onClick={() => setTab('newsletter')}>Newsletter <span>{subscribers.length}</span></button>
       </nav>
       {notice ? <div className={styles.notification} role={notice.ok ? 'status' : 'alert'}><span className={styles.notificationMark} aria-hidden="true">{notice.ok ? '•' : '!'}</span><span>{notice.message}</span><button type="button" onClick={() => setNotice(null)} aria-label="Dismiss notification">×</button></div> : null}
-      {tab === 'events' ? <main className={styles.workspace}>
+      {tab === 'metrics' ? <main className={styles.workspace}>
         <EventMetrics events={events} attendees={attendees} loadError={loadErrors.attendance} />
+      </main> : null}
+      {tab === 'events' ? <main className={styles.workspace}>
         <section className={styles.collection} aria-labelledby="events-list-heading">
           <div className={styles.collectionHead}>
             <div><p className={styles.kicker}>Calendar inventory</p><h2 id="events-list-heading">All events</h2><span>{filteredEvents.length} shown</span></div>

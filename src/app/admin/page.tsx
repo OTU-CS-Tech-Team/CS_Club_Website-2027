@@ -131,11 +131,11 @@ export default async function AdminPage() {
       const [memberResult, guestResult, stampResult] = await Promise.all([
         adminClient
           .from('event_rsvps')
-          .select('event_id, user_id, year_of_study')
+          .select('event_id, user_id, year_of_study, suggestions')
           .in('event_id', eventIds),
         adminClient
           .from('event_guests')
-          .select('id, event_id, name, email, student_id, confirmed')
+          .select('id, event_id, name, email, student_id, suggestions, confirmed')
           .in('event_id', eventIds),
         // All stamps, not just current events: stamps from deleted events have a null event_id but still count toward passport points.
         adminClient
@@ -156,7 +156,7 @@ export default async function AdminPage() {
         const loadedEventIds = new Set(eventIds);
         const walkIns = stamps
           .filter((stamp) => stamp.event_id && loadedEventIds.has(stamp.event_id) && !rsvpKeys.has(`${stamp.event_id}:${stamp.user_id}`))
-          .map((stamp) => ({ event_id: stamp.event_id as string, user_id: stamp.user_id, year_of_study: null }));
+          .map((stamp) => ({ event_id: stamp.event_id as string, user_id: stamp.user_id, year_of_study: null, suggestions: null }));
         const memberRows = [...(memberResult.data ?? []), ...walkIns];
         const memberIds = Array.from(new Set(memberRows.map((row) => row.user_id)));
         const profileResult = memberIds.length
@@ -187,6 +187,7 @@ export default async function AdminPage() {
                 email: profile?.email ?? '',
                 student_id: null,
                 year_of_study: rsvp.year_of_study,
+                suggestions: rsvp.suggestions ?? null,
                 points: pointsByUser.get(rsvp.user_id) ?? 0,
                 kind: 'member',
                 status: attendedMembers.has(`${rsvp.event_id}:${rsvp.user_id}`) ? 'attended' : 'confirmed',
@@ -199,6 +200,7 @@ export default async function AdminPage() {
               email: guest.email ?? '',
               student_id: guest.student_id ?? null,
               year_of_study: null,
+              suggestions: guest.suggestions ?? null,
               points: null,
               kind: 'guest',
               status: guest.confirmed ? 'confirmed' : 'pending',

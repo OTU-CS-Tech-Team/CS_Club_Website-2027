@@ -166,6 +166,50 @@ export async function deleteEvent(
   return { ok: true, message: 'Event deleted.' };
 }
 
+/**
+ * Remove someone from an event roster. The roster is assembled from three
+ * tables, so the id says which: "guest:<event_guests.id>" for a guest RSVP,
+ * "member:<event_id>:<user_id>" for a signed-in member. A member can appear
+ * via an event_rsvps row, a passport_stamps check-in, or both, so clear both.
+ */
+export async function removeAttendee(attendeeId: string): Promise<AdminActionState> {
+  try {
+    await requireAdmin();
+    const admin = createAdminClient();
+    const [kind, ...rest] = attendeeId.split(':');
+
+    if (kind === 'guest') {
+      const [guestId] = rest;
+      if (!guestId) return initialError('That attendee could not be identified.');
+      const { error } = await admin.from('event_guests').delete().eq('id', guestId);
+      if (error) {
+        console.error('Unable to remove guest RSVP', { code: error.code, message: error.message });
+        return initialError('Unable to remove that RSVP.');
+      }
+    } else if (kind === 'member') {
+      const [eventId, userId] = rest;
+      if (!eventId || !userId) return initialError('That attendee could not be identified.');
+      const [rsvpResult, stampResult] = await Promise.all([
+        admin.from('event_rsvps').delete().eq('event_id', eventId).eq('user_id', userId),
+        admin.from('passport_stamps').delete().eq('event_id', eventId).eq('user_id', userId),
+      ]);
+      const error = rsvpResult.error ?? stampResult.error;
+      if (error) {
+        console.error('Unable to remove member RSVP', { code: error.code, message: error.message });
+        return initialError('Unable to remove that RSVP.');
+      }
+    } else {
+      return initialError('That attendee could not be identified.');
+    }
+  } catch (error) {
+    return initialError(authorizationError(error) ?? 'Unable to remove that RSVP.');
+  }
+
+  revalidatePath('/admin');
+  revalidatePath('/passport');
+  return { ok: true, message: 'Removed from this event.' };
+}
+
 export async function saveJob(
   _previousState: AdminActionState,
   formData: FormData,

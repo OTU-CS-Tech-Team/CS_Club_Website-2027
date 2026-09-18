@@ -33,6 +33,7 @@ export type EventAttendee = {
   email: string;
   student_id: string | null;
   year_of_study: string | null;
+  suggestions: string | null;
   points: number | null;
   kind: 'member' | 'guest';
   status: 'attended' | 'confirmed' | 'pending';
