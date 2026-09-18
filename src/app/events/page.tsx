@@ -1,7 +1,7 @@
 import EventsBoard from '@/components/events/EventsBoard';
 import { getPublishedEvents } from '@/lib/content';
 import { getPastEvents, getUpcomingEvents } from '@/lib/eventSchedule';
-import styles from '@/components/landing/landing.module.css';
+import styles from '@/components/events/events.module.css';
 
 export const metadata = {
   title: 'Events — CS Club',
