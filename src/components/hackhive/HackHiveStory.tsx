@@ -134,7 +134,7 @@ export default function HackHiveStory() {
       }
 
       const startedAt = performance.now();
-      const duration = 1400;
+      const duration = 800;
       const countUp = (now: number) => {
         const progress = Math.min((now - startedAt) / duration, 1);
         const eased = 1 - Math.pow(1 - progress, 4);

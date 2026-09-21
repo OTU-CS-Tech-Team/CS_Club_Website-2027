@@ -290,7 +290,7 @@
 .statPlus {
   color: var(--accent);
   opacity: 0;
-  transition: opacity 550ms cubic-bezier(0.22, 1, 0.36, 1) 900ms;
+  transition: opacity 320ms ease-out 440ms;
 }
 .statsActive .statPlus { opacity: 1; }
 .stats .statStatement dd { max-width: 11rem; font-family: inherit; font-size: clamp(1.35rem, 2.5vw, 2rem); font-weight: 600; letter-spacing: -0.04em; line-height: 1; }
@@ -300,10 +300,10 @@
   opacity: 0;
   transform: translateY(0.55em);
   transition:
-    opacity 550ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 650ms cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 360ms ease-out,
+    transform 400ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-.statStatement dd span + span { transition-delay: 120ms; }
+.statStatement dd span + span { transition-delay: 80ms; }
 .statsActive .statStatement dd span { opacity: 1; transform: translateY(0); }
 
 .gallerySection {
