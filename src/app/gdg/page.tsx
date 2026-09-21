@@ -45,7 +45,7 @@ const timeline = [
 
 export default function GdgPage() {
   return (
-    <div className={`${styles.landing} ${styles.sprintPage}`}>
+    <div className={styles.landing}>
       <div className={styles.shell}>
         <header className={styles.pageHeader}>
           <h1 className={styles.headline}>OTU Project Sprints</h1>

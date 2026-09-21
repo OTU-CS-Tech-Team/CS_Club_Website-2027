@@ -282,11 +282,6 @@
 
 /* Project Sprints (/gdg) */
 
-/* solid lavender like home/team/hackhive, not the /events gradient */
-.sprintPage {
-  background: var(--canvas);
-}
-
 .leadCopy {
   max-width: 68ch;
   margin: 0 0 1rem;
