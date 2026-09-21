@@ -9,6 +9,7 @@ import './globals.css';
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
+  variable: '--font-inter',
 });
 
 export const metadata: Metadata = {
@@ -30,7 +31,7 @@ export default async function RootLayout({
   const admin = signedIn ? await isAdmin(supabase, user.id) : false;
 
   return (
-    <html lang="en" className={inter.className} suppressHydrationWarning>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <Navbar signedIn={signedIn} isAdmin={admin} />
         <main>{children}</main>
