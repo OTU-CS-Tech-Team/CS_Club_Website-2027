@@ -20,6 +20,8 @@ const heroWords = [
   'brilliant.',
 ];
 const statTargets = [250, 550, 24];
+const SHOW_TESTIMONIALS = false;
+const SHOW_SPONSORS = false;
 
 const orbitImages = [
   { src: '/hackhive/orbit/group-celebration.webp', className: styles.orbitOne },
@@ -410,33 +412,37 @@ export default function HackHiveStory() {
         </div>
       </section>
 
-      <section className={styles.testimonials} aria-labelledby="voices-title">
-        <div className={styles.testimonialHeading}>
-          <p className={styles.sectionLabel}>Why it matters</p>
-          <h2 id="voices-title">From the people who built the hive.</h2>
-        </div>
-        <div className={styles.quoteGrid}>
-          {testimonials.map((testimonial) => (
-            <figure className={styles.quoteCard} key={testimonial.names}>
-              <blockquote>{testimonial.quote}</blockquote>
-              <figcaption>
-                <strong>{testimonial.names}</strong>
-                <span>{testimonial.role}</span>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      </section>
+      {SHOW_TESTIMONIALS && (
+        <section className={styles.testimonials} aria-labelledby="voices-title">
+          <div className={styles.testimonialHeading}>
+            <p className={styles.sectionLabel}>Why it matters</p>
+            <h2 id="voices-title">From the people who built the hive.</h2>
+          </div>
+          <div className={styles.quoteGrid}>
+            {testimonials.map((testimonial) => (
+              <figure className={styles.quoteCard} key={testimonial.names}>
+                <blockquote>{testimonial.quote}</blockquote>
+                <figcaption>
+                  <strong>{testimonial.names}</strong>
+                  <span>{testimonial.role}</span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
 
-      <section className={styles.sponsors} aria-labelledby="sponsors-title">
-        <div className={styles.sponsorLead}>
-          <p className={styles.sectionLabel}>2025 supporters</p>
-          <h2 id="sponsors-title">Made possible with people who back student builders.</h2>
-        </div>
-        <ul className={styles.sponsorList} aria-label="HackHive 2025 sponsors">
-          {sponsors.map((sponsor) => <li key={sponsor}>{sponsor}</li>)}
-        </ul>
-      </section>
+      {SHOW_SPONSORS && (
+        <section className={styles.sponsors} aria-labelledby="sponsors-title">
+          <div className={styles.sponsorLead}>
+            <p className={styles.sectionLabel}>2025 supporters</p>
+            <h2 id="sponsors-title">Made possible with people who back student builders.</h2>
+          </div>
+          <ul className={styles.sponsorList} aria-label="HackHive 2025 sponsors">
+            {sponsors.map((sponsor) => <li key={sponsor}>{sponsor}</li>)}
+          </ul>
+        </section>
+      )}
 
       <section className={styles.archiveCta} aria-labelledby="archive-title">
         <p className={styles.sectionLabel}>Keep exploring</p>
