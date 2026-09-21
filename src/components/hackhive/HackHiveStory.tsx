@@ -257,7 +257,14 @@ export default function HackHiveStory() {
           break;
         }
       }
-      console.assert(pathIsSafe, 'HackHive orbit path intersects the protected content rectangle.');
+      // On phone widths the hero text fills the stage, so the protected rect spans
+      // the full width and contains the orbit centre — no closed path can clear it.
+      // Only assert where the constraint is satisfiable (text as a centre column).
+      const contentSpansStage = safeLeft <= 0 && safeRight >= width;
+      console.assert(
+        pathIsSafe || contentSpansStage,
+        'HackHive orbit path intersects the protected content rectangle.',
+      );
       stage.dataset.orbitSafe = String(pathIsSafe);
       stage.style.setProperty('--orbit-center-x', `${centerX}px`);
       stage.style.setProperty('--orbit-center-y', `${centerY}px`);
