@@ -245,8 +245,8 @@
 }
 
 .intro {
-  padding-top: clamp(3.5rem, 6vw, 5.5rem);
-  padding-bottom: clamp(3.5rem, 6vw, 5rem);
+  padding-top: clamp(2.5rem, 4.5vw, 4rem);
+  padding-bottom: clamp(2.5rem, 4.5vw, 3.75rem);
   background: transparent;
   border-top: 1px solid var(--line);
 }
@@ -254,7 +254,7 @@
 .introGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.65fr);
-  gap: clamp(2rem, 7vw, 7rem);
+  gap: clamp(1.5rem, 5vw, 4.5rem);
   align-items: end;
   max-width: 82rem;
   margin-top: 1rem;
@@ -277,12 +277,12 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   max-width: 88rem;
-  margin: clamp(2.5rem, 5vw, 4rem) auto 0;
+  margin: clamp(1.75rem, 3.5vw, 2.75rem) auto 0;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
 
-.stats div { min-height: 8.5rem; padding: 1.25rem 1rem 1.5rem 0; }
+.stats div { min-height: 7rem; padding: 1rem 0.875rem 1.125rem 0; }
 .stats div + div { border-left: 1px solid var(--line); padding-left: 1rem; }
 .stats dt { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
 .stats dd { margin: 1.35rem 0 0; font-family: inherit; font-size: clamp(2.8rem, 5.5vw, 5rem); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.07em; line-height: 0.85; }
@@ -307,8 +307,8 @@
 .statsActive .statStatement dd span { opacity: 1; transform: translateY(0); }
 
 .gallerySection {
-  padding-top: clamp(3.5rem, 6vw, 5.5rem);
-  padding-bottom: clamp(3.5rem, 6vw, 5.5rem);
+  padding-top: clamp(2.5rem, 4.5vw, 4rem);
+  padding-bottom: clamp(2.5rem, 4.5vw, 4rem);
   background: transparent;
   border-top: 1px solid var(--line);
 }
@@ -322,10 +322,10 @@
 .gallery {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr 0.8fr;
-  grid-template-rows: 12rem 12rem;
+  grid-template-rows: 10rem 10rem;
   gap: 1px;
   max-width: 85rem;
-  margin: clamp(2.25rem, 5vw, 3.75rem) auto 0;
+  margin: clamp(1.5rem, 3.5vw, 2.75rem) auto 0;
   background: var(--line);
 }
 
@@ -346,8 +346,8 @@
 .gallerySmall { grid-column: 3; }
 
 .testimonials {
-  padding-top: clamp(3.5rem, 6vw, 5.5rem);
-  padding-bottom: clamp(3.5rem, 6vw, 5.5rem);
+  padding-top: clamp(2.5rem, 4.5vw, 4rem);
+  padding-bottom: clamp(2.5rem, 4.5vw, 4rem);
   background: transparent;
   color: var(--ink);
   border-top: 1px solid var(--line);
@@ -395,8 +395,8 @@
   grid-template-columns: minmax(0, 1fr) minmax(22rem, 0.9fr);
   gap: clamp(2rem, 9vw, 10rem);
   align-items: center;
-  padding-top: clamp(3.5rem, 6vw, 5.5rem);
-  padding-bottom: clamp(3.5rem, 6vw, 5.5rem);
+  padding-top: clamp(2.5rem, 4.5vw, 4rem);
+  padding-bottom: clamp(2.5rem, 4.5vw, 4rem);
   background: transparent;
   border-top: 1px solid var(--line);
 }
@@ -410,8 +410,8 @@
 .archiveCta {
   display: grid;
   justify-items: center;
-  padding-top: clamp(3.5rem, 6vw, 5.5rem);
-  padding-bottom: clamp(3.5rem, 6vw, 5.5rem);
+  padding-top: clamp(2.5rem, 4.5vw, 4rem);
+  padding-bottom: clamp(2.5rem, 4.5vw, 4rem);
   background: transparent;
   color: var(--ink);
   text-align: center;
@@ -420,8 +420,8 @@
 
 .archiveCta .sectionLabel { color: var(--accent); }
 .archiveCta h2 { max-width: 57rem; margin-top: 0.85rem; }
-.archiveCta p:not(.sectionLabel) { max-width: 34rem; margin: 1.2rem 0 0; font-size: 1rem; line-height: 1.55; }
-.archiveLink { margin-top: 2rem; background: transparent; }
+.archiveCta p:not(.sectionLabel) { max-width: 34rem; margin: 1rem 0 0; font-size: 1rem; line-height: 1.55; }
+.archiveLink { margin-top: 1.5rem; background: transparent; }
 .archiveLink:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 
 @media (max-width: 850px) {
