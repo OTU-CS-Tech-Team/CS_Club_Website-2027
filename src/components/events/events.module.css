@@ -283,58 +283,17 @@
 
 /* Project Sprints (/gdg) */
 
+/* solid lavender like home/team/hackhive, not the /events gradient */
+.sprintPage {
+  background: var(--canvas);
+}
+
 .leadCopy {
-  max-width: 62ch;
-  margin: 0;
+  max-width: 68ch;
+  margin: 0 0 1rem;
   font-size: 1.02rem;
   line-height: 1.6;
   color: var(--ink-soft);
-}
-
-.sprintList {
-  display: grid;
-  gap: 0.85rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.sprintItem {
-  padding: 1.15rem 1.35rem;
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--accent);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.45);
-}
-
-.sprintItem h3 {
-  margin: 0.15rem 0 0.35rem;
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.sprintItem p {
-  margin: 0;
-  font-size: 0.94rem;
-  line-height: 1.5;
-  color: var(--ink-soft);
-}
-
-.sprintWhen {
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-.infoGrid {
-  display: grid;
-  /* capped so wide screens land 3 across (6 cards -> 3 + 3) instead of 5 + 1 */
-  max-width: 1080px;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 0.85rem;
 }
 
 .factGrid {
@@ -366,9 +325,35 @@
   letter-spacing: -0.01em;
 }
 
+.timeline {
+  max-width: 68ch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline li {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px dashed var(--line);
+  font-size: 0.96rem;
+  line-height: 1.45;
+}
+
+.timeline li span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-top: 0.1rem;
+}
+
 .checkList {
   max-width: 68ch;
-  margin: 1.5rem 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
   display: grid;
@@ -391,53 +376,6 @@
   height: 0.45rem;
   border-radius: 2px;
   background: var(--accent);
-}
-
-.disclosure {
-  max-width: 1080px;
-}
-
-.disclosure summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  cursor: pointer;
-  list-style: none;
-  transition: border-color 0.18s ease, background 0.18s ease;
-}
-
-.disclosure summary::-webkit-details-marker {
-  display: none;
-}
-
-.disclosure summary::after {
-  content: '';
-  flex: none;
-  width: 0.55rem;
-  height: 0.55rem;
-  margin-right: 0.3rem;
-  border-right: 1.8px solid var(--accent);
-  border-bottom: 1.8px solid var(--accent);
-  transform: translateY(-3px) rotate(45deg);
-  transition: transform 0.18s ease;
-}
-
-.disclosure[open] summary::after {
-  transform: translateY(2px) rotate(225deg);
-}
-
-.disclosure summary:hover,
-.disclosure summary:focus-visible {
-  border-color: var(--accent);
-  background: rgba(255, 255, 255, 0.75);
-  outline: none;
-}
-
-.disclosure .sprintList {
-  margin-top: 0.85rem;
-  /* nests the milestones under the summary card */
-  padding-left: clamp(0.75rem, 2vw, 1.75rem);
 }
 
 .noteCopy {
