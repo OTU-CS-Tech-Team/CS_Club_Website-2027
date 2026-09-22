@@ -40,14 +40,14 @@ const orbitImages = [
 
 const galleryImages = [
   {
-    src: '/hackhive/filmstrip/checkin-desk.jpg',
-    alt: 'HackHive attendees checking in at the event desk',
+    src: '/hackhive/gallery/checkin-conversation.webp',
+    alt: 'A HackHive organizer welcoming an attendee at check-in',
     className: styles.galleryLarge,
     label: 'The doors open',
   },
   {
-    src: '/hackhive/filmstrip/demo-laptop.jpg',
-    alt: 'A HackHive participant working at a laptop',
+    src: '/hackhive/gallery/event-host.webp',
+    alt: 'A HackHive organizer speaking during the event',
     className: styles.galleryTall,
     label: 'Built in a weekend',
   },
@@ -58,8 +58,8 @@ const galleryImages = [
     label: 'Ideas, out loud',
   },
   {
-    src: '/hackhive/filmstrip/lecture-row.jpg',
-    alt: 'HackHive participants gathered for a session',
+    src: '/hackhive/gallery/project-demo.webp',
+    alt: 'HackHive participants sharing their project at a demo table',
     className: styles.gallerySmall,
     label: 'A room full of possibility',
   },
@@ -292,7 +292,7 @@ export default function HackHiveStory() {
           const progress = (globalProgress + phaseOffset) % 1;
           const point = orbitPath.getPointAtLength(progress * pathLength);
           const depth = Math.max(0, Math.min(1, (point.y - pathTop) / Math.max(1, pathBottom - pathTop)));
-          const scale = 0.82 + depth * 0.18;
+          const scale = 0.72 + depth * 0.38;
           item.style.transform = `translate3d(${point.x}px, ${point.y}px, 0) translate(-50%, -50%) scale(${scale})`;
           const isActive = item.matches(':hover, :focus-visible');
           item.style.zIndex = isActive ? '10' : String(1 + Math.round(depth * 2));
