@@ -24,12 +24,9 @@ const SHOW_TESTIMONIALS = false;
 const SHOW_SPONSORS = false;
 
 const orbitImages = [
-  { src: '/hackhive/orbit/group-celebration.webp', className: styles.orbitOne },
   { src: '/hackhive/filmstrip/demo-laptop.jpg', className: styles.orbitTwo },
   { src: '/hackhive/orbit/mic-moment.webp', className: styles.orbitThree },
-  { src: '/hackhive/orbit/participant-candid.webp', className: styles.orbitFour },
   { src: '/hackhive/filmstrip/hallway.jpg', className: styles.orbitFive },
-  { src: '/hackhive/orbit/karaoke-candid.webp', className: styles.orbitSix },
   { src: '/hackhive/filmstrip/lecture-row.jpg', className: styles.orbitSeven },
   { src: '/hackhive/orbit/crowd-overhead.webp', className: styles.orbitEight },
   { src: '/hackhive/filmstrip/study-pair.jpg', className: styles.orbitNine },
