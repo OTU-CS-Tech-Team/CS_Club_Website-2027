@@ -185,7 +185,7 @@ export default function HackHiveStory() {
       const height = stageRect.height;
       mobileCards = window.innerWidth <= 620;
       compactCards = window.innerWidth <= 850;
-      const hoveredCardSize = mobileCards ? 52 : compactCards ? 130 : 170;
+      const hoveredCardSize = mobileCards ? 56 : compactCards ? 130 : 174;
       const cardClearance = hoveredCardSize / 2;
       const sideEdgePadding = mobileCards ? 4 : compactCards ? 10 : 16;
       const topEdgePadding = mobileCards ? 6 : compactCards ? 12 : 16;
@@ -292,7 +292,8 @@ export default function HackHiveStory() {
           const progress = (globalProgress + phaseOffset) % 1;
           const point = orbitPath.getPointAtLength(progress * pathLength);
           const depth = Math.max(0, Math.min(1, (point.y - pathTop) / Math.max(1, pathBottom - pathTop)));
-          const scale = 0.82 + depth * 0.18;
+          const easedDepth = depth * depth * (3 - 2 * depth);
+          const scale = 0.45 + easedDepth * 0.9;
           item.style.transform = `translate3d(${point.x}px, ${point.y}px, 0) translate(-50%, -50%) scale(${scale})`;
           const isActive = item.matches(':hover, :focus-visible');
           item.style.zIndex = isActive ? '10' : String(1 + Math.round(depth * 2));
