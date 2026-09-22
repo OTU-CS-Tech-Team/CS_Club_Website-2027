@@ -21,6 +21,7 @@ const columns = [
     title: 'events',
     links: [
       { href: '/events', label: 'upcoming events' },
+      { href: '/gdg', label: 'gdg project sprints' },
     ],
   },
   {

@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useEffect, useId, useRef, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import styles from './navbar.module.css';
+import Link from "next/link";
+import { useEffect, useId, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import styles from "./navbar.module.css";
 
 type NavLink = {
   href: string;
@@ -22,57 +22,64 @@ type NavSection = {
 
 const sections: NavSection[] = [
   {
-    id: 'home',
-    label: 'Home',
-    links: [{ href: '/', label: 'Home', description: 'Club homepage and what’s new' }],
+    id: "home",
+    label: "Home",
+    links: [
+      { href: "/", label: "Home", description: "Club homepage and what’s new" },
+    ],
   },
   {
-    id: 'team',
-    label: 'Team',
+    id: "team",
+    label: "Team",
     links: [
       {
-        href: '/team',
-        label: 'Meet the Team',
-        description: 'Club leadership and member profiles',
+        href: "/team",
+        label: "Meet the Team",
+        description: "Club leadership and member profiles",
       },
     ],
   },
   {
-    id: 'events',
-    label: 'Events',
+    id: "events",
+    label: "Events",
     links: [
       {
-        href: '/events',
-        label: 'Upcoming Events',
-        description: 'Workshops, socials, and what’s on this semester',
+        href: "/events",
+        label: "Upcoming Events",
+        description: "Workshops, socials, and what’s on this semester",
         prefetch: false,
       },
-    ],
-  },
-  {
-    id: 'hackhive',
-    label: 'HackHive',
-    links: [
       {
-        href: '/hackhive',
-        label: 'HackHive Info',
-        description: 'The story, impact, and project archive',
-      },
-      {
-        href: '/hackhive/archive',
-        label: 'HackHive Museum',
-        description: 'Museum archive of HackHive projects, year by year',
+        href: "/gdg",
+        label: "GDG Project Sprints",
+        description: "CS Club x GDG — build a real project in 5-6 weeks",
       },
     ],
   },
   {
-    id: 'careers',
-    label: 'Careers',
+    id: "hackhive",
+    label: "HackHive",
     links: [
       {
-        href: '/careers',
-        label: 'View Open Roles',
-        description: 'Apply to join the CS Club team',
+        href: "/hackhive",
+        label: "HackHive Info",
+        description: "The story, impact, and project archive",
+      },
+      {
+        href: "/hackhive/archive",
+        label: "HackHive Museum",
+        description: "Museum archive of HackHive projects, year by year",
+      },
+    ],
+  },
+  {
+    id: "careers",
+    label: "Careers",
+    links: [
+      {
+        href: "/careers",
+        label: "View Open Roles",
+        description: "Apply to join the CS Club team",
         arrow: true,
       },
     ],
@@ -80,30 +87,30 @@ const sections: NavSection[] = [
 ];
 
 const adminSection: NavSection = {
-  id: 'admin',
-    label: 'Admin',
+  id: "admin",
+  label: "Admin",
   links: [
     {
-      href: '/admin',
-      label: 'Dashboard',
-      description: 'Manage events and job postings',
+      href: "/admin",
+      label: "Dashboard",
+      description: "Manage events and job postings",
     },
     {
-      href: '/admin/checkin',
-      label: 'Event Check-in',
-      description: 'Scan member passports at the door',
+      href: "/admin/checkin",
+      label: "Event Check-in",
+      description: "Scan member passports at the door",
     },
   ],
 };
 
 const accountSection: NavSection = {
-  id: 'passport',
-    label: 'Passport',
+  id: "passport",
+  label: "Passport",
   links: [
     {
-      href: '/passport',
-      label: 'Member Passport',
-      description: 'Your stamps, points, and check-in QR',
+      href: "/passport",
+      label: "Member Passport",
+      description: "Your stamps, points, and check-in QR",
     },
   ],
 };
@@ -184,26 +191,28 @@ export default function Navbar({
   useEffect(() => {
     const supabase = createClient();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event !== 'SIGNED_IN' && event !== 'SIGNED_OUT') return;
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event !== "SIGNED_IN" && event !== "SIGNED_OUT") return;
 
-      const nextSignedIn = !!session?.user;
-      setIsSignedIn(nextSignedIn);
+        const nextSignedIn = !!session?.user;
+        setIsSignedIn(nextSignedIn);
 
-      if (!nextSignedIn) {
-        setIsAdminUser(false);
-        return;
-      }
+        if (!nextSignedIn) {
+          setIsAdminUser(false);
+          return;
+        }
 
-      void supabase
-        .from('admin_users')
-        .select('user_id')
-        .eq('user_id', session.user.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          setIsAdminUser(!!data);
-        });
-    });
+        void supabase
+          .from("admin_users")
+          .select("user_id")
+          .eq("user_id", session.user.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            setIsAdminUser(!!data);
+          });
+      },
+    );
 
     return () => listener.subscription.unsubscribe();
   }, []);
@@ -248,10 +257,10 @@ export default function Navbar({
     };
 
     update();
-    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       if (raf) window.cancelAnimationFrame(raf);
-      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
@@ -263,16 +272,16 @@ export default function Navbar({
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setOpenId(null);
       }
     }
 
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
@@ -303,7 +312,7 @@ export default function Navbar({
     setIsSignedIn(false);
     setIsAdminUser(false);
     await supabase.auth.signOut();
-    router.push('/');
+    router.push("/");
     router.refresh();
   }
 
@@ -317,7 +326,7 @@ export default function Navbar({
         />
       ) : null}
       <header
-        className={`${styles.header} ${pathname === '/' ? styles.headerHome : ''} ${
+        className={`${styles.header} ${pathname === "/" ? styles.headerHome : ""} ${
           navRevealed ? styles.headerVisible : styles.headerHidden
         }`}
         ref={rootRef}
@@ -347,14 +356,14 @@ export default function Navbar({
                 <div key={section.id} className={styles.item}>
                   <button
                     type="button"
-                    className={`${styles.trigger} ${isOpen ? styles.triggerOpen : ''}`}
+                    className={`${styles.trigger} ${isOpen ? styles.triggerOpen : ""}`}
                     aria-expanded={isOpen}
                     aria-controls={panelId}
                     onMouseEnter={() => openSectionMenu(section.id)}
                     onClick={() => {
                       const canHover =
-                        typeof window !== 'undefined' &&
-                        window.matchMedia('(hover: hover)').matches;
+                        typeof window !== "undefined" &&
+                        window.matchMedia("(hover: hover)").matches;
                       if (canHover) {
                         openSectionMenu(section.id);
                         return;
@@ -391,7 +400,9 @@ export default function Navbar({
                               {link.label}
                               {link.arrow ? <ArrowIcon /> : null}
                             </span>
-                            <span className={styles.linkCopy}>{link.description}</span>
+                            <span className={styles.linkCopy}>
+                              {link.description}
+                            </span>
                           </Link>
                         ))}
                       </div>
