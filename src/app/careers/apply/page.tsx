@@ -4,6 +4,10 @@ import { getActiveJob } from '@/lib/content';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'Apply',
+};
+
 export default async function GeneralMemberApplicationPage() {
   const job = await getActiveJob('general-member');
   if (!job) notFound();

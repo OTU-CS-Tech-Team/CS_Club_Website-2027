@@ -4,7 +4,7 @@ import { getPastEvents, getUpcomingEvents } from '@/lib/eventSchedule';
 import styles from '@/components/events/events.module.css';
 
 export const metadata = {
-  title: 'Events — CS Club',
+  title: 'Upcoming Events',
   description: 'Upcoming and past Computer Science Club events.',
 };
 

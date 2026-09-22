@@ -8,7 +8,7 @@ import type { ClubJob, EventAttendee, ManagedEvent } from '@/types/content';
 import AdminDashboard from './AdminDashboard';
 
 export const metadata = {
-  title: 'Executive dashboard — CS Club',
+  title: 'Admin Dashboard',
   description: 'Manage CS Club events and job postings.',
 };
 

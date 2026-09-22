@@ -2,7 +2,7 @@ import HackHiveMuseum from '@/components/museum/HackHiveMuseum';
 import { getArchiveCollections } from '@/data/hackhive';
 
 export const metadata = {
-  title: 'HackHive Project Archive',
+  title: 'HackHive Museum',
   description: 'Museum archive of HackHive projects, year by year.',
 };
 

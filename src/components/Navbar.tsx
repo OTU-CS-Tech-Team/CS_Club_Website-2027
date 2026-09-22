@@ -23,12 +23,12 @@ type NavSection = {
 const sections: NavSection[] = [
   {
     id: 'home',
-    label: 'home',
+    label: 'Home',
     links: [{ href: '/', label: 'Home', description: 'Club homepage and what’s new' }],
   },
   {
     id: 'team',
-    label: 'team',
+    label: 'Team',
     links: [
       {
         href: '/team',
@@ -39,7 +39,7 @@ const sections: NavSection[] = [
   },
   {
     id: 'events',
-    label: 'events',
+    label: 'Events',
     links: [
       {
         href: '/events',
@@ -47,16 +47,27 @@ const sections: NavSection[] = [
         description: 'Workshops, socials, and what’s on this semester',
         prefetch: false,
       },
+    ],
+  },
+  {
+    id: 'hackhive',
+    label: 'HackHive',
+    links: [
       {
         href: '/hackhive',
-        label: 'HackHive',
+        label: 'HackHive Info',
         description: 'The story, impact, and project archive',
+      },
+      {
+        href: '/hackhive/archive',
+        label: 'HackHive Museum',
+        description: 'Museum archive of HackHive projects, year by year',
       },
     ],
   },
   {
     id: 'careers',
-    label: 'careers',
+    label: 'Careers',
     links: [
       {
         href: '/careers',
@@ -70,7 +81,7 @@ const sections: NavSection[] = [
 
 const adminSection: NavSection = {
   id: 'admin',
-  label: 'admin',
+    label: 'Admin',
   links: [
     {
       href: '/admin',
@@ -87,7 +98,7 @@ const adminSection: NavSection = {
 
 const accountSection: NavSection = {
   id: 'passport',
-  label: 'passport',
+    label: 'Passport',
   links: [
     {
       href: '/passport',
@@ -365,7 +376,7 @@ export default function Navbar({
                       onMouseEnter={cancelClose}
                     >
                       <div className={styles.meta}>
-                        <span>NAV/{section.label.toUpperCase()}</span>
+                        <span>{section.label}</span>
                       </div>
                       <div className={styles.links}>
                         {section.links.map((link) => (

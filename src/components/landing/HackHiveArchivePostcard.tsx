@@ -164,7 +164,7 @@ export default function HackHiveArchivePostcard({
         <p className={styles.archiveChapterIndex}>
           <span>04</span>
           <span className={styles.archiveIndexRule} aria-hidden="true" />
-          <span>HackHive</span>
+          <span>HackHive Museum</span>
         </p>
         <div className={styles.archiveCopy}>
           <h2 id="archive-heading" className={styles.archiveHeadline}>
