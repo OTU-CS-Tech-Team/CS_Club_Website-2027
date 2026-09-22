@@ -1,13 +1,14 @@
 'use client';
 
-import { useActionState, useCallback, useDeferredValue, useEffect, useRef, useState, type FormEvent } from 'react';
+import { startTransition, useActionState, useCallback, useDeferredValue, useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import type { ClubJob, EventAttendee, ManagedEvent } from '@/types/content';
+import type { ClubJob, EventAttendee, JobApplication, ManagedEvent } from '@/types/content';
 import type { MailingListSubscriber } from '@/lib/members';
 import { validateEventForm } from '@/lib/eventFormValidation';
 import {
   deleteEvent,
   deleteJob,
+  openApplicationResume,
   removeAttendee,
   saveEvent,
   saveJob,
@@ -16,6 +17,8 @@ import {
   type AdminActionState,
 } from './actions';
 import styles from './admin.module.css';
+import { createQuestionId, createSectionId, MAX_CUSTOM_SECTIONS, MAX_JOB_QUESTIONS, MAX_QUESTION_PROMPT, MAX_SECTION_BODY, MAX_SECTION_TITLE } from '@/lib/jobSections';
+import type { JobContentBlock, JobQuestion } from '@/types/content';
 import { CategoryPicker, DatePicker, TimePicker } from './CustomPickers';
 
 const initialState: AdminActionState = { ok: false, message: '' };
@@ -24,7 +27,7 @@ type SentNewsletter = { id: string; subject: string; recipient_count: number; se
 
 type ContentPreview =
   | { kind: 'event'; title: string; description: string; date: string; startTime: string; endTime: string; location: string; image: string; published: boolean }
-  | { kind: 'job'; title: string; description: string; category: string; closingDate: string; commitment: string; location: string; active: boolean };
+  | { kind: 'job'; title: string; description: string; category: string; closingDate: string; commitment: string; location: string; active: boolean; sections: Array<{ title: string; body: string }>; questions: string[] };
 
 function torontoDateValue(value?: string | null) {
   if (!value) return '';
@@ -228,13 +231,75 @@ function EventEditor({ event, onDone, onSuccess, onPreview }: { event: ManagedEv
   );
 }
 
+function moveItem<T extends { key: string }>(items: T[], key: string, direction: -1 | 1) {
+  const index = items.findIndex((item) => item.key === key);
+  const nextIndex = index + direction;
+  if (index < 0 || nextIndex < 0 || nextIndex >= items.length) return items;
+  const next = [...items];
+  const [moved] = next.splice(index, 1);
+  next.splice(nextIndex, 0, moved);
+  return next;
+}
+
 function JobEditor({ job, onDone, onSuccess, onPreview }: { job: ClubJob | null; onDone: () => void; onSuccess: (message: string) => void; onPreview: (preview: ContentPreview) => void }) {
   const router = useRouter();
   const [state, action, pending] = useActionState(saveJob, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const [clientError, setClientError] = useState('');
+  const [step, setStep] = useState<'posting' | 'application'>('posting');
   const [category, setCategory] = useState(job?.category ?? '');
   const [closingDate, setClosingDate] = useState(() => torontoDateValue(job?.closes_at));
+  const [content, setContent] = useState(() => (job?.content?.length ? job.content : [
+    { id: 'role-description', title: 'Role description', body: job?.description ?? '', builtin: 'description' as const },
+    { id: 'what-youll-do', title: "What you'll do", body: '', builtin: 'duties' as const },
+    { id: 'ideal-experience', title: 'Ideal experience', body: '', builtin: 'experience' as const },
+  ]).map((block) => ({ ...block, key: block.id })));
+  const [questions, setQuestions] = useState(() => (job?.questions ?? []).map((question) => ({ ...question, key: question.id })));
+
+  const questionCount = questions.length;
+  const customCount = content.filter((block) => !block.builtin).length;
+  const posting = JSON.stringify({
+    content: content.map(({ id, title, body, builtin }) => ({ id, title, body, builtin })),
+    questions: questions.map(({ id, prompt, required }) => ({ id, prompt, required })),
+  });
+
+  function postingError(data: FormData) {
+    if (!String(data.get('title') ?? '').trim()) return 'Please enter a job title.';
+    if (!category.trim()) return 'Please enter a category.';
+    const description = content.find((block) => block.builtin === 'description');
+    if (!description?.body.trim()) return 'Please enter a role description.';
+    const incomplete = content.find((block) => !block.builtin && (!block.title.trim() || !block.body.trim()));
+    if (incomplete) return 'Enter a heading and copy for every extra section.';
+    return '';
+  }
+
+  function addSection() {
+    if (customCount >= MAX_CUSTOM_SECTIONS) {
+      setClientError(`You can add up to ${MAX_CUSTOM_SECTIONS} extra sections.`);
+      return;
+    }
+    const id = createSectionId();
+    setContent((current) => [...current, { key: id, id, title: '', body: '', builtin: null }]);
+    setClientError('');
+  }
+
+  function addQuestion() {
+    if (questionCount >= MAX_JOB_QUESTIONS) {
+      setClientError(`You can add up to ${MAX_JOB_QUESTIONS} extra questions.`);
+      return;
+    }
+    const id = createQuestionId();
+    setQuestions((current) => [...current, { key: id, id, prompt: '', required: true }]);
+    setClientError('');
+  }
+
+  function updateContent(key: string, patch: Partial<JobContentBlock>) {
+    setContent((current) => current.map((block) => (block.key === key ? { ...block, ...patch } : block)));
+  }
+
+  function updateQuestion(key: string, patch: Partial<JobQuestion>) {
+    setQuestions((current) => current.map((question) => (question.key === key ? { ...question, ...patch } : question)));
+  }
 
   useEffect(() => {
     if (state.ok) {
@@ -248,43 +313,71 @@ function JobEditor({ job, onDone, onSuccess, onPreview }: { job: ClubJob | null;
   }, [state.ok, state.message, onDone, onSuccess, router]);
 
   function validate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (step === 'posting') goToApplication();
+  }
+
+  function finish() {
+    if (!formRef.current) return;
     setClientError('');
-    const data = new FormData(event.currentTarget);
-    const fields: Array<[string, string]> = [
-      ['title', 'a job title'],
-      ['category', 'a category'],
-      ['description', 'a description'],
-    ];
-    const missing = fields.find(([name]) => !String(data.get(name) ?? '').trim());
-    if (missing) {
-      event.preventDefault();
-      setClientError(`Please enter ${missing[1]}.`);
+    const data = new FormData(formRef.current);
+    const detailsError = postingError(data);
+    if (detailsError) {
+      setStep('posting');
+      setClientError(detailsError);
+      return;
     }
+    if (questions.some((question) => !question.prompt.trim())) {
+      setClientError('Enter a prompt for every application question.');
+      return;
+    }
+    startTransition(() => {
+      action(data);
+    });
+  }
+
+  function goToApplication() {
+    if (!formRef.current) return;
+    const detailsError = postingError(new FormData(formRef.current));
+    if (detailsError) {
+      setClientError(detailsError);
+      return;
+    }
+    setClientError('');
+    setStep('application');
   }
 
   function preview() {
     if (!formRef.current) return;
     const data = new FormData(formRef.current);
     const title = String(data.get('title') ?? '').trim();
-    const description = String(data.get('description') ?? '').trim();
-    if (!title || !description || !category) {
-      setClientError('Complete the job details before previewing.');
+    const detailsError = postingError(data);
+    if (detailsError) {
+      setClientError(detailsError);
+      setStep('posting');
+      return;
+    }
+    if (questions.some((question) => !question.prompt.trim())) {
+      setClientError('Enter a prompt for every application question.');
+      setStep('application');
       return;
     }
     onPreview({
       kind: 'job',
       title,
-      description,
+      description: content.find((block) => block.builtin === 'description')?.body.trim() ?? '',
       category,
       closingDate,
       commitment: String(data.get('commitment') ?? '').trim(),
       location: String(data.get('jobLocation') ?? '').trim(),
       active: data.get('isActive') === 'on',
+      sections: content.flatMap((block) => (block.body.trim() ? [{ title: block.builtin ? block.title : block.title.trim(), body: block.body.trim() }] : [])),
+      questions: questions.map((question) => `${question.prompt.trim()}${question.required ? '' : ' (optional)'}`),
     });
   }
 
   return (
-    <form ref={formRef} action={action} className={styles.editor} noValidate onSubmit={validate} onInput={() => setClientError('')}>
+    <form ref={formRef} className={styles.editor} noValidate onSubmit={validate} onInput={() => setClientError('')}>
       <div className={styles.editorHead}>
         <div>
           <p className={styles.kicker}>{job ? 'Editing job' : 'New job'}</p>
@@ -292,20 +385,113 @@ function JobEditor({ job, onDone, onSuccess, onPreview }: { job: ClubJob | null;
         </div>
         <button className={styles.textButton} type="button" onClick={onDone}>Cancel</button>
       </div>
+      <div className={styles.stepTabs} role="tablist" aria-label="Job editor steps">
+        <button type="button" className={step === 'posting' ? styles.stepTabActive : styles.stepTab} onClick={() => setStep('posting')}>1. Job description</button>
+        <button type="button" className={step === 'application' ? styles.stepTabActive : styles.stepTab} onClick={goToApplication}>2. Application form</button>
+      </div>
       <input type="hidden" name="originalId" value={job?.id ?? ''} />
-      <div className={styles.formGrid}>
+      <input type="hidden" name="posting" value={posting} />
+      <div className={styles.formGrid} hidden={step !== 'posting'}>
         <label className={styles.wide}>Title<input name="title" defaultValue={job?.title} maxLength={160} aria-required="true" /></label>
-        <label>Category<CategoryPicker value={category} onChange={(value) => { setCategory(value); setClientError(''); }} /></label>
+        <label>Department<CategoryPicker value={category} onChange={(value) => { setCategory(value); setClientError(''); }} /></label>
+        <label><span className={styles.labelLine}>Location <span className={styles.optional}>(optional)</span></span><input name="jobLocation" defaultValue={job?.location ?? ''} maxLength={160} placeholder="Ontario Tech / Hybrid" /></label>
         <label><span className={styles.labelLine}>Closing date <span className={styles.optional}>(optional)</span></span><DatePicker name="closingDate" value={closingDate} onChange={setClosingDate} ariaLabel="Choose job closing date" /></label>
         <label><span className={styles.labelLine}>Time commitment <span className={styles.optional}>(optional)</span></span><input name="commitment" defaultValue={job?.commitment ?? ''} maxLength={120} placeholder="2–4 hours per week" /></label>
-        <label><span className={styles.labelLine}>Location <span className={styles.optional}>(optional)</span></span><input name="jobLocation" defaultValue={job?.location ?? ''} maxLength={160} placeholder="Ontario Tech / Hybrid" /></label>
-        <label className={styles.wide}>Description<textarea name="description" defaultValue={job?.description} maxLength={5000} rows={7} aria-required="true" /></label>
+        <div className={styles.sectionStack}>
+          {content.map((block, index) => (
+            <div className={styles.formSection} key={block.key}>
+              <div className={styles.formSectionHead}>
+                {block.builtin ? (
+                  <span className={styles.sectionName}>{block.title}{block.builtin === 'description' ? '' : <span className={styles.optional}> (optional)</span>}</span>
+                ) : (
+                  <label className={styles.promptField}>
+                    Heading
+                    <input
+                      value={block.title}
+                      onChange={(event) => updateContent(block.key, { title: event.target.value })}
+                      maxLength={MAX_SECTION_TITLE}
+                      placeholder="Section heading"
+                      aria-required="true"
+                    />
+                  </label>
+                )}
+                <div className={styles.sectionMoves}>
+                  <button type="button" aria-label="Move section up" disabled={index === 0} onClick={() => setContent((current) => moveItem(current, block.key, -1))}>↑</button>
+                  <button type="button" aria-label="Move section down" disabled={index === content.length - 1} onClick={() => setContent((current) => moveItem(current, block.key, 1))}>↓</button>
+                  {block.builtin ? null : <button type="button" onClick={() => setContent((current) => current.filter((item) => item.key !== block.key))}>Remove</button>}
+                </div>
+              </div>
+              <textarea
+                value={block.body}
+                onChange={(event) => updateContent(block.key, { body: event.target.value })}
+                maxLength={MAX_SECTION_BODY}
+                rows={block.builtin === 'description' ? 7 : 5}
+                aria-label={block.title || 'Section'}
+                aria-required={block.builtin === 'description'}
+                placeholder={block.builtin === 'duties' ? 'Start a line with - to make a bullet.' : block.builtin === 'experience' ? 'The background that would help someone thrive here.' : undefined}
+              />
+            </div>
+          ))}
+          <button className={styles.addSection} type="button" onClick={addSection}>
+            <span aria-hidden="true">+</span>
+            Add a section
+          </button>
+        </div>
         <label className={styles.checkLabel}><input name="isActive" type="checkbox" defaultChecked={job?.is_active ?? true} />Visible on the careers page</label>
+      </div>
+      <div className={styles.formGrid} hidden={step !== 'application'}>
+        <p className={`${styles.hint} ${styles.wide}`}>Every application includes these. Add anything else you want to ask below.</p>
+        <div className={styles.sectionStack}>
+          {['First and last name', 'Ontario Tech email', 'Year of study', 'Program', 'Resume'].map((label) => (
+            <div className={styles.defaultQuestion} key={label}>
+              {label}
+              <span>Included</span>
+            </div>
+          ))}
+          {questions.map((question, index) => (
+            <div className={styles.formSection} key={question.key}>
+              <div className={styles.formSectionHead}>
+                <label className={styles.promptField}>
+                  Question
+                  <input
+                    value={question.prompt}
+                    onChange={(event) => updateQuestion(question.key, { prompt: event.target.value })}
+                    maxLength={MAX_QUESTION_PROMPT}
+                    placeholder="e.g. Tell me about a project you want to build"
+                    aria-required="true"
+                  />
+                </label>
+                <div className={styles.sectionMoves}>
+                  <button
+                    type="button"
+                    className={question.required ? styles.requirementOn : styles.requirementOff}
+                    aria-pressed={question.required}
+                    onClick={() => updateQuestion(question.key, { required: !question.required })}
+                  >
+                    {question.required ? 'Required' : 'Optional'}
+                  </button>
+                  <button type="button" aria-label="Move question up" disabled={index === 0} onClick={() => setQuestions((current) => moveItem(current, question.key, -1))}>↑</button>
+                  <button type="button" aria-label="Move question down" disabled={index === questions.length - 1} onClick={() => setQuestions((current) => moveItem(current, question.key, 1))}>↓</button>
+                  <button type="button" onClick={() => setQuestions((current) => current.filter((item) => item.key !== question.key))}>Remove</button>
+                </div>
+              </div>
+            </div>
+          ))}
+          <button className={styles.addSection} type="button" onClick={addQuestion}>
+            <span aria-hidden="true">+</span>
+            Add a question
+          </button>
+        </div>
       </div>
       {clientError || state.message ? <p className={clientError || !state.ok ? styles.error : styles.success} role="alert">{clientError || state.message}</p> : null}
       <div className={styles.editorActions}>
         <button className={styles.previewButton} type="button" onClick={preview}>Preview</button>
-        <button className={styles.primaryButton} type="submit" disabled={pending}>{pending ? 'Saving...' : job ? 'Update job' : 'Create job'}</button>
+        {step === 'application' ? <button className={styles.previewButton} type="button" onClick={() => setStep('posting')}>Back</button> : null}
+        {step === 'posting' ? (
+          <button key="next" className={styles.primaryButton} type="button" onClick={goToApplication}>Next</button>
+        ) : (
+          <button key="finish" className={styles.primaryButton} type="button" onClick={finish} disabled={pending}>{pending ? 'Saving...' : job ? 'Update job' : 'Create job'}</button>
+        )}
       </div>
     </form>
   );
@@ -497,7 +683,13 @@ function PreviewDialog({ preview, onClose }: { preview: ContentPreview; onClose:
         ) : (
           <>
             <p className={styles.previewMeta}>{[preview.category, preview.commitment, preview.location, preview.closingDate ? `Closes ${preview.closingDate}` : 'Open until filled'].filter(Boolean).join(' · ')}</p>
-            <p>{preview.description}</p>
+            {preview.sections.map((section) => (
+              <div key={`${section.title}-${section.body.slice(0, 24)}`}>
+                <strong>{section.title}</strong>
+                <p>{section.body}</p>
+              </div>
+            ))}
+            {preview.questions.length ? <ol className={styles.previewQuestions}>{preview.questions.map((question, index) => <li key={`${question}-${index}`}>{question}</li>)}</ol> : null}
             <span className={preview.active ? styles.statusLive : styles.statusDraft}>{preview.active ? 'Visible' : 'Hidden'}</span>
           </>
         )}
@@ -600,6 +792,186 @@ function RsvpDialog({
                 ))}
               </div>
             ) : <p className={styles.empty}>No RSVPs for this event yet.</p>}
+          </>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function applicationCsv(job: ClubJob, applications: JobApplication[]) {
+  const questionHeaders: string[] = [];
+  const questionKeys: string[] = [];
+  for (const application of applications) {
+    for (const answer of application.answers) {
+      const key = answer.id || answer.prompt;
+      if (questionKeys.includes(key)) continue;
+      const duplicate = questionHeaders.filter((header) => header === answer.prompt).length;
+      questionHeaders.push(duplicate ? `${answer.prompt} (${duplicate + 1})` : answer.prompt);
+      questionKeys.push(key);
+    }
+  }
+  for (const question of job.questions ?? []) {
+    if (questionKeys.includes(question.id)) continue;
+    questionHeaders.push(question.prompt);
+    questionKeys.push(question.id);
+  }
+  const header = ['First name', 'Last name', 'Ontario Tech email', 'Student ID', 'Year of study', 'Program', 'Ideas', 'Resume', 'Submitted', ...questionHeaders];
+  const rows = applications.map((application) => {
+    const byKey = new Map(application.answers.map((answer) => [answer.id || answer.prompt, answer.answer]));
+    return [
+      application.first_name,
+      application.last_name,
+      application.ontario_tech_email,
+      application.student_id,
+      application.year_of_study,
+      application.program_of_study,
+      application.ideas,
+      application.resume_path ? 'Yes' : 'No',
+      application.created_at ? new Date(application.created_at).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' }) : '',
+      ...questionKeys.map((key) => byKey.get(key) ?? ''),
+    ];
+  });
+  return { header, rows };
+}
+
+function applicantName(application: JobApplication) {
+  return `${application.first_name} ${application.last_name}`.trim() || application.ontario_tech_email || 'Applicant';
+}
+
+function ResponsesDialog({
+  job,
+  applications,
+  loadError,
+  onClose,
+}: {
+  job: ClubJob;
+  applications: JobApplication[];
+  loadError: string;
+  onClose: () => void;
+}) {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [resumeError, setResumeError] = useState('');
+  const [resumeLink, setResumeLink] = useState('');
+  const [openingResume, setOpeningResume] = useState(false);
+  const selected = applications.find((application) => application.id === selectedId) ?? null;
+
+  useEffect(() => {
+    const closeOnEscape = (keyboardEvent: KeyboardEvent) => {
+      if (keyboardEvent.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [onClose]);
+
+  async function openResume(path: string) {
+    setResumeError('');
+    setResumeLink('');
+    setOpeningResume(true);
+    const tab = window.open('about:blank', '_blank');
+    const result = await openApplicationResume(path);
+    setOpeningResume(false);
+    if (!result.ok) {
+      tab?.close();
+      setResumeError(result.message);
+      return;
+    }
+    if (tab) {
+      tab.opener = null;
+      tab.location.href = result.url;
+      return;
+    }
+    setResumeLink(result.url);
+  }
+
+  const responseFields = selected ? [
+    ['First name', selected.first_name],
+    ['Last name', selected.last_name],
+    ['Ontario Tech email', selected.ontario_tech_email],
+    ['Student ID', selected.student_id],
+    ['Year of study', selected.year_of_study],
+    ['Program', selected.program_of_study],
+  ] : [];
+  const customAnswers = selected ? [
+    ...(job.questions ?? []).map((question) => ({
+      key: question.id,
+      label: question.prompt,
+      value: selected.answers.find((answer) => answer.id === question.id)?.answer || 'Left blank',
+    })),
+    ...selected.answers
+      .filter((answer) => !(job.questions ?? []).some((question) => question.id === answer.id))
+      .map((answer) => ({ key: answer.id || answer.prompt, label: answer.prompt, value: answer.answer || 'Left blank' })),
+  ] : [];
+
+  return (
+    <div className={styles.dialogBackdrop} role="presentation" onMouseDown={(mouseEvent) => { if (mouseEvent.target === mouseEvent.currentTarget) onClose(); }}>
+      <section className={`${styles.dialog} ${styles.rsvpDialog}`} role="dialog" aria-modal="true" aria-labelledby="responses-dialog-title">
+        <div className={styles.previewHeader}>
+          <div>
+            <p className={styles.kicker}>{selected ? 'Application' : 'Responses'}</p>
+            <h2 id="responses-dialog-title">{selected ? applicantName(selected) : job.title}</h2>
+          </div>
+          <button className={styles.previewClose} type="button" onClick={onClose} aria-label="Close responses">×</button>
+        </div>
+        {loadError ? <p className={styles.error} role="alert">{loadError}</p> : selected ? (
+          <div className={styles.responseDetail}>
+            <button className={styles.textButton} type="button" onClick={() => { setSelectedId(null); setResumeError(''); setResumeLink(''); }}>Back to applicants</button>
+            <div className={styles.answerList}>
+              {responseFields.map(([label, value]) => (
+                <div className={styles.answerBlock} key={label}>
+                  <span>{label}</span>
+                  <p>{value || 'Left blank'}</p>
+                </div>
+              ))}
+              <div className={styles.answerBlock}>
+                <span>Resume</span>
+                {selected.resume_path ? (
+                  <>
+                    <button className={styles.textButton} type="button" onClick={() => openResume(selected.resume_path!)} disabled={openingResume}>
+                      {openingResume ? 'Opening resume...' : 'Open resume'}
+                    </button>
+                    {resumeLink ? <a href={resumeLink} target="_blank" rel="noopener noreferrer">Open resume</a> : null}
+                    {resumeError ? <p className={styles.error} role="alert">{resumeError}</p> : null}
+                  </>
+                ) : <p>No resume was stored with this application.</p>}
+              </div>
+              {customAnswers.map((answer) => (
+                <div className={styles.answerBlock} key={answer.key}>
+                  <span>{answer.label}</span>
+                  <p>{answer.value}</p>
+                </div>
+              ))}
+              <div className={styles.answerBlock}>
+                <span>Got ideas for us?</span>
+                <p>{selected.ideas || 'Left blank'}</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className={styles.hint}>{applications.length} application{applications.length === 1 ? '' : 's'} for {job.title}.</p>
+            {applications.length ? (
+              <button
+                className={styles.textButton}
+                type="button"
+                onClick={() => {
+                  const csv = applicationCsv(job, applications);
+                  downloadCsv(csvFileName(`${job.title}-responses`), csv.header, csv.rows);
+                }}
+              >
+                Export CSV
+              </button>
+            ) : null}
+            {applications.length ? (
+              <div className={styles.rsvpRoster} aria-label={`Applications for ${job.title}`}>
+                {applications.map((application) => (
+                  <button className={styles.applicantButton} type="button" key={application.id} onClick={() => setSelectedId(application.id)}>
+                    <strong>{applicantName(application)}</strong>
+                    <span>{application.ontario_tech_email}</span>
+                  </button>
+                ))}
+              </div>
+            ) : <p className={styles.empty}>No one has applied to this role yet.</p>}
           </>
         )}
       </section>
@@ -716,6 +1088,7 @@ export default function AdminDashboard({
   newsletterConfigured,
   creatorEmails,
   attendees,
+  applications,
   loadErrors,
 }: {
   email: string;
@@ -726,7 +1099,8 @@ export default function AdminDashboard({
   newsletterConfigured: boolean;
   creatorEmails: Record<string, string>;
   attendees: EventAttendee[];
-  loadErrors: { events: string; jobs: string; attendance: string };
+  applications: JobApplication[];
+  loadErrors: { events: string; jobs: string; attendance: string; applications: string };
 }) {
   const [tab, setTab] = useState<'events' | 'metrics' | 'jobs' | 'newsletter'>('events');
   const [editingEvent, setEditingEvent] = useState<ManagedEvent | null>(null);
@@ -736,6 +1110,7 @@ export default function AdminDashboard({
   const [deleting, setDeleting] = useState<DeleteTarget | null>(null);
   const [preview, setPreview] = useState<ContentPreview | null>(null);
   const [rsvpEvent, setRsvpEvent] = useState<ManagedEvent | null>(null);
+  const [reviewJob, setReviewJob] = useState<ClubJob | null>(null);
   const [notice, setNotice] = useState<AdminActionState | null>(null);
   const [eventQuery, setEventQuery] = useState('');
   const [eventFilter, setEventFilter] = useState<EventStatusFilter>('all');
@@ -758,6 +1133,10 @@ export default function AdminDashboard({
   const closePreview = useCallback(() => setPreview(null), []);
   const now = Date.now();
   const categories = Array.from(new Set(jobs.map((job) => job.category))).sort((a, b) => a.localeCompare(b));
+  const applicationCounts = new Map<string, number>();
+  for (const application of applications) {
+    applicationCounts.set(application.job_id, (applicationCounts.get(application.job_id) ?? 0) + 1);
+  }
   const filteredEvents = events.filter((event) => {
     const matchesSearch = !deferredEventQuery || [event.title, event.location, event.date].some((value) => value.toLowerCase().includes(deferredEventQuery));
     return matchesSearch && (eventFilter === 'all' || eventStatus(event, now) === eventFilter);
@@ -838,7 +1217,7 @@ export default function AdminDashboard({
           </div>
           {!loadErrors.jobs && filteredJobs.length ? <div className={styles.fiveRowScroll} tabIndex={0} aria-label="Job results">{filteredJobs.map((job) => {
             const status = jobStatus(job, now);
-            return <article className={styles.item} key={job.id}><div className={styles.itemBody}><p className={styles.itemMeta}>{job.category}{job.closes_at ? ` / Closes ${torontoDateValue(job.closes_at)}` : ' / Open until filled'}</p><h3>{job.title}</h3>{job.commitment || job.location ? <p>{[job.commitment, job.location].filter(Boolean).join(' · ')}</p> : null}<p className={styles.audit}>{auditLabel(job.created_by, creatorEmails, job.updated_at)}</p></div><div className={styles.itemControls}><span className={status === 'live' ? styles.statusLive : status === 'expired' ? styles.statusPast : styles.statusDraft}>{status}</span><div className={styles.itemActions}><button type="button" onClick={() => { setEditingJob(job); setJobEditorOpen(true); }}>Edit</button><button className={styles.deleteButton} type="button" onClick={() => setDeleting({ type: 'job', id: job.id, title: job.title })}>Delete</button></div></div></article>;
+            return <article className={styles.item} key={job.id}><div className={styles.itemBody}><p className={styles.itemMeta}>{job.category}{job.closes_at ? ` / Closes ${torontoDateValue(job.closes_at)}` : ' / Open until filled'}</p><h3>{job.title}</h3>{job.commitment || job.location ? <p>{[job.commitment, job.location].filter(Boolean).join(' · ')}</p> : null}<p className={styles.audit}>{auditLabel(job.created_by, creatorEmails, job.updated_at)}</p></div><div className={styles.itemControls}><span className={status === 'live' ? styles.statusLive : status === 'expired' ? styles.statusPast : styles.statusDraft}>{status}</span><div className={styles.itemActions}><button type="button" onClick={() => setReviewJob(job)} aria-label={`Review responses for ${job.title}`}>Responses {applicationCounts.get(job.id) ?? 0}</button><button type="button" onClick={() => { setEditingJob(job); setJobEditorOpen(true); }}>Edit</button><button className={styles.deleteButton} type="button" onClick={() => setDeleting({ type: 'job', id: job.id, title: job.title })}>Delete</button></div></div></article>;
           })}</div> : !loadErrors.jobs ? <p className={styles.empty}>No jobs match those filters.</p> : null}
         </section>
       </main> : null}
@@ -870,6 +1249,7 @@ export default function AdminDashboard({
       {deleting ? <DeleteDialog target={deleting} onClose={() => setDeleting(null)} onComplete={completeDelete} /> : null}
       {preview ? <PreviewDialog preview={preview} onClose={closePreview} /> : null}
       {rsvpEvent ? <RsvpDialog event={rsvpEvent} attendees={attendees.filter((attendee) => attendee.event_id === rsvpEvent.id)} loadError={loadErrors.attendance} onClose={() => setRsvpEvent(null)} /> : null}
+      {reviewJob ? <ResponsesDialog key={reviewJob.id} job={reviewJob} applications={applications.filter((application) => application.job_id === reviewJob.id)} loadError={loadErrors.applications} onClose={() => setReviewJob(null)} /> : null}
     </div>
   );
 }

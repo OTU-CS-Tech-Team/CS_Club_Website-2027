@@ -9,6 +9,7 @@ import { isValidCalendarDate, parseEventImageUrls, validateEventForm } from '@/l
 import { sendBulkEmail, sendDirectEmail, newsletterEmailHtml, newsletterEmailText } from '@/lib/email';
 import { getMailingListEmails } from '@/lib/members';
 import { pruneNewsletterHistory } from '@/lib/newsletters';
+import { isMissingColumnError, packJobDescription, parseSubmittedPosting, RESUME_PATH_PATTERN } from '@/lib/jobSections';
 
 export type AdminActionState = {
   ok: boolean;
@@ -210,6 +211,22 @@ export async function removeAttendee(attendeeId: string): Promise<AdminActionSta
   return { ok: true, message: 'Removed from this event.' };
 }
 
+export async function openApplicationResume(path: string): Promise<{ ok: true; url: string } | { ok: false; message: string }> {
+  if (!RESUME_PATH_PATTERN.test(path)) return { ok: false, message: 'That resume could not be found.' };
+  try {
+    await requireAdmin();
+    const admin = createAdminClient();
+    const { data, error } = await admin.storage.from('resumes').createSignedUrl(path, 60 * 10);
+    if (error || !data?.signedUrl) {
+      console.error('Unable to open resume', { message: error?.message });
+      return { ok: false, message: 'That resume could not be opened.' };
+    }
+    return { ok: true, url: data.signedUrl };
+  } catch (error) {
+    return { ok: false, message: authorizationError(error) ?? 'That resume could not be opened.' };
+  }
+}
+
 export async function saveJob(
   _previousState: AdminActionState,
   formData: FormData,
@@ -217,16 +234,18 @@ export async function saveJob(
   const originalId = text(formData, 'originalId');
   const title = text(formData, 'title');
   const category = text(formData, 'category');
-  const description = text(formData, 'description');
   const closingDate = text(formData, 'closingDate');
   const commitment = text(formData, 'commitment');
   const location = text(formData, 'jobLocation');
+  const parsedPosting = parseSubmittedPosting(text(formData, 'posting'));
   const id = originalId || slugify(title);
   const isActive = formData.get('isActive') === 'on';
   const closesAt = closingDate ? torontoDateTime(closingDate, '23:59') : null;
 
-  if (!id || !title || !category || !description) return initialError('Complete every required job field.');
-  if (title.length > 160 || category.length > 80 || description.length > 5000 || commitment.length > 120 || location.length > 160) {
+  if (!parsedPosting.ok) return initialError(parsedPosting.message);
+  const roleDescription = parsedPosting.description;
+  if (!id || !title || !category || !roleDescription) return initialError('Complete every required job field.');
+  if (title.length > 160 || category.length > 80 || roleDescription.length > 5000 || commitment.length > 120 || location.length > 160) {
     return initialError('One or more job fields are too long.');
   }
   if (closingDate && (!isValidCalendarDate(closingDate) || !closesAt)) {
@@ -239,17 +258,30 @@ export async function saveJob(
       id,
       title,
       category,
-      description,
+      description: roleDescription,
       is_active: isActive,
       closes_at: closesAt?.toISOString() ?? null,
       commitment: commitment || null,
       location: location || null,
+      sections: parsedPosting.sections,
       ...(!originalId ? { created_by: user.id } : {}),
     };
     const query = originalId
       ? supabase.from('jobs').update(payload).eq('id', originalId)
       : supabase.from('jobs').insert(payload);
-    const { error } = await query;
+    let { error } = await query;
+    if (error && (isMissingColumnError(error) || error.code === '23514')) {
+      const packed = packJobDescription(roleDescription, parsedPosting.sections);
+      if (packed.length > 5000) {
+        return initialError('This posting is too long to save together. Shorten the role description or extra sections.');
+      }
+      const { sections: _sections, ...legacyPayload } = payload;
+      const retryPayload = { ...legacyPayload, description: packed };
+      const retry = originalId
+        ? supabase.from('jobs').update(retryPayload).eq('id', originalId)
+        : supabase.from('jobs').insert(retryPayload);
+      ({ error } = await retry);
+    }
     if (error) {
       console.error('Unable to save job', { code: error.code, message: error.message });
       return initialError(error.code === '23505' ? 'A job with this title already exists.' : 'Unable to save the job.');
