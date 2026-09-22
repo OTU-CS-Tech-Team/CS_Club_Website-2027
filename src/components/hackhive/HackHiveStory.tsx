@@ -6,18 +6,18 @@ import { useEffect, useRef, useState } from 'react';
 import styles from './hackhiveStory.module.css';
 
 const heroWords = [
-  'real.',
-  'bold.',
-  'useful.',
-  'meaningful.',
-  'lasting.',
-  'together.',
-  'creative.',
-  'curious.',
-  'ambitious.',
-  'possible.',
-  'impactful.',
-  'brilliant.',
+  { word: 'Real.', color: '#d45d7d' },
+  { word: 'Bold.', color: '#6a3df5' },
+  { word: 'Useful.', color: '#2f7d6d' },
+  { word: 'Meaningful.', color: '#c45c26' },
+  { word: 'Lasting.', color: '#3d5a80' },
+  { word: 'Together.', color: '#7a4e8a' },
+  { word: 'Creative.', color: '#b23a6a' },
+  { word: 'Curious.', color: '#1f6f8b' },
+  { word: 'Ambitious.', color: '#8a4b08' },
+  { word: 'Possible.', color: '#3d4db7' },
+  { word: 'Impactful.', color: '#9b3d4a' },
+  { word: 'Brilliant.', color: '#5b3a8c' },
 ];
 const statTargets = [250, 550, 24];
 const SHOW_TESTIMONIALS = false;
@@ -106,19 +106,6 @@ export default function HackHiveStory() {
   const orbitItemRefs = useRef<Array<HTMLDivElement | null>>([]);
   const orbitPausedRef = useRef(false);
   const statsRef = useRef<HTMLDListElement>(null);
-
-  useEffect(() => {
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reducedMotion) return;
-
-    const wordTimer = window.setInterval(() => {
-      if (!orbitPausedRef.current) {
-        setHeroWordIndex((current) => (current + 1) % heroWords.length);
-      }
-    }, 2400);
-
-    return () => window.clearInterval(wordTimer);
-  }, []);
 
   useEffect(() => {
     const stats = statsRef.current;
@@ -317,8 +304,13 @@ export default function HackHiveStory() {
     };
   }, []);
 
-  const pauseOrbit = () => {
+  const holdOrbit = (event: { type: string; currentTarget: Element }) => {
+    if (event.type === 'focus' && event.currentTarget.matches(':hover')) {
+      orbitPausedRef.current = true;
+      return;
+    }
     orbitPausedRef.current = true;
+    setHeroWordIndex((current) => (current + 1) % heroWords.length);
   };
 
   const resumeOrbit = () => {
@@ -343,9 +335,9 @@ export default function HackHiveStory() {
               key={image.src}
               tabIndex={0}
               aria-label="HackHive memory"
-              onMouseEnter={pauseOrbit}
+              onMouseEnter={holdOrbit}
               onMouseLeave={resumeOrbit}
-              onFocus={pauseOrbit}
+              onFocus={holdOrbit}
               onBlur={resumeOrbit}
             >
               <div className={styles.orbitItemInner}>
@@ -360,16 +352,17 @@ export default function HackHiveStory() {
         <div ref={heroContentRef} className={styles.heroContent}>
           <h1
             id="hackhive-headline"
-            aria-label={`Build something ${heroWords[heroWordIndex]}`}
+            aria-label={`Build something ${heroWords[heroWordIndex].word}`}
           >
             <span aria-hidden="true" className={styles.heroPhrase}>Build something</span>
             <span aria-hidden="true" className={styles.wordCycle}>
-              {heroWords.map((word, index) => (
+              {heroWords.map((entry, index) => (
                 <span
                   className={`${styles.changingWord} ${index === heroWordIndex ? styles.changingWordActive : ''}`}
-                  key={word}
+                  key={entry.word}
+                  style={{ color: entry.color }}
                 >
-                  {word}
+                  {entry.word}
                 </span>
               ))}
             </span>

@@ -19,6 +19,11 @@ export const metadata: Metadata = {
   },
   description:
     'Computer Science Club website — events, HackHive, team, and more.',
+  icons: {
+    icon: [{ url: '/cs_club_logo.png', type: 'image/png' }],
+    shortcut: '/cs_club_logo.png',
+    apple: '/cs_club_logo.png',
+  },
 };
 
 export default async function RootLayout({

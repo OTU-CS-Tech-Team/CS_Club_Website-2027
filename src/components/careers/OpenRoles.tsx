@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { presetCategoryIndex } from '@/data/jobCategories';
 import type { ClubJob } from '@/types/content';
+import DepartmentIcon from './DepartmentIcon';
 import styles from './careers.module.css';
 
 type OpenRolesProps = {
@@ -30,87 +32,6 @@ function Chevron({ open }: { open: boolean }) {
   );
 }
 
-function CommunityIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="9" cy="8" r="3.25" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="16.5" cy="9.5" r="2.5" stroke="currentColor" strokeWidth="1.5" />
-      <path
-        d="M3.5 18.5c.8-2.8 2.9-4.3 5.5-4.3s4.7 1.5 5.5 4.3"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M14 14.2c1.5-.5 3-.4 4.4.5 1.3.9 2.1 2.3 2.4 3.8"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function CodeIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="m8 8-4 4 4 4M16 8l4 4-4 4M13 5l-2 14"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function MegaphoneIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M3 11v2a2 2 0 0 0 2 2h1l8 4V5L6 9H5a2 2 0 0 0-2 2Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-      <path d="M19 9.5a3.5 3.5 0 0 1 0 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function CalendarIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="3.5" y="5.5" width="17" height="15" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M8 3.5v4M16 3.5v4M3.5 10h17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function BriefcaseIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="3.5" y="7.5" width="17" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <path
-        d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5M3.5 13h17"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function categoryIcon(category: string) {
-  const key = category.toLowerCase();
-  if (key.includes('community') || key.includes('member')) return <CommunityIcon />;
-  if (key.includes('tech') || key.includes('engineer')) return <CodeIcon />;
-  if (key.includes('market')) return <MegaphoneIcon />;
-  if (key.includes('event')) return <CalendarIcon />;
-  return <BriefcaseIcon />;
-}
-
 export default function OpenRoles({ jobs }: OpenRolesProps) {
   const departments = useMemo(() => {
     const map = new Map<string, ClubJob[]>();
@@ -121,12 +42,14 @@ export default function OpenRoles({ jobs }: OpenRolesProps) {
       map.set(category, list);
     }
 
-    // Prefer Community first when present, then alpha for the rest.
     return [...map.entries()]
       .map(([name, roles]) => ({ name, roles }))
       .sort((a, b) => {
-        if (a.name.toLowerCase() === 'community') return -1;
-        if (b.name.toLowerCase() === 'community') return 1;
+        const aIndex = presetCategoryIndex(a.name);
+        const bIndex = presetCategoryIndex(b.name);
+        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+        if (aIndex !== -1) return -1;
+        if (bIndex !== -1) return 1;
         return a.name.localeCompare(b.name);
       });
   }, [jobs]);
@@ -243,7 +166,7 @@ export default function OpenRoles({ jobs }: OpenRolesProps) {
                   aria-expanded={isOpen}
                   onClick={() => toggle(dept.name)}
                 >
-                  <span className={styles.groupIcon}>{categoryIcon(dept.name)}</span>
+                  <span className={styles.groupIcon}><DepartmentIcon category={dept.name} /></span>
                   <span className={styles.groupCopy}>
                     <span className={styles.groupName}>{dept.name}</span>
                     <span className={styles.groupCount}>
@@ -258,7 +181,7 @@ export default function OpenRoles({ jobs }: OpenRolesProps) {
                     {dept.roles.map((role) => (
                       <Link
                         key={role.id}
-                        href={`/careers/${role.id}/apply`}
+                        href={`/careers/${role.id}`}
                         className={styles.role}
                       >
                         <span className={styles.roleCopy}>

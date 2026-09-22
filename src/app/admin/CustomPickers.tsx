@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { JOB_CATEGORIES } from '@/data/jobCategories';
 import styles from './admin.module.css';
 
 function pad(value: number) {
@@ -135,16 +136,6 @@ export function DatePicker({
     </div>
   );
 }
-
-const JOB_CATEGORIES = [
-  'Community',
-  'Engineering',
-  'Marketing',
-  'Design',
-  'Events',
-  'Partnerships',
-  'Operations',
-] as const;
 
 export function CategoryPicker({
   value,
