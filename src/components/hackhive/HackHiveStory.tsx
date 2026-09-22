@@ -292,7 +292,7 @@ export default function HackHiveStory() {
           const progress = (globalProgress + phaseOffset) % 1;
           const point = orbitPath.getPointAtLength(progress * pathLength);
           const depth = Math.max(0, Math.min(1, (point.y - pathTop) / Math.max(1, pathBottom - pathTop)));
-          const scale = 0.72 + depth * 0.38;
+          const scale = 0.82 + depth * 0.18;
           item.style.transform = `translate3d(${point.x}px, ${point.y}px, 0) translate(-50%, -50%) scale(${scale})`;
           const isActive = item.matches(':hover, :focus-visible');
           item.style.zIndex = isActive ? '10' : String(1 + Math.round(depth * 2));
