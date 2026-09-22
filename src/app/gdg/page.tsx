@@ -2,7 +2,7 @@ import Link from 'next/link';
 import styles from '@/components/events/events.module.css';
 
 export const metadata = {
-  title: 'OTU Project Sprints — CS Club',
+  title: 'GDG Project Sprints',
   description:
     'CS Club x GDG Project Sprints — teams of 3-5 students build a complete software project over a multi-week cycle.',
 };

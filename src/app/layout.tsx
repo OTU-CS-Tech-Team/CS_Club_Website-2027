@@ -13,7 +13,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'CS Club',
+  title: {
+    default: 'CS CLUB',
+    template: '%s | CS Club',
+  },
   description:
     'Computer Science Club website — events, HackHive, team, and more.',
 };

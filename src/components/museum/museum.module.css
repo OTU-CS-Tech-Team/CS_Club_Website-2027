@@ -1,9 +1,9 @@
 .museum {
-  --canvas: #e6e6fa;
+  --canvas: var(--page-bg);
   --ink: #1b003f;
   --line: color-mix(in srgb, var(--ink) 16%, transparent);
   min-height: calc(100dvh - 3.5rem);
-  background: var(--canvas);
+  background: var(--page-bg);
   color: var(--ink);
 }
 

@@ -4,6 +4,10 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { isAdmin } from '@/lib/admin';
 import CheckinScanner from './CheckinScanner';
 
+export const metadata = {
+  title: 'Event Check-in',
+};
+
 export default async function CheckinPage() {
   const supabase = await createClient();
   const {

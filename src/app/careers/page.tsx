@@ -5,7 +5,7 @@ import styles from '@/components/careers/careers.module.css';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Careers — CS Club',
+  title: 'Open Roles',
   description: 'Open positions with the Ontario Tech Computer Science Club.',
 };
 

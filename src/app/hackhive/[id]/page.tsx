@@ -20,9 +20,9 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
   const project = getProjectById(id);
-  if (!project) return { title: 'Project not found' };
+  if (!project) return { title: 'Project Not Found' };
   return {
-    title: `${project.title} — HackHive Archive`,
+    title: project.title,
     description: project.description,
   };
 }

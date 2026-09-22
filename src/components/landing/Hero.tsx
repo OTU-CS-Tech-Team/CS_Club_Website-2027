@@ -123,12 +123,12 @@ export default function Hero() {
         <div
           className={`${styles.heroLater} ${laterIn ? styles.heroLaterIn : ''}`}
         >
-          <p className={styles.heroLaterTitle}>connecting people through technology</p>
+          <p className={styles.heroLaterTitle}>Connecting People Through Technology</p>
           <p
             className={`${styles.heroLaterCaption} ${styles.heroLaterFly} ${laterIn ? styles.heroLaterFlyOn : ''}`}
             style={{ ['--fly-delay' as string]: '0ms' }}
           >
-            Home to HackHive, largest hackathon in the Durham Region.
+            Home to HackHive, the largest hackathon in the Durham Region.
           </p>
           <Link
             href="/careers"

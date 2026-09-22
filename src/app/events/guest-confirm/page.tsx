@@ -2,7 +2,7 @@ import { previewGuestVerify, confirmGuestRsvpForm } from '@/app/events/actions';
 import styles from '@/components/landing/landing.module.css';
 
 export const metadata = {
-  title: 'Confirm RSVP — CS Club',
+  title: 'Confirm RSVP',
   description: 'Confirm a guest event RSVP.',
 };
 

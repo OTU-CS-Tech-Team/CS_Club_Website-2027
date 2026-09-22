@@ -10,7 +10,7 @@ const pixel = Press_Start_2P({ weight: '400', subsets: ['latin'], variable: '--f
 const terminal = VT323({ weight: '400', subsets: ['latin'], variable: '--font-terminal', display: 'swap' });
 
 export const metadata = {
-  title: 'Member Passport — CS Club',
+  title: 'Member Passport',
 };
 
 function shortName(fullName: string | null | undefined, email: string) {

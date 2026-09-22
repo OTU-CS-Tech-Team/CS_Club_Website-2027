@@ -21,7 +21,14 @@ const columns = [
     title: 'events',
     links: [
       { href: '/events', label: 'upcoming events' },
-      { href: '/hackhive', label: 'hackhive' },
+      { href: '/gdg', label: 'gdg project sprints' },
+    ],
+  },
+  {
+    title: 'hackhive',
+    links: [
+      { href: '/hackhive', label: 'hackhive info' },
+      { href: '/hackhive/archive', label: 'hackhive museum' },
     ],
   },
   {

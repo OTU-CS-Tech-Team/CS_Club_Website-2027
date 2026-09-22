@@ -915,11 +915,8 @@
   gap: clamp(0.65rem, 1.5vh, 1rem) clamp(1.25rem, 3vw, 2.75rem);
   align-items: center;
   width: 100%;
-  max-width: 92rem;
   height: 100dvh;
-  margin: 0 auto;
-  padding: clamp(1.75rem, 5vh, 3rem) clamp(1rem, 3.5vw, 3rem)
-    clamp(1.5rem, 4vh, 2.5rem);
+  padding: 1.25rem clamp(1.25rem, 5vw, 4rem) clamp(1.5rem, 4vh, 2.5rem);
   box-sizing: border-box;
   overflow: hidden;
   background: var(--stone);
@@ -1554,7 +1551,7 @@
     grid-template-rows: auto auto auto;
     height: auto;
     overflow: visible;
-    padding: 2.5rem clamp(1.25rem, 5vw, 4rem);
+    padding: 1.25rem clamp(1.25rem, 5vw, 4rem) 2.5rem;
     background: var(--stone);
   }
 
