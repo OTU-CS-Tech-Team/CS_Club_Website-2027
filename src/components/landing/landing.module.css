@@ -1,7 +1,7 @@
 .landing {
   --canvas: #e6e6fa;
   --ink: #1b003f;
-  --stone: #f5f5f4;
+  --stone: #fff;
   --hero-p: 0;
   width: 100%;
   /* Match ch2/ch4/footer so gaps never flash lavender between chapters. */
