@@ -225,7 +225,6 @@
   border-radius: 50%;
   object-fit: cover;
   object-position: center 20%;
-  border: 2px solid var(--team-yellow);
 }
 
 .teamCard h3 {
@@ -255,16 +254,8 @@
   transition: transform 0.2s ease;
 }
 
-.teamCard a svg path {
-  transition: fill 0.2s ease;
-}
-
 .teamCard a:hover svg {
   transform: scale(1.2);
-}
-
-.teamCard a:hover svg path {
-  fill: var(--team-yellow);
 }
 
 /* Small screens: the fit-to-viewport sizing would make cards unreadable, so let the
