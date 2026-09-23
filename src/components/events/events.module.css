@@ -7,6 +7,7 @@
   --line: rgba(27, 0, 63, 0.16);
   width: 100%;
   color: var(--ink);
+  background: #fff;
   min-height: calc(100dvh - 3.5rem);
   padding: clamp(2rem, 5vw, 4.5rem) clamp(1.25rem, 5vw, 5rem)
     clamp(3rem, 7vw, 6rem);
