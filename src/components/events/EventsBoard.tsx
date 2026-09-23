@@ -35,7 +35,7 @@ export default function EventsBoard({ upcoming, past }: EventsBoardProps) {
         {upcoming.length > 0 ? (
           <div className={styles.eventGridFill}>
             {upcoming.map((event) => (
-              <EventCard key={event.id} event={event} onSelect={setSelected} playClickSound />
+              <EventCard key={event.id} event={event} onSelect={setSelected} />
             ))}
           </div>
         ) : (
@@ -52,7 +52,7 @@ export default function EventsBoard({ upcoming, past }: EventsBoardProps) {
         {past.length > 0 ? (
           <div className={styles.eventGridFill}>
             {past.map((event) => (
-              <EventCard key={event.id} event={event} onSelect={setSelected} playClickSound />
+              <EventCard key={event.id} event={event} onSelect={setSelected} />
             ))}
           </div>
         ) : (
@@ -61,7 +61,7 @@ export default function EventsBoard({ upcoming, past }: EventsBoardProps) {
       </section>
 
       {selected ? (
-        <EventModal event={selected} onClose={() => setSelected(null)} playClickSound />
+        <EventModal event={selected} onClose={() => setSelected(null)} />
       ) : null}
     </>
   );

@@ -1,7 +1,5 @@
 "use client";
 
-import { useClickSound } from "@/hooks/useClickSound";
-
 type FilterProps = {
   departments: { id: string; name: string }[];
   selected: string;
@@ -9,7 +7,6 @@ type FilterProps = {
 };
 
 export default function DepartmentFilter({ departments, selected, onChange }: FilterProps) {
-  const playClick = useClickSound();
 
   return (
     <div className="dept-filter-pills" role="group" aria-label="Filter team by department">
@@ -19,10 +16,7 @@ export default function DepartmentFilter({ departments, selected, onChange }: Fi
           type="button"
           aria-pressed={selected === d.id}
           className={`dept-pill ${selected === d.id ? "active" : ""}`}
-          onClick={() => {
-            playClick();
-            onChange(d.id);
-          }}
+          onClick={() => onChange(d.id)}
         >
           {d.name}
         </button>
