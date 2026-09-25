@@ -420,7 +420,11 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
       const fourWide = pitch * (VISIBLE - 1) + overlayW;
       const widthFit = viewWidth() / Math.max(fourWide, 0.001);
       const heightFit = (visibleH * 0.94) / overlayH;
-      const fit = Math.min(heightFit, widthFit * 1.16);
+      // Phones: four frames across makes each one tiny, so show ~one frame at 85% width.
+      const mobile = host.clientWidth < 760;
+      const fit = mobile
+        ? Math.min(heightFit, (viewWidth() * 0.85) / overlayW)
+        : Math.min(heightFit, widthFit * 1.16);
 
       travel += dt * 0.20 * loopAmount;
       const cycle = unique * pitchFilm;

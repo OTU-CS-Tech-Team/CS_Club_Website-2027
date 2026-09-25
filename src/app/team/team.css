@@ -276,6 +276,24 @@
     min-height: calc(100dvh - var(--nav-h));
   }
 
+  /* One swipeable row of pills instead of a four-row block. */
+  .team-filter-bar {
+    width: 100%;
+  }
+
+  .dept-filter-pills {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .dept-pill {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
   .team-stage {
     flex: none;
     container-type: normal;
