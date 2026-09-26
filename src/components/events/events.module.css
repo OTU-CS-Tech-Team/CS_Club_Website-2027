@@ -448,4 +448,13 @@
   .eventGridFill {
     grid-template-columns: 1fr;
   }
+
+  .eventGridFill > button {
+    min-height: 0;
+  }
+
+  .eventGridFill > button > h3 {
+    margin-top: 1.1rem;
+    font-size: 1.3rem;
+  }
 }

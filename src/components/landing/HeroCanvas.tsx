@@ -211,6 +211,8 @@ export default function HeroCanvas({ sectionRef }: HeroCanvasProps) {
     let frame = 0;
     let playlist: ReturnType<typeof createLoopingClip> | null = null;
     let placeholderDraw: (() => void) | null = null;
+    let videoTexture: THREE.VideoTexture | null = null;
+    let clipVideo: HTMLVideoElement | null = null;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setClearColor(0xffffff, 1);
@@ -323,10 +325,14 @@ export default function HeroCanvas({ sectionRef }: HeroCanvasProps) {
       const framed = reduceMotion ? 1 : smoothstep(0.12, 0.62, progress);
       const stacked = reduceMotion ? 1 : smoothstep(0.48, 0.92, progress);
       const mobile = host.clientWidth < 760;
-      const originX = mobile ? 0.55 : 1.48;
-      const rotY = mobile ? -0.5 : -0.64;
+      const originX = mobile ? 0 : 1.48;
+      const rotY = mobile ? -0.3 : -0.64;
       const rotX = 0.09;
-      const card = mobile ? 0.86 : 1.08;
+      // Phones: size the card to the screen width (at the framed camera distance) so the whole clip shows.
+      const mobileViewWidth = 2 * Math.tan((camera.fov * Math.PI) / 360) * 5.3 * camera.aspect;
+      const card = mobile ? Math.min(1.08, (mobileViewWidth * 0.9) / screenWidth) : 1.08;
+      // Phones: lift the stack above the bottom-anchored copy.
+      const lift = mobile ? 0.35 : 0;
       const gap = 0.42;
 
       panes.forEach((pane, index) => {
@@ -339,13 +345,23 @@ export default function HeroCanvas({ sectionRef }: HeroCanvasProps) {
           1,
         );
         pane.position.set(
-          lerp(0, originX + (1 - t) * (mobile ? 0.24 : 0.4), stacked),
-          lerp(0, (1 - t) * 0.05, stacked),
+          lerp(0, originX + (1 - t) * (mobile ? 0.12 : 0.4), stacked),
+          lerp(0, (1 - t) * 0.05, stacked) + lift * framed,
           planeZ,
         );
         pane.rotation.set(lerp(0, rotX, stacked), lerp(0, rotY, stacked), 0);
         pane.userData.baseZ = pane.position.z;
       });
+
+      // Re-crop the clip to the pane's current shape so it never stretches (the
+      // pane morphs from viewport-shaped to card-shaped as you scroll).
+      if (videoTexture && clipVideo) {
+        coverVideo(
+          videoTexture,
+          clipVideo,
+          (clipGroup.scale.x * screenWidth) / (clipGroup.scale.y * screenHeight),
+        );
+      }
 
       clipMatIntro.opacity = 1 - framed;
       clipMat.opacity = framed;
@@ -372,11 +388,11 @@ export default function HeroCanvas({ sectionRef }: HeroCanvasProps) {
       });
 
       camera.position.set(
-        lerp(0, mobile ? -0.05 : -0.08, stacked),
+        lerp(0, mobile ? 0 : -0.08, stacked),
         lerp(0, 0.08, stacked),
         lerp(6, mobile ? 5.3 : 5.1, framed),
       );
-      camera.lookAt(lerp(0, mobile ? 0.22 : 0.52, stacked), 0, 0);
+      camera.lookAt(lerp(0, mobile ? 0.06 : 0.52, stacked), 0, 0);
 
       section.dataset.phase = stacked > 0.55 ? 'stack' : framed > 0.55 ? 'frame' : 'intro';
       section.style.setProperty('--hero-p', progress.toFixed(4));
@@ -424,17 +440,14 @@ export default function HeroCanvas({ sectionRef }: HeroCanvasProps) {
     window.addEventListener('resize', onResize);
     host.addEventListener('pointermove', onPointerMove);
 
-    const planeAspect = screenWidth / screenHeight;
-    let videoTexture: THREE.VideoTexture | null = null;
-
-    playlist = createLoopingClip(CLIP_SRC, (clipVideo) => {
+    playlist = createLoopingClip(CLIP_SRC, (video) => {
       if (disposed) return;
-      videoTexture = new THREE.VideoTexture(clipVideo);
+      clipVideo = video;
+      videoTexture = new THREE.VideoTexture(video);
       videoTexture.colorSpace = THREE.SRGBColorSpace;
       videoTexture.minFilter = THREE.LinearFilter;
       videoTexture.magFilter = THREE.LinearFilter;
       videoTexture.generateMipmaps = false;
-      coverVideo(videoTexture, clipVideo, planeAspect);
       clipMat.map = videoTexture;
       clipMatIntro.map = videoTexture;
       clipMat.needsUpdate = true;
