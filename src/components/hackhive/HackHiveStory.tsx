@@ -172,9 +172,11 @@ export default function HackHiveStory() {
       const height = stageRect.height;
       mobileCards = window.innerWidth <= 620;
       compactCards = window.innerWidth <= 850;
-      const hoveredCardSize = mobileCards ? 56 : compactCards ? 130 : 174;
+      // Phones: the biggest card on the ring's sides (84px card at ~0.9 depth scale).
+      const hoveredCardSize = mobileCards ? 80 : compactCards ? 130 : 174;
       const cardClearance = hoveredCardSize / 2;
-      const sideEdgePadding = mobileCards ? 4 : compactCards ? 10 : 16;
+      // Phones: the stage is inset 12px from the screen, so -8 keeps cards 4px inside it.
+      const sideEdgePadding = mobileCards ? -8 : compactCards ? 10 : 16;
       const topEdgePadding = mobileCards ? 6 : compactCards ? 12 : 16;
       const bottomEdgePadding = mobileCards ? 4 : compactCards ? 8 : 12;
       const sideGap = mobileCards ? 8 : compactCards ? 34 : 48;
@@ -191,8 +193,9 @@ export default function HackHiveStory() {
       const centerX = width / 2;
       const centerY = (contentTop + contentBottom) / 2;
       const angle = (mobileCards ? -5 : compactCards ? -9 : -12) * Math.PI / 180;
-      let radiusX = width * (mobileCards ? 0.44 : 0.47);
-      let radiusY = height * (mobileCards ? 0.31 : compactCards ? 0.33 : 0.35);
+      // Phones: a big, nearly round ring that fills the screen, so cards never bunch up.
+      let radiusX = width * (mobileCards ? 0.52 : 0.47);
+      let radiusY = height * (mobileCards ? 0.4 : compactCards ? 0.33 : 0.35);
       const cos = Math.cos(angle);
       const sin = Math.sin(angle);
       const boundX = Math.sqrt((radiusX * cos) ** 2 + (radiusY * sin) ** 2);
@@ -208,9 +211,16 @@ export default function HackHiveStory() {
           height - centerY - bottomEdgePadding - cardClearance,
         ),
       );
-      const fitScale = Math.min(1, availableX / boundX, availableY / boundY);
-      radiusX *= fitScale;
-      radiusY *= fitScale;
+      if (mobileCards) {
+        // Phones: narrow the ring to fit the screen width but keep its height, so the
+        // cards stay on screen without bunching together.
+        radiusX *= Math.min(1, availableX / boundX);
+        radiusY *= Math.min(1, availableY / boundY);
+      } else {
+        const fitScale = Math.min(1, availableX / boundX, availableY / boundY);
+        radiusX *= fitScale;
+        radiusY *= fitScale;
+      }
 
       const pathPoints = Array.from({ length: 241 }, (_, index) => {
         const theta = index / 240 * Math.PI * 2;
@@ -287,7 +297,8 @@ export default function HackHiveStory() {
           const point = orbitPath.getPointAtLength(progress * pathLength);
           const depth = Math.max(0, Math.min(1, (point.y - pathTop) / Math.max(1, pathBottom - pathTop)));
           const easedDepth = depth * depth * (3 - 2 * depth);
-          const scale = 0.45 + easedDepth * 0.9;
+          // Phones: gentler depth range (~2x back to front) keeps the front cards from colliding.
+          const scale = mobileCards ? 0.6 + easedDepth * 0.55 : 0.45 + easedDepth * 0.9;
           item.style.transform = `translate3d(${point.x}px, ${point.y}px, 0) translate(-50%, -50%) scale(${scale})`;
           const isActive = item.matches(':hover, :focus-visible');
           item.style.zIndex = isActive ? '10' : String(1 + Math.round(depth * 2));
