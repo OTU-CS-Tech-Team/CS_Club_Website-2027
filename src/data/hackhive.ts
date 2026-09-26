@@ -29,7 +29,7 @@ export const hackhiveProjects: HackHiveProject[] = [
     id: 'doug-the-poker-bot',
     title: 'Doug the Poker Bot',
     description:
-      'A robot dealer for home poker — deals cards, tracks player actions, and streams the game with live stats.',
+      'A robot dealer for home poker that deals cards, tracks player actions, and streams the game with live stats.',
     year: 2026,
     category: 'poker robot',
     team: 'Adrian Shkumbov, David Frieri, Jason Wang, Matthew Frieri',
@@ -59,7 +59,7 @@ export const hackhiveProjects: HackHiveProject[] = [
     id: 'lockblock',
     title: 'lockblock',
     description:
-      'A smart lock that spots strangers, locks the door, and pings your phone — no extra hardware mess.',
+      'A smart lock that spots strangers, locks the door, and pings your phone, with no extra hardware mess.',
     year: 2026,
     category: 'smart lock',
     team: 'Ethan Yang, Ryan Gao, Jeremy Liu',
@@ -80,7 +80,7 @@ export const hackhiveProjects: HackHiveProject[] = [
     id: 'cutos',
     title: 'cutOS',
     description:
-      'Edit video in plain English — auto-dubbing, voice isolation, and smart search with almost no learning curve.',
+      'Edit video in plain English with auto-dubbing, voice isolation, and smart search, all with almost no learning curve.',
     year: 2026,
     category: 'AI Editing software',
     team: 'Shams Haroon, Jonathan David McKesey, Julian Cruzet, Vincent Wong',
@@ -101,7 +101,7 @@ export const hackhiveProjects: HackHiveProject[] = [
     id: 'brailliant',
     title: 'Brailliant',
     description:
-      'Hardware that helps you grow a brailliant mind — built to make learning tactile.',
+      'Hardware that helps you grow a brailliant mind, built to make learning tactile.',
     year: 2026,
     youtubeId: 'oT1tkPZwlYM',
   },
@@ -125,7 +125,7 @@ export const hackhiveProjects: HackHiveProject[] = [
     id: 'beeprepared',
     title: 'BeePrepared',
     description:
-      'Turns a two-hour lecture into notes, cards, and mock exams in minutes — with bee agents on a study canvas.',
+      'Turns a two-hour lecture into notes, cards, and mock exams in minutes, with bee agents on a study canvas.',
     year: 2026,
     youtubeId: 'VUVFwkcULzk',
   },
@@ -147,7 +147,7 @@ export const hackhiveProjects: HackHiveProject[] = [
     id: 'rotify',
     title: 'Rotify',
     description:
-      'Save time by brain-rotting your mind — Rotify blends studying with satisfying Gen Z content.',
+      'Save time by brain-rotting your mind. Rotify blends studying with satisfying Gen Z content.',
     year: 2025,
     youtubeId: 'PjXUOong-DI',
   },
@@ -171,7 +171,7 @@ export const hackhiveProjects: HackHiveProject[] = [
     id: 'cairs-group-39',
     title: 'Cairs Group 39',
     description:
-      'The Epic Coders — software that makes everyday life easier and more accessible.',
+      'The Epic Coders: software that makes everyday life easier and more accessible.',
     year: 2025,
     youtubeId: 'sdE-lb0fNBk',
   },
@@ -179,7 +179,7 @@ export const hackhiveProjects: HackHiveProject[] = [
     id: 'pantrypal',
     title: 'PantryPal',
     description:
-      'Give it your ingredients and it cooks up recipes — then walks you through the meal so nothing burns.',
+      'Give it your ingredients and it cooks up recipes, then walks you through the meal so nothing burns.',
     year: 2024,
     youtubeId: 'dlSGcCcY6I4',
   },
@@ -195,7 +195,7 @@ export const hackhiveProjects: HackHiveProject[] = [
     id: 'trash-it',
     title: 'Trash It',
     description:
-      'Snap, sort, save the planet — a smart recycling app that turns every toss into a better choice.',
+      'Snap, sort, save the planet. A smart recycling app that turns every toss into a better choice.',
     year: 2024,
     youtubeId: 'cxQMLCtoi_w',
   },
