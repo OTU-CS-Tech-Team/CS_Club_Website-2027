@@ -8,7 +8,8 @@ import { events, getUpcomingEvents } from '@/data/landing';
 import { getPublishedEvents } from '@/lib/content';
 import styles from '@/components/landing/landing.module.css';
 
-export const dynamic = 'force-dynamic';
+// Admin edits revalidate on demand; the hourly pass drops events that have ended.
+export const revalidate = 3600;
 
 export default async function HomePage() {
   const dbEvents = await getPublishedEvents();

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isAdmin } from '@/lib/admin';
@@ -55,6 +56,8 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
+    revalidatePath('/');
+    revalidatePath('/events');
     return NextResponse.json(data);
   } catch (error) {
     console.error(error);

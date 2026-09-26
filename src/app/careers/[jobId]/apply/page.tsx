@@ -1,12 +1,17 @@
 import { notFound } from 'next/navigation';
 import CareerApplicationForm from '@/components/careers/CareerApplicationForm';
-import { getActiveJob } from '@/lib/content';
+import { getActiveJob, getActiveJobs } from '@/lib/content';
 
 type PageProps = {
   params: Promise<{ jobId: string }>;
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  const jobs = await getActiveJobs();
+  return jobs.map((job) => ({ jobId: job.id }));
+}
 
 export async function generateMetadata({ params }: PageProps) {
   const { jobId } = await params;

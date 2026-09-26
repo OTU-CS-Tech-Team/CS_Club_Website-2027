@@ -1,7 +1,7 @@
 import { events as fallbackEvents } from '@/data/landing';
 import type { ClubJob, ManagedEvent } from '@/types/content';
 import { isMissingColumnError, presentJob } from './jobSections';
-import { createClient } from './supabase/server';
+import { createPublicClient } from './supabase/public';
 
 const fallbackJob: ClubJob = {
   id: 'general-member',
@@ -78,7 +78,7 @@ export function mapDatabaseEvent(row: EventRow): ManagedEvent | null {
 }
 
 export async function getPublishedEvents(): Promise<ManagedEvent[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const result = await supabase
     .from('events')
     .select('id, title, description, location, starts_at, ends_at, images, points, is_published, created_by, created_at, updated_at')
@@ -106,7 +106,7 @@ export async function getPublishedEvents(): Promise<ManagedEvent[]> {
 }
 
 export async function getActiveJobs(): Promise<ClubJob[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const result = await supabase
     .from('jobs')
     .select('id, title, category, description, is_active, closes_at, commitment, location, sections, created_by, created_at, updated_at')

@@ -2,7 +2,8 @@ import OpenRoles from '@/components/careers/OpenRoles';
 import { getActiveJobs } from '@/lib/content';
 import styles from '@/components/careers/careers.module.css';
 
-export const dynamic = 'force-dynamic';
+// Admin edits revalidate on demand; the hourly pass drops roles past their closing date.
+export const revalidate = 3600;
 
 export const metadata = {
   title: 'Open Roles',
