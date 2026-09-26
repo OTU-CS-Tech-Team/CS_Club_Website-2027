@@ -16,6 +16,8 @@ type EventsBoardProps = {
 export default function EventsBoard({ upcoming, past }: EventsBoardProps) {
   const router = useRouter();
   const [selected, setSelected] = useState<ClubEvent | null>(null);
+  // `upcoming` arrives sorted soonest-first, so the head is the closest event.
+  const [nextEvent, ...laterEvents] = upcoming;
 
   useEffect(() => {
     router.refresh();
@@ -23,23 +25,45 @@ export default function EventsBoard({ upcoming, past }: EventsBoardProps) {
 
   return (
     <>
+      {nextEvent ? (
+        <section className={styles.section} aria-labelledby="next-event-heading">
+          <Link href="/" className={styles.backLink}>
+            Back to homepage
+          </Link>
+          <div className={styles.sectionHead}>
+            <h2 id="next-event-heading" className={styles.sectionTitle}>
+              Next up
+            </h2>
+          </div>
+          <div className={styles.nextEventSlot}>
+            <EventCard event={nextEvent} featured onSelect={setSelected} />
+          </div>
+        </section>
+      ) : null}
+
       <section className={styles.section} aria-labelledby="all-upcoming-heading">
-        <Link href="/" className={styles.backLink}>
-          Back to homepage
-        </Link>
+        {nextEvent ? null : (
+          <Link href="/" className={styles.backLink}>
+            Back to homepage
+          </Link>
+        )}
         <div className={styles.sectionHead}>
           <h2 id="all-upcoming-heading" className={styles.sectionTitle}>
             Upcoming events
           </h2>
         </div>
-        {upcoming.length > 0 ? (
+        {laterEvents.length > 0 ? (
           <div className={styles.eventGridFill}>
-            {upcoming.map((event) => (
+            {laterEvents.map((event) => (
               <EventCard key={event.id} event={event} onSelect={setSelected} />
             ))}
           </div>
         ) : (
-          <p className={styles.emptyCopy}>Nothing on the calendar yet. Check back soon.</p>
+          <p className={styles.emptyCopy}>
+            {nextEvent
+              ? 'Nothing else scheduled after this one yet. Check back soon.'
+              : 'Nothing on the calendar yet. Check back soon.'}
+          </p>
         )}
       </section>
 

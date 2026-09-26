@@ -191,6 +191,162 @@
   display: none;
 }
 
+/* "All" view: the whole club as one tree. It is far taller than the viewport, so
+   the page scrolls here instead of fitting everything above the fold, and cards
+   are sized from the width alone (5 department columns across). */
+
+.team-page--all {
+  height: auto;
+  min-height: calc(100dvh - var(--nav-h));
+}
+
+.team-page--all .team-stage {
+  flex: none;
+  container-type: inline-size;
+}
+
+.team-all {
+  --n: 5;
+  --gap: clamp(0.75rem, 2cqw, 2rem);
+  --card-w: min(calc((100cqw - var(--n) * var(--gap)) / var(--n)), 12.5rem);
+  --trunk: 1.25rem;
+  width: 100%;
+}
+
+
+.all-trunk {
+  flex: none;
+  width: var(--tree-line);
+  height: var(--trunk);
+  background: var(--team-purple);
+}
+
+.all-trunk--spacer {
+  background: transparent;
+}
+
+/* Row connectors: the bar and stems span from the centre of the first card to the
+   centre of the last, i.e. (count - 1) card-plus-gap steps. */
+
+.all-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.all-bar,
+.all-stems {
+  width: calc((var(--count) - 1) * (var(--card-w) + var(--gap)) + var(--tree-line));
+}
+
+.all-bar {
+  height: var(--tree-line);
+  background: var(--team-purple);
+}
+
+.all-stems {
+  display: flex;
+  justify-content: space-between;
+  height: var(--trunk);
+}
+
+.all-stems > span {
+  width: var(--tree-line);
+  background: var(--team-purple);
+}
+
+/* A heading in the middle of the trunk sits tight against the lines above and below. */
+.team-all > h2.all-tier-heading {
+  margin: 0.3rem 0;
+}
+
+/* Directors: one column each, hung from a shared horizontal bar. */
+
+.all-departments {
+  display: grid;
+  /* minmax(0, …) keeps the columns exactly equal even when one department's
+     content is wider, so the middle column's stem lines up with the VP trunk. */
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  width: 100%;
+}
+
+.all-dept {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--trunk) calc(var(--gap) / 2) 0;
+}
+
+.all-dept::before,
+.all-dept::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  background: var(--team-purple);
+}
+
+.all-dept::before {
+  left: 0;
+  right: 0;
+  height: var(--tree-line);
+}
+
+.all-dept::after {
+  left: 50%;
+  width: var(--tree-line);
+  height: var(--trunk);
+  transform: translateX(-50%);
+}
+
+/* Reaches up past the department bar to the VP bar (see page.tsx). */
+.all-dept--center::after {
+  top: calc(-1 * var(--trunk));
+  height: calc(2 * var(--trunk));
+}
+
+.all-dept:first-child::before {
+  left: 50%;
+}
+
+.all-dept:last-child::before {
+  right: 50%;
+}
+
+.all-dept > h2 {
+  font-size: clamp(1rem, 1.6cqw, 1.35rem);
+  white-space: normal;
+}
+
+/* Officers/coordinators stack under their director, each joined to the card
+   above by a short vertical line. */
+
+.all-officers {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.all-officer {
+  position: relative;
+  padding-top: var(--trunk);
+}
+
+.all-officer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--tree-line);
+  height: var(--trunk);
+  background: var(--team-purple);
+  transform: translateX(-50%);
+}
+
+.all-advisors-heading {
+  margin-top: 3rem !important;
+}
+
 /* Team member card. Everything inside scales with the card's own width. */
 
 .teamCard {
@@ -298,5 +454,39 @@
 
   .dept-filter-pills {
     border-radius: 20px;
+  }
+
+  /* All view: stack the departments instead of five columns across. */
+  .team-all {
+    --card-w: min(42vw, 14rem);
+  }
+
+  .all-departments {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .all-dept {
+    padding: 0;
+  }
+
+  .all-officers {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--gap);
+    margin-top: var(--gap);
+  }
+
+  .all-officer {
+    padding: 0;
+  }
+
+  .all-connector,
+  .all-dept::before,
+  .all-dept::after,
+  .all-officer::before {
+    display: none;
   }
 }

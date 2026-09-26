@@ -83,7 +83,7 @@ export const marketingTeam: TeamMember[] = [
         Image: "/Images/Qudsia.jpg",
         name: "Qudsia",
         role: "Marketing Coordinator",
-        link: "",
+        link: "https://www.linkedin.com/in/qudsia-fawad-a38aaa339/",
     },
     {
         Image: "/Images/Atifa_Baz_photo.jpg",

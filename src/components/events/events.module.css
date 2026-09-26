@@ -168,7 +168,8 @@
 
 /* A quiet viewfinder-corner "focus lock", rather than a loud hover glow */
 
-.eventGridFill > button::before {
+.eventGridFill > button::before,
+.nextEventSlot > button::before {
   content: '';
   position: absolute;
   inset: 7px;
@@ -200,7 +201,9 @@
 }
 
 .eventGridFill > button:hover::before,
-.eventGridFill > button:focus-visible::before {
+.eventGridFill > button:focus-visible::before,
+.nextEventSlot > button:hover::before,
+.nextEventSlot > button:focus-visible::before {
   opacity: 1;
   inset: 5px;
 }
@@ -280,6 +283,81 @@
   background: var(--page-bg);
 }
 
+/* Next up: the single closest upcoming event, given a soft wash of the
+   club yellow (login --yellow) edged in passport gold so it stands apart
+   from the white cards below without shouting. */
+
+.nextEventSlot {
+  --club-yellow: #fff29c;
+  --club-gold: #f4b942;
+}
+
+.section[aria-labelledby='next-event-heading'] .sectionTitle::before {
+  background: #f4b942;
+}
+
+.nextEventSlot > button {
+  /* Deeper than --club-gold so the hover brackets read on the yellow wash */
+  --bracket: #c9941f;
+  position: relative;
+  min-height: 14rem;
+  background: linear-gradient(135deg, rgba(255, 242, 156, 0.55) 0%, rgba(255, 242, 156, 0.25) 100%),
+    var(--page-bg);
+  color: var(--ink);
+  border: 1px solid var(--club-gold);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(27, 0, 63, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  animation: eventsFadeUp 0.5s ease both;
+}
+
+.nextEventSlot > button::after {
+  content: 'Next event';
+  position: absolute;
+  top: 1.1rem;
+  right: 1.2rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9a6a00;
+}
+
+.nextEventSlot > button:hover,
+.nextEventSlot > button:focus-visible {
+  background: linear-gradient(135deg, rgba(255, 242, 156, 0.8) 0%, rgba(255, 242, 156, 0.4) 100%),
+    var(--page-bg);
+  color: var(--ink);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 18px -12px rgba(154, 106, 0, 0.45);
+  outline: none;
+}
+
+.nextEventSlot > button:focus-visible {
+  outline: 2px solid var(--club-gold);
+  outline-offset: 3px;
+}
+
+.nextEventSlot > button > div > span {
+  background: rgba(244, 185, 66, 0.22);
+  border-color: transparent;
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.02em;
+}
+
+.nextEventSlot > button > p {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--ink-soft);
+}
+
+.nextEventSlot > button > p::before {
+  content: '📍';
+  font-size: 0.8em;
+}
+
 /* Empty state */
 
 .emptyCopy {
@@ -306,7 +384,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .section,
-  .eventGridFill > button {
+  .eventGridFill > button,
+  .nextEventSlot > button {
     animation: none;
   }
 }
