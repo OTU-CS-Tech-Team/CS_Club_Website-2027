@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { hackhiveSneakPeekClips } from '@/data/landing';
-import { useChapterScrollGate } from '@/hooks/useChapterScrollGate';
 import HackHiveStripCanvas from './HackHiveStripCanvas';
 import styles from './landing.module.css';
 
@@ -13,17 +12,12 @@ function clamp(n: number, min: number, max: number) {
 
 /** Film morph begins (matches HackHiveStripCanvas smoothstep start). */
 const FILM_FORMING = 0.1;
-/** Film fully assembled (matches HackHiveStripCanvas FILM_DONE). */
-const FILM_ASSEMBLED = 0.88;
 
 export default function HackHiveSneakPeek() {
   const sectionRef = useRef<HTMLElement>(null);
   const maxProgressRef = useRef(0);
   const copySettledRef = useRef(false);
   const [copyIn, setCopyIn] = useState(false);
-
-  useChapterScrollGate(sectionRef, FILM_ASSEMBLED);
-
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
