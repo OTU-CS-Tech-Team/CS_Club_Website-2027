@@ -131,8 +131,11 @@ main {
   accent-color: #111;
 }
 
-.auth-note {
-  margin: 0;
+.auth-form .auth-forgot {
+  align-self: flex-end;
+  margin: -0.4rem 0 0;
+  padding: 0;
+  background: none;
   color: #666;
   font-size: 0.8rem;
 }
