@@ -133,6 +133,11 @@
   background: var(--accent);
 }
 
+.section[aria-labelledby='all-upcoming-heading'] .sectionTitle::before {
+  background: transparent;
+  border: 2px solid currentColor;
+}
+
 /* Past events read as an archive, not a duplicate of the upcoming grid */
 
 .section[aria-labelledby='past-events-heading'] .sectionTitle::before {
@@ -169,7 +174,9 @@
 
 /* A quiet viewfinder-corner "focus lock", rather than a loud hover glow */
 
-.eventGridFill > button::before {
+.eventGridFill > button::before,
+.upcomingBoard > button::before,
+.upcomingSideCol > button::before {
   content: '';
   position: absolute;
   inset: 7px;
@@ -201,7 +208,11 @@
 }
 
 .eventGridFill > button:hover::before,
-.eventGridFill > button:focus-visible::before {
+.eventGridFill > button:focus-visible::before,
+.upcomingBoard > button:hover::before,
+.upcomingBoard > button:focus-visible::before,
+.upcomingSideCol > button:hover::before,
+.upcomingSideCol > button:focus-visible::before {
   opacity: 1;
   inset: 5px;
 }
@@ -236,9 +247,16 @@
   color: var(--ink-soft);
 }
 
+/* Same outline pin as the upcoming board's PinIcon, drawn as a mask so it
+   takes the text colour */
 .eventGridFill > button > p::before {
-  content: '📍';
-  font-size: 0.8em;
+  content: '';
+  width: 0.9rem;
+  height: 0.9rem;
+  flex-shrink: 0;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
 /* Archived (past) cards: same layout, quieter surface */
@@ -404,6 +422,77 @@
   outline: none;
 }
 
+/* Upcoming board — same featured card + side rows as the landing chapter
+   (card styles come from landing.module.css); only the layout lives here,
+   since this page isn't a fixed-height sticky frame. */
+
+.upcomingBoard {
+  display: grid;
+  grid-template-columns: 1.15fr 0.95fr;
+  gap: 1.15rem;
+  align-items: stretch;
+}
+
+/* Column headings sit in the grid's first row, one above each column */
+
+.upcomingBoard > .sectionTitle {
+  margin-bottom: 0.35rem;
+}
+
+.upcomingBoard > button,
+.upcomingSideCol > button {
+  --bracket: var(--accent);
+  position: relative;
+}
+
+/* Next event: accent-tinted card */
+
+.upcomingBoard > button {
+  grid-row: auto;
+  border-color: rgba(106, 61, 245, 0.45);
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(106, 61, 245, 0.1), transparent 60%),
+    #fff;
+  box-shadow:
+    0 0 0 4px rgba(106, 61, 245, 0.08),
+    0 14px 32px -18px rgba(106, 61, 245, 0.45);
+  grid-column: auto;
+  height: auto;
+  min-height: 24rem;
+}
+
+.upcomingBoard > button:hover,
+.upcomingBoard > button:focus-visible {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 4px rgba(106, 61, 245, 0.12),
+    0 20px 40px -18px rgba(106, 61, 245, 0.55);
+}
+
+.upcomingBoard > button > div:first-child > span:last-child {
+  color: var(--accent);
+}
+
+.upcomingBoard > button > div:last-child > span:last-child {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.upcomingSideCol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.upcomingSideCol > button {
+  flex: 1 0 auto;
+  min-height: 5.5rem;
+  max-height: 11rem;
+  padding: 0.85rem 1rem;
+}
+
 /* Empty state */
 
 .emptyCopy {
@@ -432,6 +521,26 @@
   .section,
   .eventGridFill > button {
     animation: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .upcomingBoard {
+    grid-template-columns: 1fr;
+  }
+
+  .upcomingBoard > button {
+    min-height: 0;
+  }
+
+  /* Stacked: keep each heading directly above its own content */
+  .nextLabel { order: 1; }
+  .upcomingBoard > button { order: 2; }
+  .upcomingLabel { order: 3; margin-top: 1.5rem; }
+  .upcomingSideCol { order: 4; }
+
+  .upcomingSideCol > button {
+    max-height: none;
   }
 }
 
