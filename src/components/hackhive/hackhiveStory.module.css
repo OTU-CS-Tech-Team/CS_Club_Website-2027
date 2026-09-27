@@ -143,6 +143,8 @@
 }
 
 .orbitItem {
+  --card-size: 104px;
+  --hover-scale: 1.3;
   position: absolute;
   top: 0;
   left: 0;
@@ -174,18 +176,6 @@
 }
 
 .orbitItem:focus-visible { outline: none; }
-.orbitOne { --card-size: 118px; --hover-scale: 1.44; }
-.orbitTwo { --card-size: 84px; --hover-scale: 2.02; }
-.orbitThree { --card-size: 128px; --hover-scale: 1.33; }
-.orbitFour { --card-size: 76px; --hover-scale: 2.24; }
-.orbitFive { --card-size: 105px; --hover-scale: 1.62; }
-.orbitSix { --card-size: 121px; --hover-scale: 1.41; }
-.orbitSeven { --card-size: 86px; --hover-scale: 1.98; }
-.orbitEight { --card-size: 98px; --hover-scale: 1.73; }
-.orbitNine { --card-size: 68px; --hover-scale: 2.5; }
-.orbitTen { --card-size: 92px; --hover-scale: 1.85; }
-.orbitEleven { --card-size: 74px; --hover-scale: 2.3; }
-.orbitTwelve { --card-size: 88px; --hover-scale: 1.93; }
 
 .debugLayer {
   position: absolute;
@@ -311,52 +301,39 @@
 }
 
 .testimonials .sectionLabel { color: var(--accent); }
-.testimonialHeading { max-width: 65rem; }
+.testimonialHeading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; }
+.testimonialHeading > div:first-child { max-width: 65rem; }
+.quoteControls { display: flex; align-items: center; gap: 0.55rem; flex-shrink: 0; }
+.quoteCount { margin-right: 0.6rem; color: #71717a; font-size: 0.75rem; font-variant-numeric: tabular-nums; letter-spacing: 0.1em; }
+.quoteArrow {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+.quoteArrow:hover,
+.quoteArrow:focus-visible { background: var(--ink); border-color: var(--ink); color: #fff; }
 
 .quoteShowcase {
-  display: grid;
-  grid-template-columns: minmax(12rem, 0.26fr) minmax(0, 1fr);
-  gap: clamp(2rem, 5vw, 5rem);
   max-width: 88rem;
   margin: clamp(2.25rem, 4vw, 3.5rem) auto 0;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
 
-.quoteNav { display: grid; align-content: start; }
-.quoteChoice {
-  display: grid;
-  gap: 0.3rem;
-  position: relative;
-  padding: 1.1rem 0.5rem 1.1rem 1rem;
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  background: transparent;
-  color: #71717a;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: color 180ms ease;
-}
-.quoteChoice:last-child { border-bottom: 0; }
-.quoteChoice::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 2px;
-  background: transparent;
-}
-.quoteChoice:hover,
-.quoteChoice:focus-visible,
-.quoteChoiceActive { color: var(--ink); }
-.quoteChoiceActive::before { background: #6a3df5; }
-.quoteChoiceRole { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
-.quoteChoiceName { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.035em; }
-
 .quoteFeature {
   display: grid;
-  grid-template-columns: minmax(11rem, 0.32fr) minmax(0, 1fr);
-  gap: clamp(1.5rem, 4vw, 4rem);
+  grid-template-columns: minmax(11rem, 0.28fr) minmax(0, 1fr);
+  gap: clamp(2rem, 6vw, 6rem);
   align-items: start;
   margin: 0;
   padding: clamp(1.5rem, 3vw, 3rem) 0;
@@ -420,27 +397,12 @@
   .hero { min-height: 44rem; }
   .hero h1 { font-size: clamp(2.4rem, 6.2vw, 3.7rem); }
   .orbitStage { top: 3rem; right: 1.5rem; bottom: 0.6rem; left: 1.5rem; }
-  .orbitOne { --card-size: 78px; --hover-scale: 1.67; }
-  .orbitTwo { --card-size: 56px; --hover-scale: 2.32; }
-  .orbitThree { --card-size: 90px; --hover-scale: 1.45; }
-  .orbitFour { --card-size: 52px; --hover-scale: 2.5; }
-  .orbitFive { --card-size: 70px; --hover-scale: 1.86; }
-  .orbitSix { --card-size: 82px; --hover-scale: 1.59; }
-  .orbitSeven { --card-size: 59px; --hover-scale: 2.2; }
-  .orbitEight { --card-size: 66px; --hover-scale: 1.97; }
-  .orbitNine { --card-size: 47px; --hover-scale: 2.77; }
-  .orbitTen { --card-size: 60px; --hover-scale: 2.17; }
-  .orbitEleven { --card-size: 48px; --hover-scale: 2.71; }
-  .orbitTwelve { --card-size: 57px; --hover-scale: 2.28; }
+  .orbitItem { --card-size: 72px; }
   .introGrid,
   .sponsors { grid-template-columns: 1fr; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stats div:nth-child(3) { border-left: 0; border-top: 1px solid var(--line); }
   .stats div:nth-child(4) { border-top: 1px solid var(--line); }
-  .quoteShowcase { grid-template-columns: 1fr; gap: 0; }
-  .quoteNav { grid-template-columns: repeat(4, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
-  .quoteChoice { border-bottom: 0; }
-  .quoteChoice:last-child { border-bottom: 0; }
 }
 
 @media (max-width: 620px) {
@@ -455,27 +417,13 @@
     font-size: clamp(1.55rem, 6.7vw, 2.15rem);
   }
   .orbitStage { top: 3.5rem; right: auto; bottom: 0.4rem; left: 0.75rem; width: calc(100vw - 1.5rem); }
-  .orbitOne { --card-size: 36px; --hover-scale: 1.44; }
-  .orbitTwo { --card-size: 28px; --hover-scale: 1.86; }
-  .orbitThree { --card-size: 40px; --hover-scale: 1.3; }
-  .orbitFour { --card-size: 26px; --hover-scale: 2; }
-  .orbitFive { --card-size: 34px; --hover-scale: 1.53; }
-  .orbitSix { --card-size: 39px; --hover-scale: 1.33; }
-  .orbitSeven { --card-size: 30px; --hover-scale: 1.73; }
-  .orbitEight { --card-size: 33px; --hover-scale: 1.58; }
-  .orbitNine { --card-size: 25px; --hover-scale: 2.08; }
-  .orbitTen { --card-size: 30px; --hover-scale: 1.73; }
-  .orbitEleven { --card-size: 27px; --hover-scale: 1.93; }
-  .orbitTwelve { --card-size: 31px; --hover-scale: 1.68; }
+  .orbitItem { --card-size: 34px; }
   .stats { grid-template-columns: 1fr; }
   .stats div + div,
   .stats div:nth-child(3),
   .stats div:nth-child(4) { border-top: 1px solid var(--line); border-left: 0; padding-left: 0; }
   .stats div { min-height: 8rem; }
-  .quoteNav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .quoteChoice:nth-child(-n + 2) { border-bottom: 1px solid var(--line); }
-  .quoteChoiceRole { font-size: 0.6rem; }
-  .quoteChoiceName { font-size: 0.95rem; }
+  .testimonialHeading { display: grid; gap: 1.25rem; }
   .quoteFeature { grid-template-columns: 1fr; gap: 1.5rem; }
   .quotePerson { display: flex; align-items: center; gap: 1rem; }
   .quotePortrait { width: clamp(4rem, 20vw, 5.5rem); }

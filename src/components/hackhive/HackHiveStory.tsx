@@ -23,35 +23,37 @@ const statTargets = [250, 550, 24];
 const SHOW_SPONSORS = false;
 
 const orbitImages = [
-  { src: '/hackhive/orbit/team-portrait.png', className: styles.orbitOne },
-  { src: '/hackhive/orbit/immersive-demo.png', className: styles.orbitTwo },
-  { src: '/hackhive/orbit/mic-moment.webp', className: styles.orbitThree },
-  { src: '/hackhive/orbit/sponsor-table.png', className: styles.orbitFour },
-  { src: '/hackhive/filmstrip/hallway.jpg', className: styles.orbitFive },
-  { src: '/hackhive/orbit/builders-at-work.png', className: styles.orbitSix },
-  { src: '/hackhive/filmstrip/lecture-row.jpg', className: styles.orbitSeven },
-  { src: '/hackhive/orbit/crowd-overhead.webp', className: styles.orbitEight },
-  { src: '/hackhive/filmstrip/study-pair.jpg', className: styles.orbitNine },
-  { src: '/hackhive/filmstrip/checkin-desk.jpg', className: styles.orbitTen },
-  { src: '/hackhive/filmstrip/noodles.jpg', className: styles.orbitEleven },
-  { src: '/hackhive/filmstrip/pastries.jpg', className: styles.orbitTwelve },
+  '/hackhive/orbit/team-portrait.png',
+  '/hackhive/orbit/immersive-demo.png',
+  '/hackhive/orbit/mic-moment.webp',
+  '/hackhive/orbit/sponsor-table.png',
+  '/hackhive/filmstrip/hallway.jpg',
+  '/hackhive/orbit/builders-at-work.png',
+  '/hackhive/filmstrip/lecture-row.jpg',
+  '/hackhive/orbit/crowd-overhead.webp',
+  '/hackhive/filmstrip/study-pair.jpg',
+  '/hackhive/filmstrip/checkin-desk.jpg',
+  '/hackhive/filmstrip/noodles.jpg',
+  '/hackhive/filmstrip/pastries.jpg',
 ];
 
 const testimonials = [
   {
-    names: 'Samir & Samad',
-    selector: 'Vice Presidents',
-    role: 'Vice Presidents, OTU CS Club',
-    portraits: [
-      { src: '/Images/Samir.jpg', alt: 'Samir' },
-      { src: '/Images/Samad.jpg', alt: 'Samad' },
-    ],
+    names: 'Taha',
+    role: 'Co-Founder of HackHive & Former President @ OTU CS Club',
+    portraits: [{ src: '/Images/Taha.jpg', alt: 'Taha' }],
     quote:
-      'Attending HackHive means being part of a space where curiosity, creativity, and community come together. It is a chance to challenge yourself, learn new skills, meet people who inspire you, and grow through both the successes and struggles of building something from scratch. More than just a hackathon, HackHive is an experience that encourages you to step outside your comfort zone, believe in your ideas, and leave with new knowledge, connections, and confidence.',
+      "HackHive has a special place in my heart. I watched it grow from a passion project started by a few friends to something I had the chance to build and grow. I saw it blossom into something that could help build knowledge and give students a chance to experience the kind of hands-on learning that a classroom just can't teach. To find friends and community, and to see up close what the tech industry actually looks like. I know HackHive will continue to grow and inspire others to take charge in their community, and I am excited to see where we go from here.",
+  },
+  {
+    names: 'Wasay',
+    role: 'Co-Founder of HackHive & Former President @ OTU CS Club',
+    portraits: [{ src: '/Images/Wasay.jpg', alt: 'Wasay' }],
+    quote:
+      "HackHive isn't just something I built, it's something I actually believe in. I co-founded it in 2023 because I kept meeting insanely talented people at this university who had nowhere to show what they could do. That never sat right with me, so a friend and I decided to build the stage ourselves. Watching it grow into Durham Region's largest hackathon still doesn't feel real some days. But the numbers were never the point, it was always about giving people a real shot. It's the thing I'm proudest of from my time here.",
   },
   {
     names: 'Maryam & Muqit',
-    selector: 'Co-Presidents',
     role: 'Co-Presidents, OTU CS Club',
     portraits: [
       { src: '/Images/Maryam.png', alt: 'Maryam' },
@@ -61,20 +63,14 @@ const testimonials = [
       'Looking back at my time with the Computer Science Club at Ontario Tech University, people often mention HackHive, but what I found most memorable was the people and mentors I met along the way. My journey with the CS Club allowed me to work with people who had different perspectives and ideas, including those I did not always agree with. These experiences challenged me to see things from different points of view and helped me grow personally and professionally. The club also gave me opportunities to connect with industry professionals and fellow students, share my experiences, and learn from others. Ultimately, the people, connections, and lessons I gained are what made my time with the CS Club so meaningful.',
   },
   {
-    names: 'Wasay',
-    selector: 'Co-Founder',
-    role: 'Co-Founder of HackHive & Former President @ OTU CS Club',
-    portraits: [{ src: '/Images/Wasay.jpg', alt: 'Wasay' }],
+    names: 'Samir & Samad',
+    role: 'Vice Presidents, OTU CS Club',
+    portraits: [
+      { src: '/Images/Samir.jpg', alt: 'Samir' },
+      { src: '/Images/Samad.jpg', alt: 'Samad' },
+    ],
     quote:
-      "HackHive isn't just something I built, it's something I actually believe in. I co-founded it in 2023 because I kept meeting insanely talented people at this university who had nowhere to show what they could do. That never sat right with me, so a friend and I decided to build the stage ourselves. Watching it grow into Durham Region's largest hackathon still doesn't feel real some days. But the numbers were never the point, it was always about giving people a real shot. It's the thing I'm proudest of from my time here.",
-  },
-  {
-    names: 'Taha',
-    selector: 'Co-Founder',
-    role: 'Co-Founder of HackHive & Former President @ OTU CS Club',
-    portraits: [{ src: '/Images/Taha.jpg', alt: 'Taha' }],
-    quote:
-      "HackHive has a special place in my heart. I watched it grow from a passion project started by a few friends to something I had the chance to build and grow. I saw it blossom into something that could help build knowledge and give students a chance to experience the kind of hands-on learning that a classroom just can't teach. To find friends and community, and to see up close what the tech industry actually looks like. I know HackHive will continue to grow and inspire others to take charge in their community, and I am excited to see where we go from here.",
+      'Attending HackHive means being part of a space where curiosity, creativity, and community come together. It is a chance to challenge yourself, learn new skills, meet people who inspire you, and grow through both the successes and struggles of building something from scratch. More than just a hackathon, HackHive is an experience that encourages you to step outside your comfort zone, believe in your ideas, and leave with new knowledge, connections, and confidence.',
   },
 ];
 
@@ -171,7 +167,7 @@ export default function HackHiveStory() {
       const height = stageRect.height;
       mobileCards = window.innerWidth <= 620;
       compactCards = window.innerWidth <= 850;
-      const hoveredCardSize = mobileCards ? 56 : compactCards ? 130 : 174;
+      const hoveredCardSize = mobileCards ? 56 : compactCards ? 130 : 170;
       const cardClearance = hoveredCardSize / 2;
       const sideEdgePadding = mobileCards ? 4 : compactCards ? 10 : 16;
       const topEdgePadding = mobileCards ? 6 : compactCards ? 12 : 16;
@@ -286,7 +282,7 @@ export default function HackHiveStory() {
           const point = orbitPath.getPointAtLength(progress * pathLength);
           const depth = Math.max(0, Math.min(1, (point.y - pathTop) / Math.max(1, pathBottom - pathTop)));
           const easedDepth = depth * depth * (3 - 2 * depth);
-          const scale = 0.45 + easedDepth * 0.9;
+          const scale = 0.55 + easedDepth * 0.7;
           item.style.transform = `translate3d(${point.x}px, ${point.y}px, 0) translate(-50%, -50%) scale(${scale})`;
           const isActive = item.matches(':hover, :focus-visible');
           item.style.zIndex = isActive ? '10' : String(1 + Math.round(depth * 2));
@@ -329,11 +325,11 @@ export default function HackHiveStory() {
             />
           </svg>
           <div className={styles.orbitTrack}>
-          {orbitImages.map((image) => (
+          {orbitImages.map((src, index) => (
             <div
-              ref={(item) => { orbitItemRefs.current[orbitImages.indexOf(image)] = item; }}
-              className={`${styles.orbitItem} ${image.className}`}
-              key={image.src}
+              ref={(item) => { orbitItemRefs.current[index] = item; }}
+              className={styles.orbitItem}
+              key={src}
               tabIndex={0}
               aria-label="HackHive memory"
               onMouseEnter={holdOrbit}
@@ -342,7 +338,7 @@ export default function HackHiveStory() {
               onBlur={resumeOrbit}
             >
               <div className={styles.orbitItemInner}>
-                <Image src={image.src} alt="" fill sizes="(max-width: 700px) 28vw, 180px" />
+                <Image src={src} alt="" fill sizes="(max-width: 700px) 28vw, 130px" />
                 {DEBUG_ORBIT && <span className={styles.debugCardBounds} />}
               </div>
             </div>
@@ -401,24 +397,31 @@ export default function HackHiveStory() {
 
       <section className={styles.testimonials} aria-labelledby="voices-title">
         <div className={styles.testimonialHeading}>
-          <p className={styles.sectionLabel}>In their words</p>
-          <h2 id="voices-title">What our execs and past leaders had to say.</h2>
+          <div>
+            <p className={styles.sectionLabel}>In their words</p>
+            <h2 id="voices-title">What our execs and past leaders had to say.</h2>
+          </div>
+          <div className={styles.quoteControls} role="group" aria-label="Testimonial navigation">
+            <span className={styles.quoteCount}>{String(activeTestimonial + 1).padStart(2, '0')} / {String(testimonials.length).padStart(2, '0')}</span>
+            <button
+              type="button"
+              className={styles.quoteArrow}
+              aria-label="Previous testimonial"
+              onClick={() => setActiveTestimonial((current) => (current + testimonials.length - 1) % testimonials.length)}
+            >
+              <span aria-hidden="true">←</span>
+            </button>
+            <button
+              type="button"
+              className={styles.quoteArrow}
+              aria-label="Next testimonial"
+              onClick={() => setActiveTestimonial((current) => (current + 1) % testimonials.length)}
+            >
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
         </div>
         <div className={styles.quoteShowcase}>
-          <div className={styles.quoteNav} aria-label="Choose a testimonial">
-            {testimonials.map((testimonial, index) => (
-              <button
-                type="button"
-                className={`${styles.quoteChoice} ${index === activeTestimonial ? styles.quoteChoiceActive : ''}`}
-                key={testimonial.names}
-                aria-pressed={index === activeTestimonial}
-                onClick={() => setActiveTestimonial(index)}
-              >
-                <span className={styles.quoteChoiceRole}>{testimonial.selector}</span>
-                <span className={styles.quoteChoiceName}>{testimonial.names}</span>
-              </button>
-            ))}
-          </div>
           <figure className={styles.quoteFeature} key={selectedTestimonial.names} aria-live="polite">
             <figcaption className={styles.quotePerson}>
               <div className={styles.quotePortraits}>
