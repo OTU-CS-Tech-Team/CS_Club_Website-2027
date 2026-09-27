@@ -167,7 +167,8 @@ export default function HackHiveStory() {
       const height = stageRect.height;
       mobileCards = window.innerWidth <= 620;
       compactCards = window.innerWidth <= 850;
-      const hoveredCardSize = mobileCards ? 56 : compactCards ? 130 : 170;
+      const cardSize = orbitItemRefs.current[0]?.offsetWidth ?? 34;
+      const hoveredCardSize = cardSize * 1.25 * 1.3;
       const cardClearance = hoveredCardSize / 2;
       const sideEdgePadding = mobileCards ? 4 : compactCards ? 10 : 16;
       const topEdgePadding = mobileCards ? 6 : compactCards ? 12 : 16;
