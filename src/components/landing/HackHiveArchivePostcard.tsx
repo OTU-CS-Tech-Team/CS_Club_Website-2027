@@ -213,6 +213,10 @@ export default function HackHiveArchivePostcard({
                       '--fly-rot': `${tilt + flyRot}deg`,
                       opacity: local,
                       pointerEvents: interactable ? 'auto' : 'none',
+                      // Hover's spring transition would restart every frame and shake the fly-in.
+                      transition: progress < 1 ? 'none' : undefined,
+                      // Own GPU layer while flying in, so text doesn't snap between pixels (shimmer on iOS).
+                      willChange: progress < 1 ? 'transform, opacity' : undefined,
                     } as CSSProperties
                   }
                   tabIndex={interactable ? 0 : -1}

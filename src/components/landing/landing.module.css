@@ -1090,7 +1090,7 @@
   box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.25),
     0 1px 3px rgba(0, 0, 0, 0.15);
-  transform: translate(var(--fly-x, 0), var(--drop-y, 0))
+  transform: translate3d(var(--fly-x, 0), var(--drop-y, 0), 0)
     rotate(var(--fly-rot, var(--tilt, 0deg)));
   transition:
     transform 340ms cubic-bezier(0.34, 1.56, 0.64, 1),
@@ -1592,7 +1592,7 @@
     max-width: none;
     width: 100%;
     /* Keep the fly-in (fly-x / drop-y / fly-rot) but land upright in the 2×2 grid. */
-    transform: translate(var(--fly-x, 0), var(--drop-y, 0))
+    transform: translate3d(var(--fly-x, 0), var(--drop-y, 0), 0)
       rotate(calc(var(--fly-rot, 0deg) - var(--tilt, 0deg)));
   }
 

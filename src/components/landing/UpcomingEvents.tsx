@@ -353,8 +353,12 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
                   style={
                     {
                       opacity: featuredOpacity,
-                      transform: `translateY(${featuredY}px) scale(${featuredScale})`,
+                      transform: `translate3d(0, ${featuredY}px, 0) scale(${featuredScale})`,
                       pointerEvents: interactable ? 'auto' : 'none',
+                      // Hover's spring transition would restart every frame and shake the fly-in.
+                      transition: progress < 1 ? 'none' : undefined,
+                      // Own GPU layer while flying in, so text doesn't snap between pixels (shimmer on iOS).
+                      willChange: progress < 1 ? 'transform, opacity' : undefined,
                     } as CSSProperties
                   }
                   onClick={() => setSelected(featured)}
@@ -404,8 +408,12 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
                       style={
                         {
                           opacity: rowOpacity,
-                          transform: `translateX(${rowX}px)`,
+                          transform: `translate3d(${rowX}px, 0, 0)`,
                           pointerEvents: interactable ? 'auto' : 'none',
+                          // Hover's spring transition would restart every frame and shake the fly-in.
+                          transition: progress < 1 ? 'none' : undefined,
+                          // Own GPU layer while flying in, so text doesn't snap between pixels (shimmer on iOS).
+                          willChange: progress < 1 ? 'transform, opacity' : undefined,
                         } as CSSProperties
                       }
                       onClick={() => setSelected(event)}
