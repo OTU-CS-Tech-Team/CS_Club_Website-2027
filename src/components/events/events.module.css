@@ -133,6 +133,11 @@
   background: var(--accent);
 }
 
+.section[aria-labelledby='all-upcoming-heading'] .sectionTitle::before {
+  background: transparent;
+  border: 2px solid currentColor;
+}
+
 /* Past events read as an archive, not a duplicate of the upcoming grid */
 
 .section[aria-labelledby='past-events-heading'] .sectionTitle::before {
@@ -242,9 +247,16 @@
   color: var(--ink-soft);
 }
 
+/* Same outline pin as the upcoming board's PinIcon, drawn as a mask so it
+   takes the text colour */
 .eventGridFill > button > p::before {
-  content: '📍';
-  font-size: 0.8em;
+  content: '';
+  width: 0.9rem;
+  height: 0.9rem;
+  flex-shrink: 0;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
 /* Archived (past) cards: same layout, quieter surface */
@@ -421,6 +433,12 @@
   align-items: stretch;
 }
 
+/* Column headings sit in the grid's first row, one above each column */
+
+.upcomingBoard > .sectionTitle {
+  margin-bottom: 0.35rem;
+}
+
 .upcomingBoard > button,
 .upcomingSideCol > button {
   --bracket: var(--accent);
@@ -451,27 +469,8 @@
     0 20px 40px -18px rgba(106, 61, 245, 0.55);
 }
 
-.upcomingBoard > button::after {
-  content: 'Next up';
-  position: absolute;
-  top: 1.1rem;
-  right: 1.2rem;
-  padding: 0.3rem 0.65rem;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .upcomingBoard > button > div:first-child > span:last-child {
   color: var(--accent);
-}
-
-.upcomingBoard > button > div:last-child > h3 {
-  padding-right: 6rem;
 }
 
 .upcomingBoard > button > div:last-child > span:last-child {
@@ -533,6 +532,12 @@
   .upcomingBoard > button {
     min-height: 0;
   }
+
+  /* Stacked: keep each heading directly above its own content */
+  .nextLabel { order: 1; }
+  .upcomingBoard > button { order: 2; }
+  .upcomingLabel { order: 3; margin-top: 1.5rem; }
+  .upcomingSideCol { order: 4; }
 
   .upcomingSideCol > button {
     max-height: none;

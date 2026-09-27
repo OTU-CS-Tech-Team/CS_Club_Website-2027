@@ -58,16 +58,15 @@ export default function EventsBoard({ upcoming, past }: EventsBoardProps) {
         <Link href="/" className={styles.backLink}>
           Back to homepage
         </Link>
-        <div className={styles.sectionHead}>
-          <div className={landing.eventsUpNextWrap}>
-            <h2 id="all-upcoming-heading" className={landing.eventsUpNext}>
-              Upcoming events
-            </h2>
-            <span className={landing.eventsUpNextUnderline} aria-hidden="true" />
-          </div>
-        </div>
         {nextEvent ? (
           <div className={styles.upcomingBoard}>
+            <p className={`${styles.sectionTitle} ${styles.nextLabel}`}>Next event</p>
+            <h2
+              id="all-upcoming-heading"
+              className={`${styles.sectionTitle} ${styles.upcomingLabel}`}
+            >
+              Upcoming events
+            </h2>
             <button
               type="button"
               className={landing.eventsFeatured}
@@ -131,7 +130,14 @@ export default function EventsBoard({ upcoming, past }: EventsBoardProps) {
             </div>
           </div>
         ) : (
-          <p className={styles.emptyCopy}>Nothing on the calendar yet. Check back soon.</p>
+          <>
+            <div className={styles.sectionHead}>
+              <h2 id="all-upcoming-heading" className={styles.sectionTitle}>
+                Upcoming events
+              </h2>
+            </div>
+            <p className={styles.emptyCopy}>Nothing on the calendar yet. Check back soon.</p>
+          </>
         )}
       </section>
 
