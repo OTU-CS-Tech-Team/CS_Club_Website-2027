@@ -1591,7 +1591,9 @@
   .archivePolaroid {
     max-width: none;
     width: 100%;
-    transform: none;
+    /* Keep the fly-in (fly-x / drop-y / fly-rot) but land upright in the 2×2 grid. */
+    transform: translate(var(--fly-x, 0), var(--drop-y, 0))
+      rotate(calc(var(--fly-rot, 0deg) - var(--tilt, 0deg)));
   }
 
   .archivePolaroidHovered {
@@ -1605,24 +1607,6 @@
 
   .archiveHint {
     display: none;
-  }
-
-  .sneakChapter {
-    height: auto;
-  }
-
-  .sneakSticky {
-    position: relative;
-    top: auto;
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
-  }
-
-  .sneakStage {
-    min-height: 14rem;
-    flex: none;
-    aspect-ratio: 16 / 10;
   }
 }
 
@@ -1649,17 +1633,6 @@
     height: auto;
     overflow: visible;
     background: var(--stone);
-  }
-
-  .sneakChapter {
-    height: auto;
-  }
-
-  .sneakSticky {
-    position: relative;
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
   }
 }
 
@@ -1717,6 +1690,41 @@
   width: 100%;
   min-height: 36vh;
   flex: 1.9;
+}
+
+/* Unpinned on phones and reduced motion. These must come after the base rules
+   above — earlier in the file they were silently overridden. */
+@media (prefers-reduced-motion: reduce) {
+  .sneakChapter {
+    height: auto;
+  }
+
+  .sneakSticky {
+    position: relative;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 860px) {
+  .sneakChapter {
+    height: auto;
+  }
+
+  .sneakSticky {
+    position: relative;
+    top: auto;
+    height: auto;
+    overflow: visible;
+    padding-bottom: 3rem;
+  }
+
+  .sneakStage {
+    min-height: 0;
+    flex: none;
+    aspect-ratio: 6 / 5;
+  }
 }
 
 .sneakIndex {

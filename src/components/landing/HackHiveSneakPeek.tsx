@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { hackhiveSneakPeekClips } from '@/data/landing';
+import { playOnView } from '@/lib/playOnView';
 import HackHiveStripCanvas from './HackHiveStripCanvas';
 import styles from './landing.module.css';
 
@@ -30,9 +31,14 @@ export default function HackHiveSneakPeek() {
       setCopyIn(true);
     };
 
-    if (reduceMotion.matches || staticLayout.matches) {
+    if (reduceMotion.matches) {
       showFinished();
       return;
+    }
+
+    // Phones: the chapter isn't pinned, so fly the copy in once it scrolls into view.
+    if (staticLayout.matches) {
+      return playOnView(section, 1, showFinished);
     }
 
     let raf = 0;

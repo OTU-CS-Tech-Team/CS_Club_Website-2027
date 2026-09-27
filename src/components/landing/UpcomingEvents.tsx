@@ -9,6 +9,7 @@ import {
   subscribeLoggedIn,
 } from '@/app/mailing-list/actions';
 import type { ClubEvent } from '@/types/landing';
+import { playOnView } from '@/lib/playOnView';
 import EventModal from './EventModal';
 import styles from './landing.module.css';
 
@@ -99,9 +100,17 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
       setProgress(1);
     };
 
-    if (reduceMotion.matches || staticLayout.matches) {
+    if (reduceMotion.matches) {
       showFinished();
       return;
+    }
+
+    // Phones: the chapter isn't pinned, so play the card fly-ins once it scrolls into view.
+    if (staticLayout.matches) {
+      return playOnView(section, 1200, (p) => {
+        if (p === 1) settledRef.current = true;
+        setProgress(p === 1 ? 1 : p * lastFlyInDone);
+      });
     }
 
     let raf = 0;

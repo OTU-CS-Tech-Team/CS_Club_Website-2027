@@ -237,6 +237,10 @@ export default function Navbar() {
   useEffect(() => {
     const threshold = 48;
     const directionThreshold = 2;
+    // Reveal only after a deliberate upward scroll, so small touch flicks
+    // don't keep sliding the bar in over the page.
+    const revealAfter = 40;
+    let upTravel = 0;
     let raf = 0;
     let lastY = window.scrollY;
 
@@ -257,8 +261,10 @@ export default function Navbar() {
       // Reverse from down → up: reveal the bar. Keep scrolling down: hide it.
       // Near-zero delta (paused) leaves the current peek state alone.
       if (delta < -directionThreshold) {
-        setPeekOpen(true);
+        upTravel -= delta;
+        if (upTravel >= revealAfter) setPeekOpen(true);
       } else if (delta > directionThreshold) {
+        upTravel = 0;
         setPeekOpen(false);
       }
     };

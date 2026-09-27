@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { HackHiveProject } from '@/types/hackhive';
 import { getProjectHref } from '@/data/hackhive';
+import { playOnView } from '@/lib/playOnView';
 import styles from './landing.module.css';
 
 type HackHiveArchivePostcardProps = {
@@ -90,9 +91,17 @@ export default function HackHiveArchivePostcard({
       setProgress(1);
     };
 
-    if (reduceMotion.matches || staticLayout.matches) {
+    if (reduceMotion.matches) {
       showFinished();
       return;
+    }
+
+    // Phones: the chapter isn't pinned, so pin the polaroids one by one once it scrolls into view.
+    if (staticLayout.matches) {
+      return playOnView(section, 1600, (p) => {
+        if (p === 1) settledRef.current = true;
+        setProgress(p === 1 ? 1 : p * lastFlyInDone);
+      });
     }
 
     let raf = 0;

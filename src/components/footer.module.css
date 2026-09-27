@@ -144,17 +144,59 @@
     padding-top: 2.25rem;
   }
 
+  /* Phones: five headed columns stack into a very long footer, so drop the
+     headings and let every page link flow as one wrapped list instead. */
   .grid {
-    gap: 1.75rem 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.25rem;
   }
 
   .brand {
+    width: 100%;
     flex-direction: row;
     align-items: center;
+    margin-bottom: 0.75rem;
     padding-bottom: 1.25rem;
   }
 
+  .heading {
+    display: none;
+  }
+
+  .column,
+  .list {
+    display: contents;
+  }
+
+  /* Socials go on their own line under the page links. */
+  .column:last-child {
+    display: flex;
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0 0;
+    border: none;
+    border-top: 1px dashed #e4e4e7;
+  }
+
+  .column:last-child .list {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0 1.25rem;
+  }
+
+  .list li {
+    list-style: none;
+  }
+
+  /* Thumb-sized tap targets. */
+  .link {
+    display: inline-block;
+    padding: 0.45rem 0;
+  }
+
   .bottom {
-    margin-top: 2rem;
+    margin-top: 1.25rem;
   }
 }
