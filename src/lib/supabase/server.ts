@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { getSupabaseConfig, REMEMBER_COOKIE, rememberCookieOptions } from './config';
+import { getSupabaseConfig } from './config';
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -12,10 +12,9 @@ export async function createClient() {
         return cookieStore.getAll();
       },
       setAll(cookiesToSet) {
-        const remember = cookieStore.get(REMEMBER_COOKIE)?.value;
         try {
           cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, rememberCookieOptions(options, remember)),
+            cookieStore.set(name, value, options),
           );
         } catch {
           // Server Components cannot write cookies; middleware handles refreshes.

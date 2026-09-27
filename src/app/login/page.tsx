@@ -4,13 +4,10 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { ALLOWED_EMAIL_DOMAIN, EMAIL_DOMAIN_MESSAGE, isAllowedAuthEmail } from '@/lib/authEmail';
-import { REMEMBER_COOKIE } from '@/lib/supabase/config';
 import { subscribeGuest, subscribeLoggedIn } from '@/app/mailing-list/actions';
 import styles from './login.module.css';
 
 type Mode = 'signin' | 'signup' | 'reset';
-
-const SAVED_EMAIL_KEY = 'login-email';
 
 const HEADINGS: Record<Mode, [string, string]> = {
   signin: ['Log in', 'Sign in to see your member passport.'],
@@ -26,7 +23,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState('');
   const [alerts, setAlerts] = useState(false);
-  const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // The OAuth callback bounces back here with ?error=... when sign-in is refused.
@@ -34,32 +30,11 @@ export default function LoginPage() {
     const reason = new URLSearchParams(window.location.search).get('error');
     if (reason === 'sso') setStatus('Sign-in did not complete. Try again.');
     if (reason === 'domain') setStatus(EMAIL_DOMAIN_MESSAGE);
-
-    try {
-      const saved = localStorage.getItem(SAVED_EMAIL_KEY);
-      if (saved) {
-        setEmail(saved);
-        setRemember(true);
-      }
-    } catch {
-      // Storage blocked (private mode) -> just start blank.
-    }
   }, []);
-
-  // Read by the Supabase cookie writers (lib/supabase) when the session is set,
-  // so it has to be in place before sign-in, including before the Google redirect.
-  function saveRememberChoice() {
-    document.cookie = `${REMEMBER_COOKIE}=${remember ? 1 : 0}; path=/; max-age=34560000; samesite=lax`;
-    try {
-      if (remember) localStorage.setItem(SAVED_EMAIL_KEY, email);
-      else localStorage.removeItem(SAVED_EMAIL_KEY);
-    } catch {}
-  }
 
   async function handleGoogle() {
     setStatus('');
     setLoading(true);
-    saveRememberChoice();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -82,7 +57,7 @@ export default function LoginPage() {
     if (mode === 'reset') {
       setLoading(true);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?next=/login/reset`,
+        redirectTo: `${window.location.origin}/login/reset`,
       });
       setLoading(false);
       // Same message either way on success so the form doesn't reveal which emails have accounts.
@@ -96,7 +71,6 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    saveRememberChoice();
 
     if (mode === 'signup') {
       const { data, error } = await supabase.auth.signUp({
@@ -191,16 +165,6 @@ export default function LoginPage() {
             Forgot password?
           </button>
         ) : null}
-        {mode === 'reset' ? null : (
-          <label className="auth-check">
-            <input
-              type="checkbox"
-              checked={remember}
-              onChange={(event) => setRemember(event.target.checked)}
-            />
-            Remember me
-          </label>
-        )}
         {mode === 'signup' ? (
           <label className="auth-check">
             <input

@@ -1,6 +1,6 @@
-import { createBrowserClient, parseCookieHeader, serializeCookieHeader } from '@supabase/ssr';
+import { createBrowserClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { getSupabaseConfig, REMEMBER_COOKIE, rememberCookieOptions } from './config';
+import { getSupabaseConfig } from './config';
 
 let browserClient: SupabaseClient | undefined;
 
@@ -11,16 +11,6 @@ let browserClient: SupabaseClient | undefined;
 export function createClient(): SupabaseClient {
   if (browserClient) return browserClient;
   const { url, key } = getSupabaseConfig();
-  browserClient = createBrowserClient(url, key, {
-    cookies: {
-      getAll: () => parseCookieHeader(document.cookie),
-      setAll(cookiesToSet) {
-        const remember = parseCookieHeader(document.cookie).find((c) => c.name === REMEMBER_COOKIE)?.value;
-        cookiesToSet.forEach(({ name, value, options }) => {
-          document.cookie = serializeCookieHeader(name, value, rememberCookieOptions(options, remember));
-        });
-      },
-    },
-  });
+  browserClient = createBrowserClient(url, key);
   return browserClient;
 }
