@@ -4,11 +4,12 @@ import { getPastEvents, getUpcomingEvents } from '@/lib/eventSchedule';
 import styles from '@/components/events/events.module.css';
 
 export const metadata = {
-  title: 'Events — CS Club',
+  title: 'Upcoming Events',
   description: 'Upcoming and past Computer Science Club events.',
 };
 
-export const dynamic = 'force-dynamic';
+// Admin edits revalidate on demand; the hourly pass moves ended events to "past".
+export const revalidate = 3600;
 
 export default async function EventsPage() {
   // Real RSVP only works for DB events (uuid ids). Hardcoded samples in

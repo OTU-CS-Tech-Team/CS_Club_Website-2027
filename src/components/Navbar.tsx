@@ -1,18 +1,19 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useEffect, useId, useRef, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import styles from './navbar.module.css';
+import Link from "next/link";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import styles from "./navbar.module.css";
 
 type NavLink = {
   href: string;
   label: string;
   description: string;
   arrow?: boolean;
-  prefetch?: boolean;
 };
+
+type AuthStatus = "unknown" | "signedOut" | "signedIn";
 
 type NavSection = {
   id: string;
@@ -22,46 +23,63 @@ type NavSection = {
 
 const sections: NavSection[] = [
   {
-    id: 'home',
-    label: 'home',
-    links: [{ href: '/', label: 'Home', description: 'Club homepage and what’s new' }],
+    id: "home",
+    label: "Home",
+    links: [
+      { href: "/", label: "Home", description: "Club homepage and what’s new" },
+    ],
   },
   {
-    id: 'team',
-    label: 'team',
+    id: "team",
+    label: "Team",
     links: [
       {
-        href: '/team',
-        label: 'Meet the Team',
-        description: 'Club leadership and member profiles',
+        href: "/team",
+        label: "Meet the Team",
+        description: "Club leadership and member profiles",
       },
     ],
   },
   {
-    id: 'events',
-    label: 'events',
+    id: "events",
+    label: "Events",
     links: [
       {
-        href: '/events',
-        label: 'Upcoming Events',
-        description: 'Workshops, socials, and what’s on this semester',
-        prefetch: false,
+        href: "/events",
+        label: "Upcoming Events",
+        description: "Workshops, socials, and what’s on this semester",
       },
       {
-        href: '/hackhive',
-        label: 'HackHive',
-        description: 'The story, impact, and project archive',
+        href: "/gdg",
+        label: "GDG Project Sprints",
+        description: "CS Club x GDG — build a real project in 5-6 weeks",
       },
     ],
   },
   {
-    id: 'careers',
-    label: 'careers',
+    id: "hackhive",
+    label: "HackHive",
     links: [
       {
-        href: '/careers',
-        label: 'View Open Roles',
-        description: 'Apply to join the CS Club team',
+        href: "/hackhive",
+        label: "HackHive Info",
+        description: "The story, impact, and project archive",
+      },
+      {
+        href: "/hackhive/archive",
+        label: "HackHive Museum",
+        description: "Museum archive of HackHive projects, year by year",
+      },
+    ],
+  },
+  {
+    id: "careers",
+    label: "Careers",
+    links: [
+      {
+        href: "/careers",
+        label: "View Open Roles",
+        description: "Apply to join the CS Club team",
         arrow: true,
       },
     ],
@@ -69,30 +87,30 @@ const sections: NavSection[] = [
 ];
 
 const adminSection: NavSection = {
-  id: 'admin',
-  label: 'admin',
+  id: "admin",
+  label: "Admin",
   links: [
     {
-      href: '/admin',
-      label: 'Dashboard',
-      description: 'Manage events and job postings',
+      href: "/admin",
+      label: "Dashboard",
+      description: "Manage events and job postings",
     },
     {
-      href: '/admin/checkin',
-      label: 'Event Check-in',
-      description: 'Scan member passports at the door',
+      href: "/admin/checkin",
+      label: "Event Check-in",
+      description: "Scan member passports at the door",
     },
   ],
 };
 
 const accountSection: NavSection = {
-  id: 'passport',
-  label: 'passport',
+  id: "passport",
+  label: "Passport",
   links: [
     {
-      href: '/passport',
-      label: 'Member Passport',
-      description: 'Your stamps, points, and check-in QR',
+      href: "/passport",
+      label: "Member Passport",
+      description: "Your stamps, points, and check-in QR",
     },
   ],
 };
@@ -139,24 +157,20 @@ function ArrowIcon() {
   );
 }
 
-export default function Navbar({
-  signedIn,
-  isAdmin,
-}: {
-  signedIn: boolean;
-  isAdmin: boolean;
-}) {
+export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const navId = useId();
   const rootRef = useRef<HTMLElement>(null);
   const closeTimer = useRef<number | null>(null);
-  const [isSignedIn, setIsSignedIn] = useState(signedIn);
-  const [isAdminUser, setIsAdminUser] = useState(isAdmin);
+  const adminCheckedFor = useRef<string | null>(null);
+  const [authStatus, setAuthStatus] = useState<AuthStatus>("unknown");
+  const [isAdminUser, setIsAdminUser] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [scrolledAway, setScrolledAway] = useState(false);
   const [peekOpen, setPeekOpen] = useState(false);
 
+  const isSignedIn = authStatus === "signedIn";
   const visibleSections = [
     ...sections,
     ...(isAdminUser ? [adminSection] : []),
@@ -165,37 +179,52 @@ export default function Navbar({
 
   const navRevealed = !scrolledAway || peekOpen;
 
-  useEffect(() => {
-    setIsSignedIn(signedIn);
-    setIsAdminUser(isAdmin);
-  }, [signedIn, isAdmin]);
+  const syncSession = useCallback((userId: string | null) => {
+    if (!userId) {
+      adminCheckedFor.current = null;
+      setAuthStatus("signedOut");
+      setIsAdminUser(false);
+      return;
+    }
+
+    setAuthStatus("signedIn");
+    if (adminCheckedFor.current === userId) return;
+    adminCheckedFor.current = userId;
+
+    void createClient()
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (adminCheckedFor.current === userId) setIsAdminUser(!!data);
+      });
+  }, []);
 
   useEffect(() => {
-    const supabase = createClient();
-
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event !== 'SIGNED_IN' && event !== 'SIGNED_OUT') return;
-
-      const nextSignedIn = !!session?.user;
-      setIsSignedIn(nextSignedIn);
-
-      if (!nextSignedIn) {
-        setIsAdminUser(false);
-        return;
-      }
-
-      void supabase
-        .from('admin_users')
-        .select('user_id')
-        .eq('user_id', session.user.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          setIsAdminUser(!!data);
-        });
-    });
+    const { data: listener } = createClient().auth.onAuthStateChange(
+      (event, session) => {
+        if (event !== "SIGNED_IN" && event !== "SIGNED_OUT") return;
+        syncSession(session?.user.id ?? null);
+      },
+    );
 
     return () => listener.subscription.unsubscribe();
-  }, []);
+  }, [syncSession]);
+
+  // Server-side sign-ins (admin login, OAuth callback) set cookies without
+  // firing a browser auth event, so re-read the stored session on navigation.
+  useEffect(() => {
+    let cancelled = false;
+    void createClient()
+      .auth.getSession()
+      .then(({ data: { session } }) => {
+        if (!cancelled) syncSession(session?.user.id ?? null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname, syncSession]);
 
   useEffect(() => {
     setOpenId(null);
@@ -237,10 +266,10 @@ export default function Navbar({
     };
 
     update();
-    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       if (raf) window.cancelAnimationFrame(raf);
-      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
@@ -252,16 +281,16 @@ export default function Navbar({
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setOpenId(null);
       }
     }
 
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
@@ -289,10 +318,9 @@ export default function Navbar({
 
   async function handleSignOut() {
     const supabase = createClient();
-    setIsSignedIn(false);
-    setIsAdminUser(false);
+    syncSession(null);
     await supabase.auth.signOut();
-    router.push('/');
+    router.push("/");
     router.refresh();
   }
 
@@ -306,7 +334,7 @@ export default function Navbar({
         />
       ) : null}
       <header
-        className={`${styles.header} ${pathname === '/' ? styles.headerHome : ''} ${
+        className={`${styles.header} ${pathname === "/" ? styles.headerHome : ""} ${
           navRevealed ? styles.headerVisible : styles.headerHidden
         }`}
         ref={rootRef}
@@ -336,14 +364,14 @@ export default function Navbar({
                 <div key={section.id} className={styles.item}>
                   <button
                     type="button"
-                    className={`${styles.trigger} ${isOpen ? styles.triggerOpen : ''}`}
+                    className={`${styles.trigger} ${isOpen ? styles.triggerOpen : ""}`}
                     aria-expanded={isOpen}
                     aria-controls={panelId}
                     onMouseEnter={() => openSectionMenu(section.id)}
                     onClick={() => {
                       const canHover =
-                        typeof window !== 'undefined' &&
-                        window.matchMedia('(hover: hover)').matches;
+                        typeof window !== "undefined" &&
+                        window.matchMedia("(hover: hover)").matches;
                       if (canHover) {
                         openSectionMenu(section.id);
                         return;
@@ -365,7 +393,7 @@ export default function Navbar({
                       onMouseEnter={cancelClose}
                     >
                       <div className={styles.meta}>
-                        <span>NAV/{section.label.toUpperCase()}</span>
+                        <span>{section.label}</span>
                       </div>
                       <div className={styles.links}>
                         {section.links.map((link) => (
@@ -373,14 +401,15 @@ export default function Navbar({
                             key={link.href}
                             href={link.href}
                             className={styles.link}
-                            prefetch={link.prefetch}
                             onClick={() => setOpenId(null)}
                           >
                             <span className={styles.linkTitle}>
                               {link.label}
                               {link.arrow ? <ArrowIcon /> : null}
                             </span>
-                            <span className={styles.linkCopy}>{link.description}</span>
+                            <span className={styles.linkCopy}>
+                              {link.description}
+                            </span>
                           </Link>
                         ))}
                       </div>
@@ -392,7 +421,14 @@ export default function Navbar({
           </div>
 
           <div className={styles.actions}>
-            {isSignedIn ? (
+            {authStatus === "unknown" ? (
+              <span
+                className={`${styles.actionLink} ${styles.actionPending}`}
+                aria-hidden="true"
+              >
+                Log in
+              </span>
+            ) : isSignedIn ? (
               <button
                 type="button"
                 className={styles.actionButton}

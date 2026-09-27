@@ -1,6 +1,7 @@
 import { events as fallbackEvents } from '@/data/landing';
 import type { ClubJob, ManagedEvent } from '@/types/content';
-import { createClient } from './supabase/server';
+import { isMissingColumnError, presentJob } from './jobSections';
+import { createPublicClient } from './supabase/public';
 
 const fallbackJob: ClubJob = {
   id: 'general-member',
@@ -77,7 +78,7 @@ export function mapDatabaseEvent(row: EventRow): ManagedEvent | null {
 }
 
 export async function getPublishedEvents(): Promise<ManagedEvent[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const result = await supabase
     .from('events')
     .select('id, title, description, location, starts_at, ends_at, images, points, is_published, created_by, created_at, updated_at')
@@ -105,23 +106,33 @@ export async function getPublishedEvents(): Promise<ManagedEvent[]> {
 }
 
 export async function getActiveJobs(): Promise<ClubJob[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const result = await supabase
     .from('jobs')
-    .select('id, title, category, description, is_active, closes_at, commitment, location, created_by, created_at, updated_at')
+    .select('id, title, category, description, is_active, closes_at, commitment, location, sections, created_by, created_at, updated_at')
     .eq('is_active', true)
     .or(`closes_at.is.null,closes_at.gt.${new Date().toISOString()}`)
     .order('created_at');
   let rows: ClubJob[] | null = result.data as ClubJob[] | null;
   let error = result.error;
-  if (result.error?.code === '42703') {
-    const legacyResult = await supabase
+  if (isMissingColumnError(result.error)) {
+    const currentResult = await supabase
       .from('jobs')
-      .select('id, title, category, description, is_active, created_by, created_at, updated_at')
+      .select('id, title, category, description, is_active, closes_at, commitment, location, created_by, created_at, updated_at')
       .eq('is_active', true)
+      .or(`closes_at.is.null,closes_at.gt.${new Date().toISOString()}`)
       .order('created_at');
-    rows = legacyResult.data as ClubJob[] | null;
-    error = legacyResult.error;
+    rows = currentResult.data as ClubJob[] | null;
+    error = currentResult.error;
+    if (isMissingColumnError(currentResult.error)) {
+      const legacyResult = await supabase
+        .from('jobs')
+        .select('id, title, category, description, is_active, created_by, created_at, updated_at')
+        .eq('is_active', true)
+        .order('created_at');
+      rows = legacyResult.data as ClubJob[] | null;
+      error = legacyResult.error;
+    }
   }
   if (error) {
     if (!['42703', 'PGRST205'].includes(error.code)) {
@@ -129,7 +140,11 @@ export async function getActiveJobs(): Promise<ClubJob[]> {
     }
     return [fallbackJob];
   }
-  return rows ?? [];
+  return (rows ?? []).map((row) => {
+    const record = row as ClubJob & { sections?: unknown };
+    const { sections, ...job } = record;
+    return { ...job, ...presentJob(job.description ?? '', sections) };
+  });
 }
 
 export async function getActiveJob(id: string): Promise<ClubJob | null> {

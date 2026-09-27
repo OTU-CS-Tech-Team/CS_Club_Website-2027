@@ -157,6 +157,23 @@ export async function sendEventEmail(
   }
 }
 
+export async function sendApplicationReceivedEmail(to: string, role: string) {
+  const safeRole = escapeHtml(role);
+  const html = emailShell(`
+      <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111111;">Thanks for applying</h1>
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#333333;">Thanks for your interest in the ${safeRole} role, and for taking the time to apply.</p>
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#333333;">We'll go over your qualifications against the role's requirements. If there's a match, someone from the hiring committee will be in touch.</p>
+      <p style="margin:0;font-size:14px;line-height:1.6;color:#333333;">Thanks</p>`);
+  const text = `Thanks for your interest in the ${role} role, and for taking the time to apply.\n\nWe'll go over your qualifications against the role's requirements. If there's a match, someone from the hiring committee will be in touch.\n\nThanks\n\nOTU Computer Science Club`;
+  try {
+    await sendDirectEmail(to, `Thanks for applying — ${role}`, html, text);
+    return { sent: true as const };
+  } catch (error) {
+    console.error('Failed to send application confirmation', error);
+    return { sent: false as const };
+  }
+}
+
 // Plain single-recipient send that throws on failure (unlike sendEventEmail,
 // which swallows errors for side-effect sends). Used for the newsletter's
 // "send test to myself" — a real `to:`, not routed through the bcc-batch

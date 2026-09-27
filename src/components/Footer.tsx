@@ -21,15 +21,20 @@ const columns = [
     title: 'events',
     links: [
       { href: '/events', label: 'upcoming events' },
-      { href: '/hackhive', label: 'hackhive' },
+      { href: '/gdg', label: 'gdg project sprints' },
+    ],
+  },
+  {
+    title: 'hackhive',
+    links: [
+      { href: '/hackhive', label: 'hackhive info' },
+      { href: '/hackhive/archive', label: 'hackhive museum' },
     ],
   },
   {
     title: 'join',
     links: [
       { href: '/careers', label: 'open roles' },
-      { href: '/passport', label: 'member passport' },
-      { href: '/login', label: 'log in' },
     ],
   },
 ] as const;
@@ -101,7 +106,7 @@ export default function Footer() {
 
         <div className={styles.bottom}>
           <p className={styles.copy}>
-            All Rights Reserved © {new Date().getFullYear()}
+            © {new Date().getFullYear()} Ontario Tech CS Club. All rights reserved.
           </p>
         </div>
       </div>

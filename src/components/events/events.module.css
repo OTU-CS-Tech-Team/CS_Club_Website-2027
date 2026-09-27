@@ -7,6 +7,7 @@
   --line: rgba(27, 0, 63, 0.16);
   width: 100%;
   color: var(--ink);
+  background: #fff;
   min-height: calc(100dvh - 3.5rem);
   padding: clamp(2rem, 5vw, 4.5rem) clamp(1.25rem, 5vw, 5rem)
     clamp(3rem, 7vw, 6rem);
@@ -168,8 +169,7 @@
 
 /* A quiet viewfinder-corner "focus lock", rather than a loud hover glow */
 
-.eventGridFill > button::before,
-.nextEventSlot > button::before {
+.eventGridFill > button::before {
   content: '';
   position: absolute;
   inset: 7px;
@@ -201,9 +201,7 @@
 }
 
 .eventGridFill > button:hover::before,
-.eventGridFill > button:focus-visible::before,
-.nextEventSlot > button:hover::before,
-.nextEventSlot > button:focus-visible::before {
+.eventGridFill > button:focus-visible::before {
   opacity: 1;
   inset: 5px;
 }
@@ -283,79 +281,127 @@
   background: var(--page-bg);
 }
 
-/* Next up: the single closest upcoming event, given a soft wash of the
-   club yellow (login --yellow) edged in passport gold so it stands apart
-   from the white cards below without shouting. */
+/* Project Sprints (/gdg) */
 
-.nextEventSlot {
-  --club-yellow: #fff29c;
-  --club-gold: #f4b942;
-}
-
-.section[aria-labelledby='next-event-heading'] .sectionTitle::before {
-  background: #f4b942;
-}
-
-.nextEventSlot > button {
-  /* Deeper than --club-gold so the hover brackets read on the yellow wash */
-  --bracket: #c9941f;
-  position: relative;
-  min-height: 14rem;
-  background: linear-gradient(135deg, rgba(255, 242, 156, 0.55) 0%, rgba(255, 242, 156, 0.25) 100%),
-    var(--page-bg);
-  color: var(--ink);
-  border: 1px solid var(--club-gold);
-  border-radius: 14px;
-  box-shadow: 0 1px 2px rgba(27, 0, 63, 0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  animation: eventsFadeUp 0.5s ease both;
-}
-
-.nextEventSlot > button::after {
-  content: 'Next event';
-  position: absolute;
-  top: 1.1rem;
-  right: 1.2rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #9a6a00;
-}
-
-.nextEventSlot > button:hover,
-.nextEventSlot > button:focus-visible {
-  background: linear-gradient(135deg, rgba(255, 242, 156, 0.8) 0%, rgba(255, 242, 156, 0.4) 100%),
-    var(--page-bg);
-  color: var(--ink);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 18px -12px rgba(154, 106, 0, 0.45);
-  outline: none;
-}
-
-.nextEventSlot > button:focus-visible {
-  outline: 2px solid var(--club-gold);
-  outline-offset: 3px;
-}
-
-.nextEventSlot > button > div > span {
-  background: rgba(244, 185, 66, 0.22);
-  border-color: transparent;
-  color: var(--ink);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  letter-spacing: 0.02em;
-}
-
-.nextEventSlot > button > p {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
+.leadCopy {
+  max-width: 68ch;
+  margin: 0 0 1rem;
+  font-size: 1.02rem;
+  line-height: 1.6;
   color: var(--ink-soft);
 }
 
-.nextEventSlot > button > p::before {
-  content: '📍';
-  font-size: 0.8em;
+.factGrid {
+  display: grid;
+  max-width: 1080px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.85rem;
+  margin: 1.75rem 0 0;
+}
+
+.fact {
+  padding: 1rem 1.15rem;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+}
+
+.fact dt {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.fact dd {
+  margin: 0.3rem 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.timeline {
+  max-width: 68ch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline li {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px dashed var(--line);
+  font-size: 0.96rem;
+  line-height: 1.45;
+}
+
+.timeline li span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-top: 0.1rem;
+}
+
+.checkList {
+  max-width: 68ch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.checkList li {
+  position: relative;
+  padding-left: 1.5rem;
+  font-size: 0.96rem;
+  line-height: 1.5;
+}
+
+.checkList li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.noteCopy {
+  max-width: 68ch;
+  margin: 1.5rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1.35rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--canvas);
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.cta:hover,
+.cta:focus-visible {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  outline: none;
 }
 
 /* Empty state */
@@ -384,8 +430,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .section,
-  .eventGridFill > button,
-  .nextEventSlot > button {
+  .eventGridFill > button {
     animation: none;
   }
 }

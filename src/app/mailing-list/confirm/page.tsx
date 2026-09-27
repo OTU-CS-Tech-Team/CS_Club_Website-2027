@@ -2,7 +2,7 @@ import { previewMailingConfirm, confirmMailingSignupForm } from '@/app/mailing-l
 import styles from '@/components/landing/landing.module.css';
 
 export const metadata = {
-  title: 'Confirm mailing list — CS Club',
+  title: 'Confirm Mailing List',
   description: 'Confirm your CS Club mailing list signup.',
 };
 

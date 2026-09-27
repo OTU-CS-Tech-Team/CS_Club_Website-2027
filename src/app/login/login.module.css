@@ -1,3 +1,35 @@
+.screen {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1.25rem 3rem;
+  background: #fff;
+  color: #111;
+}
+
+.stack {
+  width: min(100%, 20rem);
+}
+
+.stack :global(.auth-form) {
+  max-width: none;
+  width: 100%;
+}
+
+.stack :global(.oauth-button) {
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
+.stack h1 {
+  margin: 0 0 0.75rem;
+}
+
+.stack > p {
+  margin-top: 0;
+  color: #444;
+}
+
 .page {
   --ink: #1b003f;
   --lavender: #e6e6fa;
@@ -8,7 +40,7 @@
   place-items: center;
   padding: 2rem 1.25rem;
   color: var(--ink);
-  background: var(--lavender);
+  background: #fff;
 }
 
 .panel {

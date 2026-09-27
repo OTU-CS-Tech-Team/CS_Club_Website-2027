@@ -2,7 +2,7 @@ import { previewGuestCancel, cancelGuestRsvpForm } from '@/app/events/actions';
 import styles from '@/components/landing/landing.module.css';
 
 export const metadata = {
-  title: 'Cancel RSVP — CS Club',
+  title: 'Cancel RSVP',
   description: 'Cancel a guest event RSVP.',
 };
 

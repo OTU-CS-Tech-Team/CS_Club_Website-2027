@@ -92,10 +92,37 @@ export function YearSelect() {
   );
 }
 
+
 export default function CareerApplicationForm({ job }: { job: ClubJob }) {
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (!submitted) return;
+    window.scrollTo(0, 0);
+  }, [submitted]);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resumeName, setResumeName] = useState('');
+  const [dragOver, setDragOver] = useState(false);
+  const resumeRef = useRef<HTMLInputElement>(null);
+
+  function chooseResume(file: File | undefined) {
+    if (!file) return;
+    const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+    if (extension !== 'pdf') {
+      setError('Upload a PDF resume.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Resume must be 5 MB or smaller.');
+      return;
+    }
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    if (resumeRef.current) resumeRef.current.files = transfer.files;
+    setResumeName(file.name);
+    setError('');
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -114,13 +141,23 @@ export default function CareerApplicationForm({ job }: { job: ClubJob }) {
       setError(`Please enter ${missing[1]}.`);
       return;
     }
+    if (!resumeRef.current?.files?.[0]) {
+      setError('Please upload your resume.');
+      return;
+    }
+    const unanswered = (job.questions ?? []).find((question) => (
+      question.required && !String(formData.get(`question:${question.id}`) ?? '').trim()
+    ));
+    if (unanswered) {
+      setError(`Please answer "${unanswered.prompt}".`);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       const response = await fetch('/api/career-applications', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(Object.fromEntries(formData.entries())),
+        body: formData,
       });
       if (!response.ok) {
         const result = await response.json().catch(() => null);
@@ -136,19 +173,16 @@ export default function CareerApplicationForm({ job }: { job: ClubJob }) {
   }
 
   return (
-    <div className={styles.applyPage}>
+    <div className={submitted ? `${styles.applyPage} ${styles.applyPageDone}` : styles.applyPage}>
       <section className={styles.applyShell}>
-        <Link href="/careers" className={styles.backLink}>
-          <span aria-hidden="true">←</span> Back to careers
+        <Link href={`/careers/${job.id}`} className={styles.backLink}>
+          <span aria-hidden="true">←</span> Back to role
         </Link>
 
         {submitted ? (
           <div className={styles.success}>
-            <h3>Application received.</h3>
-            <p>
-              Thanks for putting yourself forward. The CS Club team will be in touch through your
-              Ontario Tech email.
-            </p>
+            <h3>Thanks for your interest.</h3>
+            <p>Thanks for your interest in this role. If there&apos;s a match, someone from the hiring team will be in touch.</p>
           </div>
         ) : (
           <>
@@ -163,7 +197,6 @@ export default function CareerApplicationForm({ job }: { job: ClubJob }) {
                   : 'Open until filled'}
               </span>
             </div>
-            <p className={styles.applyDescription}>{job.description}</p>
             <form onSubmit={handleSubmit} noValidate>
               <input type="hidden" name="jobId" value={job.id} />
               <div className={styles.formGrid}>
@@ -206,6 +239,45 @@ export default function CareerApplicationForm({ job }: { job: ClubJob }) {
                   Program of study
                   <input name="program" placeholder="e.g. Computer Science" aria-required="true" />
                 </label>
+                <div className={`${styles.fullWidth} ${styles.resumeField}`}>
+                  Resume
+                  <button
+                    className={`${styles.dropZone} ${dragOver ? styles.dropZoneActive : ''}`}
+                    type="button"
+                    onClick={() => resumeRef.current?.click()}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      setDragOver(true);
+                    }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      setDragOver(false);
+                      chooseResume(event.dataTransfer.files[0]);
+                    }}
+                  >
+                    {resumeName || 'Drop your resume here, or click to upload'}
+                    <span>PDF only, up to 5 MB</span>
+                  </button>
+                  <input
+                    ref={resumeRef}
+                    className={styles.srOnly}
+                    type="file"
+                    name="resume"
+                    accept=".pdf,application/pdf"
+                    aria-label="Resume"
+                    onChange={(event) => chooseResume(event.target.files?.[0])}
+                  />
+                </div>
+                {(job.questions ?? []).map((question) => (
+                  <label className={`${styles.fullWidth} ${styles.questionField}`} key={question.id}>
+                    <span>
+                      {question.prompt}
+                      {question.required ? null : <span className={styles.optionalHint}>Optional</span>}
+                    </span>
+                    <textarea name={`question:${question.id}`} rows={4} maxLength={2000} aria-required={question.required} />
+                  </label>
+                ))}
                 <label className={styles.fullWidth}>
                   Got ideas for us?
                   <textarea

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { ALLOWED_EMAIL_DOMAIN, EMAIL_DOMAIN_MESSAGE, isAllowedAuthEmail } from '@/lib/authEmail';
 import { subscribeGuest, subscribeLoggedIn } from '@/app/mailing-list/actions';
+import styles from './login.module.css';
 
 type Mode = 'signin' | 'signup';
 
@@ -113,18 +114,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="page">
+    <div className={styles.screen}>
+      <div className={styles.stack}>
       <h1>Log in</h1>
       <p>
         {mode === 'signup'
           ? 'Create your account to start your member passport.'
           : 'Sign in to see your member passport.'}
       </p>
-
-      <button type="button" className="oauth-button" onClick={handleGoogle} disabled={loading}>
-        <span aria-hidden="true">G</span> Continue with Google
-      </button>
-      <p className="auth-divider">or use your email</p>
 
       <form className="auth-form" onSubmit={handleSubmit}>
         <label>
@@ -159,8 +156,13 @@ export default function LoginPage() {
         <button type="submit" disabled={loading}>
           {mode === 'signup' ? 'Create account' : 'Sign in'}
         </button>
-        <p className="auth-note">You&apos;ll stay signed in on this device.</p>
       </form>
+
+      <p className="auth-divider">or</p>
+      <button type="button" className="oauth-button" onClick={handleGoogle} disabled={loading}>
+        <span aria-hidden="true">G</span> Continue with Google
+      </button>
+      <p className="auth-note">You&apos;ll stay signed in on this device.</p>
 
       <button
         type="button"
@@ -178,6 +180,7 @@ export default function LoginPage() {
           {status}
         </p>
       )}
+      </div>
     </div>
   );
 }

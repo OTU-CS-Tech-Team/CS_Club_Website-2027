@@ -6,28 +6,30 @@ import { useEffect, useRef, useState } from 'react';
 import styles from './hackhiveStory.module.css';
 
 const heroWords = [
-  'real.',
-  'bold.',
-  'useful.',
-  'meaningful.',
-  'lasting.',
-  'together.',
-  'creative.',
-  'curious.',
-  'ambitious.',
-  'possible.',
-  'impactful.',
-  'brilliant.',
+  { word: 'Real.', color: '#d45d7d' },
+  { word: 'Bold.', color: '#6a3df5' },
+  { word: 'Useful.', color: '#2f7d6d' },
+  { word: 'Meaningful.', color: '#c45c26' },
+  { word: 'Lasting.', color: '#3d5a80' },
+  { word: 'Together.', color: '#7a4e8a' },
+  { word: 'Creative.', color: '#b23a6a' },
+  { word: 'Curious.', color: '#1f6f8b' },
+  { word: 'Ambitious.', color: '#8a4b08' },
+  { word: 'Possible.', color: '#3d4db7' },
+  { word: 'Impactful.', color: '#9b3d4a' },
+  { word: 'Brilliant.', color: '#5b3a8c' },
 ];
 const statTargets = [250, 550, 24];
+const SHOW_TESTIMONIALS = false;
+const SHOW_SPONSORS = false;
 
 const orbitImages = [
-  { src: '/hackhive/orbit/group-celebration.webp', className: styles.orbitOne },
-  { src: '/hackhive/filmstrip/demo-laptop.jpg', className: styles.orbitTwo },
+  { src: '/hackhive/orbit/team-portrait.png', className: styles.orbitOne },
+  { src: '/hackhive/orbit/immersive-demo.png', className: styles.orbitTwo },
   { src: '/hackhive/orbit/mic-moment.webp', className: styles.orbitThree },
-  { src: '/hackhive/orbit/participant-candid.webp', className: styles.orbitFour },
+  { src: '/hackhive/orbit/sponsor-table.png', className: styles.orbitFour },
   { src: '/hackhive/filmstrip/hallway.jpg', className: styles.orbitFive },
-  { src: '/hackhive/orbit/karaoke-candid.webp', className: styles.orbitSix },
+  { src: '/hackhive/orbit/builders-at-work.png', className: styles.orbitSix },
   { src: '/hackhive/filmstrip/lecture-row.jpg', className: styles.orbitSeven },
   { src: '/hackhive/orbit/crowd-overhead.webp', className: styles.orbitEight },
   { src: '/hackhive/filmstrip/study-pair.jpg', className: styles.orbitNine },
@@ -38,14 +40,14 @@ const orbitImages = [
 
 const galleryImages = [
   {
-    src: '/hackhive/filmstrip/checkin-desk.jpg',
-    alt: 'HackHive attendees checking in at the event desk',
+    src: '/hackhive/gallery/checkin-conversation.webp',
+    alt: 'A HackHive organizer welcoming an attendee at check-in',
     className: styles.galleryLarge,
     label: 'The doors open',
   },
   {
-    src: '/hackhive/filmstrip/demo-laptop.jpg',
-    alt: 'A HackHive participant working at a laptop',
+    src: '/hackhive/gallery/event-host.webp',
+    alt: 'A HackHive organizer speaking during the event',
     className: styles.galleryTall,
     label: 'Built in a weekend',
   },
@@ -56,8 +58,8 @@ const galleryImages = [
     label: 'Ideas, out loud',
   },
   {
-    src: '/hackhive/filmstrip/lecture-row.jpg',
-    alt: 'HackHive participants gathered for a session',
+    src: '/hackhive/gallery/project-demo.webp',
+    alt: 'HackHive participants sharing their project at a demo table',
     className: styles.gallerySmall,
     label: 'A room full of possibility',
   },
@@ -106,19 +108,6 @@ export default function HackHiveStory() {
   const statsRef = useRef<HTMLDListElement>(null);
 
   useEffect(() => {
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reducedMotion) return;
-
-    const wordTimer = window.setInterval(() => {
-      if (!orbitPausedRef.current) {
-        setHeroWordIndex((current) => (current + 1) % heroWords.length);
-      }
-    }, 2400);
-
-    return () => window.clearInterval(wordTimer);
-  }, []);
-
-  useEffect(() => {
     const stats = statsRef.current;
     if (!stats) return;
 
@@ -132,7 +121,7 @@ export default function HackHiveStory() {
       }
 
       const startedAt = performance.now();
-      const duration = 1400;
+      const duration = 800;
       const countUp = (now: number) => {
         const progress = Math.min((now - startedAt) / duration, 1);
         const eased = 1 - Math.pow(1 - progress, 4);
@@ -183,7 +172,7 @@ export default function HackHiveStory() {
       const height = stageRect.height;
       mobileCards = window.innerWidth <= 620;
       compactCards = window.innerWidth <= 850;
-      const hoveredCardSize = mobileCards ? 52 : compactCards ? 130 : 170;
+      const hoveredCardSize = mobileCards ? 56 : compactCards ? 130 : 174;
       const cardClearance = hoveredCardSize / 2;
       const sideEdgePadding = mobileCards ? 4 : compactCards ? 10 : 16;
       const topEdgePadding = mobileCards ? 6 : compactCards ? 12 : 16;
@@ -257,7 +246,14 @@ export default function HackHiveStory() {
           break;
         }
       }
-      console.assert(pathIsSafe, 'HackHive orbit path intersects the protected content rectangle.');
+      // On phone widths the hero text fills the stage, so the protected rect spans
+      // the full width and contains the orbit centre — no closed path can clear it.
+      // Only assert where the constraint is satisfiable (text as a centre column).
+      const contentSpansStage = safeLeft <= 0 && safeRight >= width;
+      console.assert(
+        pathIsSafe || contentSpansStage,
+        'HackHive orbit path intersects the protected content rectangle.',
+      );
       stage.dataset.orbitSafe = String(pathIsSafe);
       stage.style.setProperty('--orbit-center-x', `${centerX}px`);
       stage.style.setProperty('--orbit-center-y', `${centerY}px`);
@@ -290,7 +286,8 @@ export default function HackHiveStory() {
           const progress = (globalProgress + phaseOffset) % 1;
           const point = orbitPath.getPointAtLength(progress * pathLength);
           const depth = Math.max(0, Math.min(1, (point.y - pathTop) / Math.max(1, pathBottom - pathTop)));
-          const scale = 0.82 + depth * 0.18;
+          const easedDepth = depth * depth * (3 - 2 * depth);
+          const scale = 0.45 + easedDepth * 0.9;
           item.style.transform = `translate3d(${point.x}px, ${point.y}px, 0) translate(-50%, -50%) scale(${scale})`;
           const isActive = item.matches(':hover, :focus-visible');
           item.style.zIndex = isActive ? '10' : String(1 + Math.round(depth * 2));
@@ -307,8 +304,13 @@ export default function HackHiveStory() {
     };
   }, []);
 
-  const pauseOrbit = () => {
+  const holdOrbit = (event: { type: string; currentTarget: Element }) => {
+    if (event.type === 'focus' && event.currentTarget.matches(':hover')) {
+      orbitPausedRef.current = true;
+      return;
+    }
     orbitPausedRef.current = true;
+    setHeroWordIndex((current) => (current + 1) % heroWords.length);
   };
 
   const resumeOrbit = () => {
@@ -333,9 +335,9 @@ export default function HackHiveStory() {
               key={image.src}
               tabIndex={0}
               aria-label="HackHive memory"
-              onMouseEnter={pauseOrbit}
+              onMouseEnter={holdOrbit}
               onMouseLeave={resumeOrbit}
-              onFocus={pauseOrbit}
+              onFocus={holdOrbit}
               onBlur={resumeOrbit}
             >
               <div className={styles.orbitItemInner}>
@@ -350,16 +352,17 @@ export default function HackHiveStory() {
         <div ref={heroContentRef} className={styles.heroContent}>
           <h1
             id="hackhive-headline"
-            aria-label={`Build something ${heroWords[heroWordIndex]}`}
+            aria-label={`Build something ${heroWords[heroWordIndex].word}`}
           >
             <span aria-hidden="true" className={styles.heroPhrase}>Build something</span>
             <span aria-hidden="true" className={styles.wordCycle}>
-              {heroWords.map((word, index) => (
+              {heroWords.map((entry, index) => (
                 <span
                   className={`${styles.changingWord} ${index === heroWordIndex ? styles.changingWordActive : ''}`}
-                  key={word}
+                  key={entry.word}
+                  style={{ color: entry.color }}
                 >
-                  {word}
+                  {entry.word}
                 </span>
               ))}
             </span>
@@ -410,33 +413,37 @@ export default function HackHiveStory() {
         </div>
       </section>
 
-      <section className={styles.testimonials} aria-labelledby="voices-title">
-        <div className={styles.testimonialHeading}>
-          <p className={styles.sectionLabel}>Why it matters</p>
-          <h2 id="voices-title">From the people who built the hive.</h2>
-        </div>
-        <div className={styles.quoteGrid}>
-          {testimonials.map((testimonial) => (
-            <figure className={styles.quoteCard} key={testimonial.names}>
-              <blockquote>{testimonial.quote}</blockquote>
-              <figcaption>
-                <strong>{testimonial.names}</strong>
-                <span>{testimonial.role}</span>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      </section>
+      {SHOW_TESTIMONIALS && (
+        <section className={styles.testimonials} aria-labelledby="voices-title">
+          <div className={styles.testimonialHeading}>
+            <p className={styles.sectionLabel}>Why it matters</p>
+            <h2 id="voices-title">From the people who built the hive.</h2>
+          </div>
+          <div className={styles.quoteGrid}>
+            {testimonials.map((testimonial) => (
+              <figure className={styles.quoteCard} key={testimonial.names}>
+                <blockquote>{testimonial.quote}</blockquote>
+                <figcaption>
+                  <strong>{testimonial.names}</strong>
+                  <span>{testimonial.role}</span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
 
-      <section className={styles.sponsors} aria-labelledby="sponsors-title">
-        <div className={styles.sponsorLead}>
-          <p className={styles.sectionLabel}>2025 supporters</p>
-          <h2 id="sponsors-title">Made possible with people who back student builders.</h2>
-        </div>
-        <ul className={styles.sponsorList} aria-label="HackHive 2025 sponsors">
-          {sponsors.map((sponsor) => <li key={sponsor}>{sponsor}</li>)}
-        </ul>
-      </section>
+      {SHOW_SPONSORS && (
+        <section className={styles.sponsors} aria-labelledby="sponsors-title">
+          <div className={styles.sponsorLead}>
+            <p className={styles.sectionLabel}>2025 supporters</p>
+            <h2 id="sponsors-title">Made possible with people who back student builders.</h2>
+          </div>
+          <ul className={styles.sponsorList} aria-label="HackHive 2025 sponsors">
+            {sponsors.map((sponsor) => <li key={sponsor}>{sponsor}</li>)}
+          </ul>
+        </section>
+      )}
 
       <section className={styles.archiveCta} aria-labelledby="archive-title">
         <p className={styles.sectionLabel}>Keep exploring</p>
