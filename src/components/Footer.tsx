@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { JetBrains_Mono } from 'next/font/google';
+import FooterGroup from './FooterGroup';
 import styles from './footer.module.css';
 
 const mono = JetBrains_Mono({
@@ -71,37 +72,31 @@ export default function Footer() {
           </div>
 
           {columns.map((column) => (
-            <div key={column.title} className={styles.column}>
-              <h2 className={styles.heading}>{column.title}</h2>
-              <ul className={styles.list}>
-                {column.links.map((link) => (
-                  <li key={link.href}>
-                    <Link href={link.href} className={styles.link}>
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-
-          <div className={styles.column}>
-            <h2 className={styles.heading}>connect</h2>
-            <ul className={styles.list}>
-              {socials.map((social) => (
-                <li key={social.href}>
-                  <a
-                    href={social.href}
-                    className={styles.link}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                  >
-                    {social.label}
-                  </a>
+            <FooterGroup key={column.title} title={column.title}>
+              {column.links.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className={styles.link}>
+                    {link.label}
+                  </Link>
                 </li>
               ))}
-            </ul>
-          </div>
+            </FooterGroup>
+          ))}
+
+          <FooterGroup title="connect">
+            {socials.map((social) => (
+              <li key={social.href}>
+                <a
+                  href={social.href}
+                  className={styles.link}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  {social.label}
+                </a>
+              </li>
+            ))}
+          </FooterGroup>
         </div>
 
         <div className={styles.bottom}>

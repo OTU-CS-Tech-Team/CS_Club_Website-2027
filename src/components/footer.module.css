@@ -71,6 +71,11 @@
   color: #18181b;
 }
 
+/* Phone-only tap-to-open heading (see FooterGroup); larger screens show .heading. */
+.toggle {
+  display: none;
+}
+
 .list {
   margin: 0;
   padding: 0;
@@ -141,59 +146,90 @@
 
 @media (max-width: 560px) {
   .inner {
-    padding-top: 2.25rem;
+    padding-top: 1.75rem;
   }
 
-  /* Phones: five headed columns stack into a very long footer, so drop the
-     headings and let every page link flow as one wrapped list instead. */
+  /* Phones: logo on the left, a divider, then one collapsible row per group,
+     so the footer stays short until someone opens a group. */
   .grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 1.25rem;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0;
   }
 
+  /* Spans every group row (4 link groups + connect) so the divider runs the full height. */
   .brand {
-    width: 100%;
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: 0.75rem;
-    padding-bottom: 1.25rem;
+    grid-column: 1;
+    grid-row: 1 / span 5;
+    align-self: stretch;
+    justify-content: flex-start;
+    margin-right: 1rem;
+    padding: 0.6rem 1rem 0 0;
+    border-bottom: none;
+    border-right: 1px solid #e4e4e7;
+  }
+
+  /* The copyright line already names the club. */
+  .brandName {
+    display: none;
+  }
+
+  .column,
+  .column:nth-child(even),
+  .column:nth-child(odd) {
+    grid-column: 2;
+    padding: 0;
+    border-left: none;
+    border-bottom: 1px solid #f0f0f2;
+  }
+
+  .column:last-child {
+    border-bottom: none;
   }
 
   .heading {
     display: none;
   }
 
-  .column,
-  .list {
-    display: contents;
-  }
-
-  /* Socials go on their own line under the page links. */
-  .column:last-child {
+  .toggle {
     display: flex;
+    align-items: center;
+    justify-content: space-between;
     width: 100%;
-    margin-top: 0.5rem;
-    padding: 0.5rem 0 0;
+    min-height: 2.75rem;
+    padding: 0;
     border: none;
-    border-top: 1px dashed #e4e4e7;
+    background: none;
+    color: #18181b;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
   }
 
-  .column:last-child .list {
-    display: flex;
+  .toggle svg {
+    color: #a1a1aa;
+    transition: transform 0.2s ease;
+  }
+
+  .toggle[aria-expanded='true'] svg {
+    transform: rotate(180deg);
+  }
+
+  .list {
     flex-direction: row;
     flex-wrap: wrap;
     gap: 0 1.25rem;
+    padding-bottom: 0.5rem;
   }
 
-  .list li {
-    list-style: none;
+  .listClosed {
+    display: none;
   }
 
   /* Thumb-sized tap targets. */
   .link {
     display: inline-block;
-    padding: 0.45rem 0;
+    padding: 0.4rem 0;
   }
 
   .bottom {
