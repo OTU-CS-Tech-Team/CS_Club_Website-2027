@@ -173,7 +173,7 @@ export default function ProjectDetailView({
           </div>
           <div className={styles.ticketStub}>
             <p>
-              <strong>HackHive 2025</strong>
+              <strong>HACKHIVE {project.year}</strong>
             </p>
           </div>
         </div>

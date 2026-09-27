@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./navbar.module.css";
@@ -11,8 +11,9 @@ type NavLink = {
   label: string;
   description: string;
   arrow?: boolean;
-  prefetch?: boolean;
 };
+
+type AuthStatus = "unknown" | "signedOut" | "signedIn";
 
 type NavSection = {
   id: string;
@@ -47,7 +48,6 @@ const sections: NavSection[] = [
         href: "/events",
         label: "Upcoming Events",
         description: "Workshops, socials, and what’s on this semester",
-        prefetch: false,
       },
       {
         href: "/gdg",
@@ -157,24 +157,20 @@ function ArrowIcon() {
   );
 }
 
-export default function Navbar({
-  signedIn,
-  isAdmin,
-}: {
-  signedIn: boolean;
-  isAdmin: boolean;
-}) {
+export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const navId = useId();
   const rootRef = useRef<HTMLElement>(null);
   const closeTimer = useRef<number | null>(null);
-  const [isSignedIn, setIsSignedIn] = useState(signedIn);
-  const [isAdminUser, setIsAdminUser] = useState(isAdmin);
+  const adminCheckedFor = useRef<string | null>(null);
+  const [authStatus, setAuthStatus] = useState<AuthStatus>("unknown");
+  const [isAdminUser, setIsAdminUser] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [scrolledAway, setScrolledAway] = useState(false);
   const [peekOpen, setPeekOpen] = useState(false);
 
+  const isSignedIn = authStatus === "signedIn";
   const visibleSections = [
     ...sections,
     ...(isAdminUser ? [adminSection] : []),
@@ -183,39 +179,52 @@ export default function Navbar({
 
   const navRevealed = !scrolledAway || peekOpen;
 
-  useEffect(() => {
-    setIsSignedIn(signedIn);
-    setIsAdminUser(isAdmin);
-  }, [signedIn, isAdmin]);
+  const syncSession = useCallback((userId: string | null) => {
+    if (!userId) {
+      adminCheckedFor.current = null;
+      setAuthStatus("signedOut");
+      setIsAdminUser(false);
+      return;
+    }
+
+    setAuthStatus("signedIn");
+    if (adminCheckedFor.current === userId) return;
+    adminCheckedFor.current = userId;
+
+    void createClient()
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (adminCheckedFor.current === userId) setIsAdminUser(!!data);
+      });
+  }, []);
 
   useEffect(() => {
-    const supabase = createClient();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
+    const { data: listener } = createClient().auth.onAuthStateChange(
       (event, session) => {
         if (event !== "SIGNED_IN" && event !== "SIGNED_OUT") return;
-
-        const nextSignedIn = !!session?.user;
-        setIsSignedIn(nextSignedIn);
-
-        if (!nextSignedIn) {
-          setIsAdminUser(false);
-          return;
-        }
-
-        void supabase
-          .from("admin_users")
-          .select("user_id")
-          .eq("user_id", session.user.id)
-          .maybeSingle()
-          .then(({ data }) => {
-            setIsAdminUser(!!data);
-          });
+        syncSession(session?.user.id ?? null);
       },
     );
 
     return () => listener.subscription.unsubscribe();
-  }, []);
+  }, [syncSession]);
+
+  // Server-side sign-ins (admin login, OAuth callback) set cookies without
+  // firing a browser auth event, so re-read the stored session on navigation.
+  useEffect(() => {
+    let cancelled = false;
+    void createClient()
+      .auth.getSession()
+      .then(({ data: { session } }) => {
+        if (!cancelled) syncSession(session?.user.id ?? null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname, syncSession]);
 
   useEffect(() => {
     setOpenId(null);
@@ -309,8 +318,7 @@ export default function Navbar({
 
   async function handleSignOut() {
     const supabase = createClient();
-    setIsSignedIn(false);
-    setIsAdminUser(false);
+    syncSession(null);
     await supabase.auth.signOut();
     router.push("/");
     router.refresh();
@@ -393,7 +401,6 @@ export default function Navbar({
                             key={link.href}
                             href={link.href}
                             className={styles.link}
-                            prefetch={link.prefetch}
                             onClick={() => setOpenId(null)}
                           >
                             <span className={styles.linkTitle}>
@@ -414,7 +421,14 @@ export default function Navbar({
           </div>
 
           <div className={styles.actions}>
-            {isSignedIn ? (
+            {authStatus === "unknown" ? (
+              <span
+                className={`${styles.actionLink} ${styles.actionPending}`}
+                aria-hidden="true"
+              >
+                Log in
+              </span>
+            ) : isSignedIn ? (
               <button
                 type="button"
                 className={styles.actionButton}
