@@ -6,18 +6,18 @@ import { useEffect, useRef, useState } from 'react';
 import styles from './hackhiveStory.module.css';
 
 const heroWords = [
-  'real.',
-  'bold.',
-  'useful.',
-  'meaningful.',
-  'lasting.',
-  'together.',
-  'creative.',
-  'curious.',
-  'ambitious.',
-  'possible.',
-  'impactful.',
-  'brilliant.',
+  { word: 'Real.', color: '#d45d7d' },
+  { word: 'Bold.', color: '#6a3df5' },
+  { word: 'Useful.', color: '#2f7d6d' },
+  { word: 'Meaningful.', color: '#c45c26' },
+  { word: 'Lasting.', color: '#3d5a80' },
+  { word: 'Together.', color: '#7a4e8a' },
+  { word: 'Creative.', color: '#b23a6a' },
+  { word: 'Curious.', color: '#1f6f8b' },
+  { word: 'Ambitious.', color: '#8a4b08' },
+  { word: 'Possible.', color: '#3d4db7' },
+  { word: 'Impactful.', color: '#9b3d4a' },
+  { word: 'Brilliant.', color: '#5b3a8c' },
 ];
 const statTargets = [250, 550, 24];
 const SHOW_SPONSORS = false;
@@ -40,6 +40,7 @@ const orbitImages = [
 const testimonials = [
   {
     names: 'Samir & Samad',
+    selector: 'Vice Presidents',
     role: 'Vice Presidents, OTU CS Club',
     portraits: [
       { src: '/Images/Samir.jpg', alt: 'Samir' },
@@ -50,6 +51,7 @@ const testimonials = [
   },
   {
     names: 'Maryam & Muqit',
+    selector: 'Co-Presidents',
     role: 'Co-Presidents, OTU CS Club',
     portraits: [
       { src: '/Images/Maryam.png', alt: 'Maryam' },
@@ -60,6 +62,7 @@ const testimonials = [
   },
   {
     names: 'Wasay',
+    selector: 'Co-Founder',
     role: 'Co-Founder of HackHive & Former President @ OTU CS Club',
     portraits: [{ src: '/Images/Wasay.jpg', alt: 'Wasay' }],
     quote:
@@ -67,6 +70,7 @@ const testimonials = [
   },
   {
     names: 'Taha',
+    selector: 'Co-Founder',
     role: 'Co-Founder of HackHive & Former President @ OTU CS Club',
     portraits: [{ src: '/Images/Taha.jpg', alt: 'Taha' }],
     quote:
@@ -79,6 +83,7 @@ const DEBUG_ORBIT = false;
 
 export default function HackHiveStory() {
   const [heroWordIndex, setHeroWordIndex] = useState(0);
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [statValues, setStatValues] = useState(() => statTargets.map(() => 0));
   const [statsActive, setStatsActive] = useState(false);
   const orbitStageRef = useRef<HTMLDivElement>(null);
@@ -166,7 +171,7 @@ export default function HackHiveStory() {
       const height = stageRect.height;
       mobileCards = window.innerWidth <= 620;
       compactCards = window.innerWidth <= 850;
-      const hoveredCardSize = mobileCards ? 52 : compactCards ? 130 : 170;
+      const hoveredCardSize = mobileCards ? 56 : compactCards ? 130 : 174;
       const cardClearance = hoveredCardSize / 2;
       const sideEdgePadding = mobileCards ? 4 : compactCards ? 10 : 16;
       const topEdgePadding = mobileCards ? 6 : compactCards ? 12 : 16;
@@ -281,7 +286,7 @@ export default function HackHiveStory() {
           const point = orbitPath.getPointAtLength(progress * pathLength);
           const depth = Math.max(0, Math.min(1, (point.y - pathTop) / Math.max(1, pathBottom - pathTop)));
           const easedDepth = depth * depth * (3 - 2 * depth);
-          const scale = 0.55 + easedDepth * 0.45;
+          const scale = 0.45 + easedDepth * 0.9;
           item.style.transform = `translate3d(${point.x}px, ${point.y}px, 0) translate(-50%, -50%) scale(${scale})`;
           const isActive = item.matches(':hover, :focus-visible');
           item.style.zIndex = isActive ? '10' : String(1 + Math.round(depth * 2));
@@ -298,13 +303,20 @@ export default function HackHiveStory() {
     };
   }, []);
 
-  const pauseOrbit = () => {
+  const holdOrbit = (event: { type: string; currentTarget: Element }) => {
+    if (event.type === 'focus' && event.currentTarget.matches(':hover')) {
+      orbitPausedRef.current = true;
+      return;
+    }
     orbitPausedRef.current = true;
+    setHeroWordIndex((current) => (current + 1) % heroWords.length);
   };
 
   const resumeOrbit = () => {
     orbitPausedRef.current = false;
   };
+
+  const selectedTestimonial = testimonials[activeTestimonial];
 
   return (
     <div className={styles.page}>
@@ -324,9 +336,9 @@ export default function HackHiveStory() {
               key={image.src}
               tabIndex={0}
               aria-label="HackHive memory"
-              onMouseEnter={pauseOrbit}
+              onMouseEnter={holdOrbit}
               onMouseLeave={resumeOrbit}
-              onFocus={pauseOrbit}
+              onFocus={holdOrbit}
               onBlur={resumeOrbit}
             >
               <div className={styles.orbitItemInner}>
@@ -341,16 +353,17 @@ export default function HackHiveStory() {
         <div ref={heroContentRef} className={styles.heroContent}>
           <h1
             id="hackhive-headline"
-            aria-label={`Build something ${heroWords[heroWordIndex]}`}
+            aria-label={`Build something ${heroWords[heroWordIndex].word}`}
           >
             <span aria-hidden="true" className={styles.heroPhrase}>Build something</span>
             <span aria-hidden="true" className={styles.wordCycle}>
-              {heroWords.map((word, index) => (
+              {heroWords.map((entry, index) => (
                 <span
                   className={`${styles.changingWord} ${index === heroWordIndex ? styles.changingWordActive : ''}`}
-                  key={word}
+                  key={entry.word}
+                  style={{ color: entry.color }}
                 >
-                  {word}
+                  {entry.word}
                 </span>
               ))}
             </span>
@@ -391,23 +404,37 @@ export default function HackHiveStory() {
           <p className={styles.sectionLabel}>In their words</p>
           <h2 id="voices-title">What our execs and past leaders had to say.</h2>
         </div>
-        <div className={styles.quoteList}>
-          {testimonials.map((testimonial) => (
-            <figure className={styles.quoteRow} key={testimonial.names}>
-              <figcaption className={styles.quotePerson}>
-                <strong>{testimonial.names}</strong>
-                <div className={styles.quotePortraits}>
-                  {testimonial.portraits.map((portrait) => (
-                    <div className={styles.quotePortrait} key={portrait.alt}>
-                      <Image src={portrait.src} alt={portrait.alt} fill sizes="(max-width: 620px) 72px, 100px" />
-                    </div>
-                  ))}
-                </div>
-                <span>{testimonial.role}</span>
-              </figcaption>
-              <blockquote>{testimonial.quote}</blockquote>
-            </figure>
-          ))}
+        <div className={styles.quoteShowcase}>
+          <div className={styles.quoteNav} aria-label="Choose a testimonial">
+            {testimonials.map((testimonial, index) => (
+              <button
+                type="button"
+                className={`${styles.quoteChoice} ${index === activeTestimonial ? styles.quoteChoiceActive : ''}`}
+                key={testimonial.names}
+                aria-pressed={index === activeTestimonial}
+                onClick={() => setActiveTestimonial(index)}
+              >
+                <span className={styles.quoteChoiceRole}>{testimonial.selector}</span>
+                <span className={styles.quoteChoiceName}>{testimonial.names}</span>
+              </button>
+            ))}
+          </div>
+          <figure className={styles.quoteFeature} key={selectedTestimonial.names} aria-live="polite">
+            <figcaption className={styles.quotePerson}>
+              <div className={styles.quotePortraits}>
+                {selectedTestimonial.portraits.map((portrait) => (
+                  <div className={styles.quotePortrait} key={portrait.alt}>
+                    <Image src={portrait.src} alt={portrait.alt} fill sizes="(max-width: 620px) 96px, 132px" />
+                  </div>
+                ))}
+              </div>
+              <div className={styles.quoteAttribution}>
+                <strong>{selectedTestimonial.names}</strong>
+                <span>{selectedTestimonial.role}</span>
+              </div>
+            </figcaption>
+            <blockquote>{selectedTestimonial.quote}</blockquote>
+          </figure>
         </div>
       </section>
 
