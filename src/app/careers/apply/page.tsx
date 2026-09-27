@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import CareerApplicationForm from '@/components/careers/CareerApplicationForm';
 import { getActiveJob } from '@/lib/content';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 export const metadata = {
   title: 'Apply',

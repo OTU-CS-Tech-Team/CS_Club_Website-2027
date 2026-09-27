@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { HackHiveProject } from '@/types/hackhive';
 import { getProjectHref } from '@/data/hackhive';
-import { useChapterScrollGate } from '@/hooks/useChapterScrollGate';
 import styles from './landing.module.css';
 
 type HackHiveArchivePostcardProps = {
@@ -77,9 +76,6 @@ export default function HackHiveArchivePostcard({
     polaroids.length > 0
       ? 0.06 + (polaroids.length - 1) * 0.18 + 0.24
       : 0.84;
-
-  useChapterScrollGate(sectionRef, lastFlyInDone);
-
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;

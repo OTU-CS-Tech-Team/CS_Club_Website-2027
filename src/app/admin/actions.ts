@@ -290,7 +290,7 @@ export async function saveJob(
     return initialError(authorizationError(error) ?? 'Unable to save the job.');
   }
 
-  revalidatePath('/careers');
+  revalidatePath('/careers', 'layout');
   revalidatePath('/admin');
   return { ok: true, message: originalId ? 'Job updated.' : 'Job created.' };
 }
@@ -311,7 +311,7 @@ export async function deleteJob(
   } catch (error) {
     return initialError(authorizationError(error) ?? 'Unable to delete the job.');
   }
-  revalidatePath('/careers');
+  revalidatePath('/careers', 'layout');
   revalidatePath('/admin');
   return { ok: true, message: 'Job deleted.' };
 }

@@ -132,6 +132,10 @@
   opacity: 0.65;
 }
 
+.actionPending {
+  visibility: hidden;
+}
+
 .item {
   position: relative;
 }

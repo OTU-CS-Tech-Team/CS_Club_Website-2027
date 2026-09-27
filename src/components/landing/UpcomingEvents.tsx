@@ -9,7 +9,6 @@ import {
   subscribeLoggedIn,
 } from '@/app/mailing-list/actions';
 import type { ClubEvent } from '@/types/landing';
-import { useChapterScrollGate } from '@/hooks/useChapterScrollGate';
 import EventModal from './EventModal';
 import styles from './landing.module.css';
 
@@ -86,9 +85,6 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
     sideEvents.length > 0
       ? 0.18 + (sideEvents.length - 1) * 0.1 + 0.18
       : 0.28;
-
-  useChapterScrollGate(sectionRef, lastFlyInDone);
-
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
