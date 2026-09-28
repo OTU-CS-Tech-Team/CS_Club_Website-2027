@@ -242,6 +242,18 @@
   }
 
   .items {
+    width: 100%;
+    order: 3;
+    justify-content: center;
+    gap: 0.15rem 0.4rem;
+  }
+
+  .trigger {
+    padding: 0.45rem 0.25rem;
+    font-size: 0.82rem;
+  }
+
+  .chevron {
     display: none;
   }
 

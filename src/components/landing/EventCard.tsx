@@ -1,12 +1,10 @@
 import type { ClubEvent } from '@/types/landing';
 import styles from './landing.module.css';
-import { useClickSound } from '@/hooks/useClickSound';
 
 type EventCardProps = {
   event: ClubEvent;
   featured?: boolean;
   onSelect: (event: ClubEvent) => void;
-  playClickSound?: boolean;
 };
 
 function formatDate(iso: string) {
@@ -16,17 +14,12 @@ function formatDate(iso: string) {
   }).format(new Date(`${iso}T12:00:00`));
 }
 
-export default function EventCard({ event, featured, onSelect, playClickSound = false }: EventCardProps) {
-  const playClick = useClickSound();
-
+export default function EventCard({ event, featured, onSelect }: EventCardProps) {
   return (
     <button
       type="button"
       className={`${styles.eventCard} ${featured ? styles.eventCardFeatured : ''}`}
-      onClick={() => {
-        if (playClickSound) playClick();
-        onSelect(event);
-      }}
+      onClick={() => onSelect(event)}
     >
       <div className={styles.eventMeta}>
         <span className={styles.chip}>{formatDate(event.date)}</span>

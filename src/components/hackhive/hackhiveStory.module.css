@@ -474,52 +474,73 @@
   max-width: 65rem;
 }
 
-.quoteGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0;
+.quoteShowcase {
   max-width: 88rem;
-  margin: clamp(2.25rem, 5vw, 3.75rem) auto 0;
+  margin: clamp(2.25rem, 4vw, 3.5rem) auto 0;
   border-top: 1px solid var(--line);
-  border-left: 1px solid var(--line);
-}
-
-.quoteCard {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 16rem;
-  margin: 0;
-  padding: clamp(1.35rem, 3vw, 2.25rem);
-  background: transparent;
-  border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
 
-.quoteCard blockquote {
-  margin: 0;
-  font-family: inherit;
-  font-size: clamp(1.08rem, 1.6vw, 1.4rem);
-  letter-spacing: -0.035em;
-  line-height: 1.25;
+.quoteFeature {
+  display: grid;
+  grid-template-columns: minmax(16rem, 0.5fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  align-items: center;
+  padding: clamp(1.5rem, 3vw, 3rem) 0;
 }
 
-.quoteCard figcaption {
+.quoteCopy {
+  min-width: 0;
+  animation: quoteEnter 280ms ease both;
+}
+.quoteAttribution {
   display: grid;
-  gap: 0.3rem;
-  margin-top: 2.5rem;
+  gap: 0.4rem;
 }
-.quoteCard figcaption strong {
-  color: var(--rose);
-  font-size: 0.76rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+.quoteAttribution strong {
+  font-size: clamp(2rem, 3.2vw, 3rem);
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  line-height: 1;
 }
-.quoteCard figcaption span {
-  max-width: 27rem;
-  color: color-mix(in srgb, var(--ink) 68%, transparent);
-  font-size: 0.75rem;
-  line-height: 1.45;
+.quoteAttribution span {
+  color: #52525b;
+  font-size: clamp(1rem, 1.35vw, 1.2rem);
+  font-weight: 600;
+  line-height: 1.35;
+}
+.quoteFeature blockquote {
+  max-width: 48rem;
+  margin: 1.5rem 0 0;
+  font-size: clamp(1.05rem, 1.45vw, 1.3rem);
+  letter-spacing: -0.02em;
+  line-height: 1.6;
+}
+.quoteFeature blockquote::before {
+  content: '“';
+  color: #6a3df5;
+  font-size: 1.5em;
+  line-height: 0;
+  vertical-align: -0.15em;
+  margin-right: 0.08em;
+}
+.quoteFeature blockquote::after {
+  content: '”';
+  color: #6a3df5;
+  font-size: 1.5em;
+  line-height: 0;
+  vertical-align: -0.15em;
+}
+
+@keyframes quoteEnter {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .sponsors {
@@ -787,11 +808,12 @@
     grid-column: auto;
     grid-row: auto;
   }
-  .quoteGrid {
+  .quoteFeature {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
-  .quoteCard {
-    min-height: 0;
+  .quoteCopy {
+    padding: 0 0.25rem;
   }
   .sponsorList {
     grid-template-columns: 1fr;
@@ -811,7 +833,8 @@
   }
   .orbitTrack,
   .orbitItem,
-  .orbitItemInner {
+  .orbitItemInner,
+  .quoteCopy {
     animation: none;
   }
 }

@@ -3,21 +3,13 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { toggleRsvp, registerGuest, getLoggedInRsvpState } from '@/app/events/actions';
-import { useClickSound } from '@/hooks/useClickSound';
 // Styled to match the general member application form, not the landing forms.
 import styles from '../careers/careers.module.css';
 
 // Logged-in: one RSVP button (name / email / student ID come from the account).
 // Signed-out: collect those three fields as a guest registration + confirmation email.
-export default function DbEventRsvp({
-  eventId,
-  playClickSound = false,
-}: {
-  eventId: string;
-  playClickSound?: boolean;
-}) {
+export default function DbEventRsvp({ eventId }: { eventId: string }) {
   const supabase = createClient();
-  const playClick = useClickSound();
   const [status, setStatus] = useState<'loading' | 'signedOut' | 'signedIn'>('loading');
   const [rsvped, setRsvped] = useState(false);
   const [pending, setPending] = useState(false);
@@ -79,7 +71,6 @@ export default function DbEventRsvp({
   }, [eventId, supabase]);
 
   async function handleRsvpClick() {
-    if (playClickSound) playClick();
     setRsvpError('');
     setEmailWarning('');
     setPending(true);
@@ -98,7 +89,6 @@ export default function DbEventRsvp({
   }
 
   async function handleCancelRsvp() {
-    if (playClickSound) playClick();
     setRsvpError('');
     setEmailWarning('');
     setPending(true);
@@ -113,7 +103,6 @@ export default function DbEventRsvp({
 
   async function handleGuestSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (playClickSound) playClick();
     setGuestStatus('');
     setEmailWarning('');
     setPending(true);
