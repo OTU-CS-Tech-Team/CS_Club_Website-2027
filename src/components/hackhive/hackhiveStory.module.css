@@ -323,7 +323,7 @@
 .quoteAttribution strong { font-size: clamp(2rem, 3.2vw, 3rem); font-weight: 600; letter-spacing: -0.055em; line-height: 1; }
 .quoteAttribution span { color: #52525b; font-size: clamp(1rem, 1.35vw, 1.2rem); font-weight: 600; line-height: 1.35; }
 .quoteFeature blockquote { max-width: 48rem; margin: 1.5rem 0 0; font-size: clamp(1.05rem, 1.45vw, 1.3rem); letter-spacing: -0.02em; line-height: 1.6; }
-.quoteFeature blockquote::before { content: '“'; display: block; height: 0.85em; color: #6a3df5; font-size: 3rem; line-height: 1; }
+.quoteFeature blockquote::before { content: '“'; color: #6a3df5; font-size: 1.5em; line-height: 0; vertical-align: -0.15em; margin-right: 0.08em; }
 .quoteFeature blockquote::after { content: '”'; color: #6a3df5; font-size: 1.5em; line-height: 0; vertical-align: -0.15em; }
 
 @keyframes quoteEnter {
