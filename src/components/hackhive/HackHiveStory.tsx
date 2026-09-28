@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import TestimonialBadge from './TestimonialBadge';
 import styles from './hackhiveStory.module.css';
 
 const heroWords = [
@@ -20,75 +21,57 @@ const heroWords = [
   { word: 'Brilliant.', color: '#5b3a8c' },
 ];
 const statTargets = [250, 550, 24];
-const SHOW_TESTIMONIALS = false;
 const SHOW_SPONSORS = false;
 
 const orbitImages = [
-  { src: '/hackhive/orbit/team-portrait.png', className: styles.orbitOne },
-  { src: '/hackhive/orbit/immersive-demo.png', className: styles.orbitTwo },
-  { src: '/hackhive/orbit/mic-moment.webp', className: styles.orbitThree },
-  { src: '/hackhive/orbit/sponsor-table.png', className: styles.orbitFour },
-  { src: '/hackhive/filmstrip/hallway.jpg', className: styles.orbitFive },
-  { src: '/hackhive/orbit/builders-at-work.png', className: styles.orbitSix },
-  { src: '/hackhive/filmstrip/lecture-row.jpg', className: styles.orbitSeven },
-  { src: '/hackhive/orbit/crowd-overhead.webp', className: styles.orbitEight },
-  { src: '/hackhive/filmstrip/study-pair.jpg', className: styles.orbitNine },
-  { src: '/hackhive/filmstrip/checkin-desk.jpg', className: styles.orbitTen },
-  { src: '/hackhive/filmstrip/noodles.jpg', className: styles.orbitEleven },
-  { src: '/hackhive/filmstrip/pastries.jpg', className: styles.orbitTwelve },
-];
-
-const galleryImages = [
-  {
-    src: '/hackhive/gallery/checkin-conversation.webp',
-    alt: 'A HackHive organizer welcoming an attendee at check-in',
-    className: styles.galleryLarge,
-    label: 'The doors open',
-  },
-  {
-    src: '/hackhive/gallery/event-host.webp',
-    alt: 'A HackHive organizer speaking during the event',
-    className: styles.galleryTall,
-    label: 'Built in a weekend',
-  },
-  {
-    src: '/hackhive/filmstrip/pitch-mic.jpg',
-    alt: 'A HackHive participant presenting their project',
-    className: styles.galleryWide,
-    label: 'Ideas, out loud',
-  },
-  {
-    src: '/hackhive/gallery/project-demo.webp',
-    alt: 'HackHive participants sharing their project at a demo table',
-    className: styles.gallerySmall,
-    label: 'A room full of possibility',
-  },
+  '/hackhive/orbit/team-portrait.png',
+  '/hackhive/orbit/immersive-demo.png',
+  '/hackhive/orbit/mic-moment.webp',
+  '/hackhive/orbit/sponsor-table.png',
+  '/hackhive/filmstrip/hallway.jpg',
+  '/hackhive/orbit/builders-at-work.png',
+  '/hackhive/filmstrip/lecture-row.jpg',
+  '/hackhive/orbit/crowd-overhead.webp',
+  '/hackhive/filmstrip/study-pair.jpg',
+  '/hackhive/filmstrip/checkin-desk.jpg',
+  '/hackhive/filmstrip/noodles.jpg',
+  '/hackhive/filmstrip/pastries.jpg',
 ];
 
 const testimonials = [
   {
-    names: 'Samir & Samad',
-    role: 'Vice Presidents, OTU CS Club',
+    names: 'Taha',
+    role: 'Co-Founder of HackHive & Former President @ OTU CS Club',
+    portraits: [{ src: '/Images/Taha.jpg', alt: 'Taha' }],
     quote:
-      'Attending HackHive means being part of a space where curiosity, creativity, and community come together. It is a chance to challenge yourself, learn new skills, meet people who inspire you, and grow through both the successes and struggles of building something from scratch. More than just a hackathon, HackHive is an experience that encourages you to step outside your comfort zone, believe in your ideas, and leave with new knowledge, connections, and confidence.',
-  },
-  {
-    names: 'Maryam & Muqit',
-    role: 'Co-Presidents, OTU CS Club',
-    quote:
-      'HackHive has been one of the most rewarding parts of our time with the Computer Science Club. Seeing students come together to build, learn, and challenge themselves has made all the work behind it worthwhile. As Co-Presidents, we are excited to keep growing HackHive into something even bigger, with stronger opportunities, better experiences, and more ways for students to connect. We hope it continues becoming a defining part of the CS Club for years ahead.',
+      "HackHive has a special place in my heart. I watched it grow from a passion project started by a few friends to something I had the chance to build and grow. I saw it blossom into something that could help build knowledge and give students a chance to experience the kind of hands-on learning that a classroom just can't teach. To find friends and community, and to see up close what the tech industry actually looks like. I know HackHive will continue to grow and inspire others to take charge in their community, and I am excited to see where we go from here.",
   },
   {
     names: 'Wasay',
     role: 'Co-Founder of HackHive & Former President @ OTU CS Club',
+    portraits: [{ src: '/Images/Wasay.jpg', alt: 'Wasay' }],
     quote:
       "HackHive isn't just something I built, it's something I actually believe in. I co-founded it in 2023 because I kept meeting insanely talented people at this university who had nowhere to show what they could do. That never sat right with me, so a friend and I decided to build the stage ourselves. Watching it grow into Durham Region's largest hackathon still doesn't feel real some days. But the numbers were never the point, it was always about giving people a real shot. It's the thing I'm proudest of from my time here.",
   },
   {
-    names: 'Taha',
-    role: 'Co-Founder of HackHive & Former President @ OTU CS Club',
+    names: 'Maryam & Muqit',
+    role: 'Co-Presidents, OTU CS Club',
+    portraits: [
+      { src: '/Images/Maryam.png', alt: 'Maryam' },
+      { src: '/Images/Muqit.webp', alt: 'Muqit' },
+    ],
     quote:
-      "HackHive has a special place in my heart. I watched it grow from a passion project started by a few friends to something I had the chance to build and grow. I saw it blossom into something that could help build knowledge and give students a chance to experience the kind of hands-on learning that a classroom just can't teach. To find friends and community, and to see up close what the tech industry actually looks like. I know HackHive will continue to grow and inspire others to take charge in their community, and I am excited to see where we go from here.",
+      'Looking back at my time with the Computer Science Club at Ontario Tech University, people often mention HackHive, but what I found most memorable was the people and mentors I met along the way. My journey with the CS Club allowed me to work with people who had different perspectives and ideas, including those I did not always agree with. These experiences challenged me to see things from different points of view and helped me grow personally and professionally. The club also gave me opportunities to connect with industry professionals and fellow students, share my experiences, and learn from others. Ultimately, the people, connections, and lessons I gained are what made my time with the CS Club so meaningful.',
+  },
+  {
+    names: 'Samir & Samad',
+    role: 'Vice Presidents, OTU CS Club',
+    portraits: [
+      { src: '/Images/Samir.jpg', alt: 'Samir' },
+      { src: '/Images/Samad.jpg', alt: 'Samad' },
+    ],
+    quote:
+      'Attending HackHive means being part of a space where curiosity, creativity, and community come together. It is a chance to challenge yourself, learn new skills, meet people who inspire you, and grow through both the successes and struggles of building something from scratch. More than just a hackathon, HackHive is an experience that encourages you to step outside your comfort zone, believe in your ideas, and leave with new knowledge, connections, and confidence.',
   },
 ];
 
@@ -97,6 +80,7 @@ const DEBUG_ORBIT = false;
 
 export default function HackHiveStory() {
   const [heroWordIndex, setHeroWordIndex] = useState(0);
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [statValues, setStatValues] = useState(() => statTargets.map(() => 0));
   const [statsActive, setStatsActive] = useState(false);
   const orbitStageRef = useRef<HTMLDivElement>(null);
@@ -106,6 +90,18 @@ export default function HackHiveStory() {
   const orbitItemRefs = useRef<Array<HTMLDivElement | null>>([]);
   const orbitPausedRef = useRef(false);
   const statsRef = useRef<HTMLDListElement>(null);
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const wordTimer = window.setInterval(() => {
+      if (!orbitPausedRef.current) {
+        setHeroWordIndex((current) => (current + 1) % heroWords.length);
+      }
+    }, 2400);
+
+    return () => window.clearInterval(wordTimer);
+  }, []);
 
   useEffect(() => {
     const stats = statsRef.current;
@@ -172,7 +168,8 @@ export default function HackHiveStory() {
       const height = stageRect.height;
       mobileCards = window.innerWidth <= 620;
       compactCards = window.innerWidth <= 850;
-      const hoveredCardSize = mobileCards ? 56 : compactCards ? 130 : 174;
+      const cardSize = orbitItemRefs.current[0]?.offsetWidth ?? 34;
+      const hoveredCardSize = cardSize * 1.25 * 1.3;
       const cardClearance = hoveredCardSize / 2;
       const sideEdgePadding = mobileCards ? 4 : compactCards ? 10 : 16;
       const topEdgePadding = mobileCards ? 6 : compactCards ? 12 : 16;
@@ -287,7 +284,7 @@ export default function HackHiveStory() {
           const point = orbitPath.getPointAtLength(progress * pathLength);
           const depth = Math.max(0, Math.min(1, (point.y - pathTop) / Math.max(1, pathBottom - pathTop)));
           const easedDepth = depth * depth * (3 - 2 * depth);
-          const scale = 0.45 + easedDepth * 0.9;
+          const scale = 0.55 + easedDepth * 0.7;
           item.style.transform = `translate3d(${point.x}px, ${point.y}px, 0) translate(-50%, -50%) scale(${scale})`;
           const isActive = item.matches(':hover, :focus-visible');
           item.style.zIndex = isActive ? '10' : String(1 + Math.round(depth * 2));
@@ -317,6 +314,8 @@ export default function HackHiveStory() {
     orbitPausedRef.current = false;
   };
 
+  const selectedTestimonial = testimonials[activeTestimonial];
+
   return (
     <div className={styles.page}>
       <section className={styles.hero} aria-labelledby="hackhive-headline">
@@ -328,11 +327,11 @@ export default function HackHiveStory() {
             />
           </svg>
           <div className={styles.orbitTrack}>
-          {orbitImages.map((image) => (
+          {orbitImages.map((src, index) => (
             <div
-              ref={(item) => { orbitItemRefs.current[orbitImages.indexOf(image)] = item; }}
-              className={`${styles.orbitItem} ${image.className}`}
-              key={image.src}
+              ref={(item) => { orbitItemRefs.current[index] = item; }}
+              className={styles.orbitItem}
+              key={src}
               tabIndex={0}
               aria-label="HackHive memory"
               onMouseEnter={holdOrbit}
@@ -341,7 +340,7 @@ export default function HackHiveStory() {
               onBlur={resumeOrbit}
             >
               <div className={styles.orbitItemInner}>
-                <Image src={image.src} alt="" fill sizes="(max-width: 700px) 28vw, 180px" />
+                <Image src={src} alt="" fill sizes="(max-width: 700px) 28vw, 130px" />
                 {DEBUG_ORBIT && <span className={styles.debugCardBounds} />}
               </div>
             </div>
@@ -398,40 +397,24 @@ export default function HackHiveStory() {
         </dl>
       </section>
 
-      <section className={styles.gallerySection} aria-labelledby="gallery-title">
-        <div className={styles.sectionHeading}>
-          <p className={styles.sectionLabel}>Last year, in the room</p>
-          <h2 id="gallery-title">The part you had to be there for.</h2>
+      <section className={styles.testimonials} aria-labelledby="voices-title">
+        <div className={styles.testimonialHeading}>
+          <p className={styles.sectionLabel}>In their words</p>
+          <h2 id="voices-title">What our execs and past leaders had to say.</h2>
         </div>
-        <div className={styles.gallery}>
-          {galleryImages.map((image) => (
-            <figure className={`${styles.galleryFigure} ${image.className}`} key={image.src}>
-              <Image src={image.src} alt={image.alt} fill sizes="(max-width: 700px) 100vw, 50vw" />
-              <figcaption>{image.label}</figcaption>
-            </figure>
-          ))}
+        <div className={styles.quoteShowcase}>
+          <div className={styles.quoteFeature}>
+            <TestimonialBadge options={testimonials} selectedIndex={activeTestimonial} onSelect={setActiveTestimonial} />
+            <div className={styles.quoteCopy} aria-live="polite" key={selectedTestimonial.names}>
+              <div className={styles.quoteAttribution}>
+                <strong>{selectedTestimonial.names}</strong>
+                <span>{selectedTestimonial.role}</span>
+              </div>
+              <blockquote>{selectedTestimonial.quote}</blockquote>
+            </div>
+          </div>
         </div>
       </section>
-
-      {SHOW_TESTIMONIALS && (
-        <section className={styles.testimonials} aria-labelledby="voices-title">
-          <div className={styles.testimonialHeading}>
-            <p className={styles.sectionLabel}>Why it matters</p>
-            <h2 id="voices-title">From the people who built the hive.</h2>
-          </div>
-          <div className={styles.quoteGrid}>
-            {testimonials.map((testimonial) => (
-              <figure className={styles.quoteCard} key={testimonial.names}>
-                <blockquote>{testimonial.quote}</blockquote>
-                <figcaption>
-                  <strong>{testimonial.names}</strong>
-                  <span>{testimonial.role}</span>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </section>
-      )}
 
       {SHOW_SPONSORS && (
         <section className={styles.sponsors} aria-labelledby="sponsors-title">

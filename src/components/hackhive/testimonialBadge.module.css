@@ -1,0 +1,86 @@
+.badge {
+  position: relative;
+  width: min(100%, 30rem);
+  aspect-ratio: 0.83;
+  isolation: isolate;
+}
+
+.fallback {
+  position: absolute;
+  inset: 16% 10% 8%;
+  border: 1px solid #e6e1f2;
+  border-radius: 1rem;
+  background: #fcfbff;
+  box-shadow: 0 1.25rem 2.5rem rgb(24 24 27 / 8%);
+}
+
+.badge[data-ready='true'] .fallback { opacity: 0; }
+
+.canvas {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.face {
+  position: absolute;
+  inset: 18% 14% 10%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+}
+
+.portraits {
+  display: flex;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+}
+
+.portrait {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(62%, 11rem);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #f0eef5;
+}
+
+.portraitsPair .portrait { width: min(46%, 7.5rem); }
+.portrait img { object-fit: cover; object-position: center 25%; }
+
+.names { display: grid; gap: 0.35rem; }
+
+.nameButton {
+  min-height: 2.25rem;
+  padding: 0.35rem 0.5rem;
+  border: 0;
+  border-radius: 0.35rem;
+  background: #ece9f4;
+  color: #36333e;
+  font: inherit;
+  font-size: clamp(0.7rem, 1vw, 0.85rem);
+  font-weight: 600;
+  line-height: 1.1;
+  cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+.nameButton:hover,
+.nameButton:focus-visible,
+.nameButtonActive { background: #18181b; color: #fff; }
+
+@media (max-width: 620px) {
+  .badge { width: min(100%, 21rem); margin-inline: auto; }
+  .portrait { width: min(62%, 9rem); }
+  .nameButton { font-size: 0.78rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nameButton { transition: none; }
+}
