@@ -169,6 +169,7 @@ export default function Navbar() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [scrolledAway, setScrolledAway] = useState(false);
   const [peekOpen, setPeekOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const isSignedIn = authStatus === "signedIn";
   const visibleSections = [
@@ -177,7 +178,8 @@ export default function Navbar() {
     ...(isSignedIn ? [accountSection] : []),
   ];
 
-  const navRevealed = !scrolledAway || peekOpen;
+  const navRevealed = !scrolledAway || peekOpen || menuOpen;
+  const mobileMenuId = `${navId}-mobile-menu`;
 
   const syncSession = useCallback((userId: string | null) => {
     if (!userId) {
@@ -229,11 +231,16 @@ export default function Navbar() {
   useEffect(() => {
     setOpenId(null);
     setPeekOpen(false);
+    setMenuOpen(false);
   }, [pathname]);
 
   useEffect(() => {
     const threshold = 48;
     const directionThreshold = 2;
+    // Reveal only after a deliberate upward scroll, so small touch flicks
+    // don't keep sliding the bar in over the page.
+    const revealAfter = 40;
+    let upTravel = 0;
     let raf = 0;
     let lastY = window.scrollY;
 
@@ -254,8 +261,10 @@ export default function Navbar() {
       // Reverse from down → up: reveal the bar. Keep scrolling down: hide it.
       // Near-zero delta (paused) leaves the current peek state alone.
       if (delta < -directionThreshold) {
-        setPeekOpen(true);
+        upTravel -= delta;
+        if (upTravel >= revealAfter) setPeekOpen(true);
       } else if (delta > directionThreshold) {
+        upTravel = 0;
         setPeekOpen(false);
       }
     };
@@ -277,12 +286,14 @@ export default function Navbar() {
     function handlePointerDown(event: MouseEvent) {
       if (!rootRef.current?.contains(event.target as Node)) {
         setOpenId(null);
+        setMenuOpen(false);
       }
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setOpenId(null);
+        setMenuOpen(false);
       }
     }
 
@@ -441,8 +452,45 @@ export default function Navbar() {
                 Log in
               </Link>
             )}
+            <button
+              type="button"
+              className={styles.menuToggle}
+              aria-expanded={menuOpen}
+              aria-controls={mobileMenuId}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path
+                  d={menuOpen ? "M5 5l10 10M15 5 5 15" : "M3 6h14M3 10h14M3 14h14"}
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
           </div>
         </nav>
+
+        {menuOpen ? (
+          <div className={styles.mobileMenu} id={mobileMenuId}>
+            {visibleSections.map((section) => (
+              <div key={section.id} className={styles.mobileGroup}>
+                <p className={styles.meta}>{section.label}</p>
+                {section.links.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={styles.mobileLink}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : null}
       </header>
     </>
   );

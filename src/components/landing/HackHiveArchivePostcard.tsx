@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { HackHiveProject } from '@/types/hackhive';
 import { getProjectHref } from '@/data/hackhive';
+import { playOnView } from '@/lib/playOnView';
 import styles from './landing.module.css';
 
 type HackHiveArchivePostcardProps = {
@@ -90,9 +91,17 @@ export default function HackHiveArchivePostcard({
       setProgress(1);
     };
 
-    if (reduceMotion.matches || staticLayout.matches) {
+    if (reduceMotion.matches) {
       showFinished();
       return;
+    }
+
+    // Phones: the chapter isn't pinned, so pin the polaroids one by one once it scrolls into view.
+    if (staticLayout.matches) {
+      return playOnView(section, 1600, (p) => {
+        if (p === 1) settledRef.current = true;
+        setProgress(p === 1 ? 1 : p * lastFlyInDone);
+      });
     }
 
     let raf = 0;
@@ -204,6 +213,10 @@ export default function HackHiveArchivePostcard({
                       '--fly-rot': `${tilt + flyRot}deg`,
                       opacity: local,
                       pointerEvents: interactable ? 'auto' : 'none',
+                      // Hover's spring transition would restart every frame and shake the fly-in.
+                      transition: progress < 1 ? 'none' : undefined,
+                      // Own GPU layer while flying in, so text doesn't snap between pixels (shimmer on iOS).
+                      willChange: progress < 1 ? 'transform, opacity' : undefined,
                     } as CSSProperties
                   }
                   tabIndex={interactable ? 0 : -1}

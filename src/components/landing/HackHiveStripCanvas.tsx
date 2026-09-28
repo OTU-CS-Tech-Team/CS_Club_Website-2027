@@ -384,8 +384,19 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
       camera.updateProjectionMatrix();
     };
 
+    const staticLayout = window.matchMedia('(max-width: 860px)');
+    let playStartedAt = 0;
+
     const scrollProgress = () => {
       if (reduceMotion) return 1;
+      // Phones: the chapter isn't pinned, so assemble the film on a timer once it's
+      // in view (same trigger point as playOnView) instead of scrubbing with scroll.
+      if (staticLayout.matches) {
+        if (!playStartedAt && section.getBoundingClientRect().top < window.innerHeight * 0.75) {
+          playStartedAt = performance.now();
+        }
+        return playStartedAt ? clamp((performance.now() - playStartedAt) / 1800, 0, 1) : 0;
+      }
       const totalScroll = section.offsetHeight - window.innerHeight;
       if (totalScroll <= 0) return 0;
       return clamp(-section.getBoundingClientRect().top / totalScroll, 0, 1);
@@ -420,7 +431,11 @@ export default function HackHiveStripCanvas({ sectionRef, clips }: HackHiveStrip
       const fourWide = pitch * (VISIBLE - 1) + overlayW;
       const widthFit = viewWidth() / Math.max(fourWide, 0.001);
       const heightFit = (visibleH * 0.94) / overlayH;
-      const fit = Math.min(heightFit, widthFit * 1.16);
+      // Phones: four frames across makes each one tiny, so show ~one frame at 85% width.
+      const mobile = host.clientWidth < 760;
+      const fit = mobile
+        ? Math.min(heightFit, (viewWidth() * 0.85) / overlayW)
+        : Math.min(heightFit, widthFit * 1.16);
 
       travel += dt * 0.20 * loopAmount;
       const cycle = unique * pitchFilm;

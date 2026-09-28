@@ -14,7 +14,10 @@
   justify-items: center;
   min-height: 100dvh;
   padding: clamp(1.25rem, 4vw, 2.5rem) 1rem 3rem;
-  background: #fff;
+  /* Same tint + texture as .card so the passport sits in one continuous colour */
+  background:
+    linear-gradient(rgba(27, 0, 63, 0.8), rgba(27, 0, 63, 0.8)),
+    url('/passport/halftone-card.jpg') center / cover;
 }
 
 /* Flip card */
