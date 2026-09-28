@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import TestimonialBadge from './TestimonialBadge';
 import styles from './hackhiveStory.module.css';
 
 const heroWords = [
@@ -398,47 +399,20 @@ export default function HackHiveStory() {
 
       <section className={styles.testimonials} aria-labelledby="voices-title">
         <div className={styles.testimonialHeading}>
-          <div>
-            <p className={styles.sectionLabel}>In their words</p>
-            <h2 id="voices-title">What our execs and past leaders had to say.</h2>
-          </div>
-          <div className={styles.quoteControls} role="group" aria-label="Testimonial navigation">
-            <span className={styles.quoteCount}>{String(activeTestimonial + 1).padStart(2, '0')} / {String(testimonials.length).padStart(2, '0')}</span>
-            <button
-              type="button"
-              className={styles.quoteArrow}
-              aria-label="Previous testimonial"
-              onClick={() => setActiveTestimonial((current) => (current + testimonials.length - 1) % testimonials.length)}
-            >
-              <span aria-hidden="true">←</span>
-            </button>
-            <button
-              type="button"
-              className={styles.quoteArrow}
-              aria-label="Next testimonial"
-              onClick={() => setActiveTestimonial((current) => (current + 1) % testimonials.length)}
-            >
-              <span aria-hidden="true">→</span>
-            </button>
-          </div>
+          <p className={styles.sectionLabel}>In their words</p>
+          <h2 id="voices-title">What our execs and past leaders had to say.</h2>
         </div>
         <div className={styles.quoteShowcase}>
-          <figure className={styles.quoteFeature} key={selectedTestimonial.names} aria-live="polite">
-            <figcaption className={styles.quotePerson}>
-              <div className={styles.quotePortraits}>
-                {selectedTestimonial.portraits.map((portrait) => (
-                  <div className={styles.quotePortrait} key={portrait.alt}>
-                    <Image src={portrait.src} alt={portrait.alt} fill sizes="(max-width: 620px) 96px, 132px" />
-                  </div>
-                ))}
-              </div>
+          <div className={styles.quoteFeature}>
+            <TestimonialBadge options={testimonials} selectedIndex={activeTestimonial} onSelect={setActiveTestimonial} />
+            <div className={styles.quoteCopy} aria-live="polite" key={selectedTestimonial.names}>
               <div className={styles.quoteAttribution}>
                 <strong>{selectedTestimonial.names}</strong>
                 <span>{selectedTestimonial.role}</span>
               </div>
-            </figcaption>
-            <blockquote>{selectedTestimonial.quote}</blockquote>
-          </figure>
+              <blockquote>{selectedTestimonial.quote}</blockquote>
+            </div>
+          </div>
         </div>
       </section>
 

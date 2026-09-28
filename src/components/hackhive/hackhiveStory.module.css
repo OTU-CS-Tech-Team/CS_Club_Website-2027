@@ -301,27 +301,7 @@
 }
 
 .testimonials .sectionLabel { color: var(--accent); }
-.testimonialHeading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; }
-.testimonialHeading > div:first-child { max-width: 65rem; }
-.quoteControls { display: flex; align-items: center; gap: 0.55rem; flex-shrink: 0; }
-.quoteCount { margin-right: 0.6rem; color: #71717a; font-size: 0.75rem; font-variant-numeric: tabular-nums; letter-spacing: 0.1em; }
-.quoteArrow {
-  display: grid;
-  place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--ink);
-  font: inherit;
-  font-size: 1.15rem;
-  cursor: pointer;
-  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
-}
-.quoteArrow:hover,
-.quoteArrow:focus-visible { background: var(--ink); border-color: var(--ink); color: #fff; }
+.testimonialHeading { max-width: 65rem; }
 
 .quoteShowcase {
   max-width: 88rem;
@@ -332,30 +312,19 @@
 
 .quoteFeature {
   display: grid;
-  grid-template-columns: minmax(11rem, 0.28fr) minmax(0, 1fr);
-  gap: clamp(2rem, 6vw, 6rem);
-  align-items: start;
-  margin: 0;
+  grid-template-columns: minmax(16rem, 0.5fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  align-items: center;
   padding: clamp(1.5rem, 3vw, 3rem) 0;
-  animation: quoteEnter 280ms ease both;
 }
 
-.quotePerson { display: grid; justify-items: start; gap: 1rem; }
-.quotePortraits { display: flex; gap: 0.5rem; }
-.quotePortrait {
-  position: relative;
-  overflow: hidden;
-  width: clamp(5.5rem, 8vw, 7.5rem);
-  aspect-ratio: 1;
-  border: 0;
-  border-radius: 50%;
-  background: #f4f4f5;
-}
-.quotePortrait img { object-fit: cover; object-position: center 25%; }
-.quoteAttribution { display: grid; gap: 0.3rem; }
-.quoteAttribution strong { font-size: clamp(1.25rem, 2vw, 1.75rem); font-weight: 600; letter-spacing: -0.045em; }
-.quoteAttribution span { max-width: 16rem; color: #71717a; font-size: 0.8rem; line-height: 1.45; }
-.quoteFeature blockquote { max-width: 55rem; margin: 0; font-size: clamp(1.08rem, 1.6vw, 1.4rem); letter-spacing: -0.025em; line-height: 1.5; }
+.quoteCopy { min-width: 0; animation: quoteEnter 280ms ease both; }
+.quoteAttribution { display: grid; gap: 0.4rem; }
+.quoteAttribution strong { font-size: clamp(2rem, 3.2vw, 3rem); font-weight: 600; letter-spacing: -0.055em; line-height: 1; }
+.quoteAttribution span { color: #52525b; font-size: clamp(1rem, 1.35vw, 1.2rem); font-weight: 600; line-height: 1.35; }
+.quoteFeature blockquote { max-width: 48rem; margin: 1.5rem 0 0; font-size: clamp(1.05rem, 1.45vw, 1.3rem); letter-spacing: -0.02em; line-height: 1.6; }
+.quoteFeature blockquote::before { content: '“'; display: block; height: 0.85em; color: #6a3df5; font-size: 3rem; line-height: 1; }
+.quoteFeature blockquote::after { content: '”'; color: #6a3df5; font-size: 1.5em; line-height: 0; vertical-align: -0.15em; }
 
 @keyframes quoteEnter {
   from { opacity: 0; transform: translateY(0.4rem); }
@@ -423,10 +392,8 @@
   .stats div:nth-child(3),
   .stats div:nth-child(4) { border-top: 1px solid var(--line); border-left: 0; padding-left: 0; }
   .stats div { min-height: 8rem; }
-  .testimonialHeading { display: grid; gap: 1.25rem; }
   .quoteFeature { grid-template-columns: 1fr; gap: 1.5rem; }
-  .quotePerson { display: flex; align-items: center; gap: 1rem; }
-  .quotePortrait { width: clamp(4rem, 20vw, 5.5rem); }
+  .quoteCopy { padding: 0 0.25rem; }
   .sponsorList { grid-template-columns: 1fr; }
 }
 
@@ -439,5 +406,5 @@
   .orbitTrack,
   .orbitItem,
   .orbitItemInner,
-  .quoteFeature { animation: none; }
+  .quoteCopy { animation: none; }
 }
