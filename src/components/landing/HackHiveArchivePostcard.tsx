@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { HackHiveProject } from '@/types/hackhive';
@@ -66,6 +66,25 @@ export default function HackHiveArchivePostcard({
   const [progress, setProgress] = useState(0);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    if (window.location.hash !== '#hackhive-archive') return;
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const scrollToBoard = () => {
+      const top = section.getBoundingClientRect().top + window.scrollY;
+      const staticLayout = window.matchMedia(
+        '(max-width: 860px), (prefers-reduced-motion: reduce)',
+      ).matches;
+      const runway = staticLayout ? 0 : section.offsetHeight - window.innerHeight;
+      window.scrollTo(0, top + Math.max(0, runway));
+    };
+
+    scrollToBoard();
+    const frame = window.requestAnimationFrame(scrollToBoard);
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   const polaroids = projects.slice(0, 4);
   const interactable = progress >= 0.82;
@@ -162,6 +181,7 @@ export default function HackHiveArchivePostcard({
   return (
     <section
       ref={sectionRef}
+      id="hackhive-archive"
       className={styles.archiveChapter}
       aria-labelledby="archive-heading"
     >

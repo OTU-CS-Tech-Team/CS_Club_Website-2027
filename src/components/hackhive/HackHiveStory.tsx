@@ -24,18 +24,18 @@ const statTargets = [250, 550, 24];
 const SHOW_SPONSORS = false;
 
 const orbitImages = [
-  '/hackhive/orbit/team-portrait.png',
-  '/hackhive/orbit/immersive-demo.png',
-  '/hackhive/orbit/mic-moment.webp',
-  '/hackhive/orbit/sponsor-table.png',
-  '/hackhive/filmstrip/hallway.jpg',
-  '/hackhive/orbit/builders-at-work.png',
-  '/hackhive/filmstrip/lecture-row.jpg',
-  '/hackhive/orbit/crowd-overhead.webp',
-  '/hackhive/filmstrip/study-pair.jpg',
-  '/hackhive/filmstrip/checkin-desk.jpg',
-  '/hackhive/filmstrip/noodles.jpg',
-  '/hackhive/filmstrip/pastries.jpg',
+  { src: '/hackhive/orbit/team-portrait.png', slot: styles.orbitOne },
+  { src: '/hackhive/orbit/immersive-demo.png', slot: styles.orbitTwo },
+  { src: '/hackhive/orbit/mic-moment.webp', slot: styles.orbitThree },
+  { src: '/hackhive/orbit/sponsor-table.png', slot: styles.orbitFour },
+  { src: '/hackhive/filmstrip/hallway.jpg', slot: styles.orbitFive },
+  { src: '/hackhive/orbit/builders-at-work.png', slot: styles.orbitSix },
+  { src: '/hackhive/filmstrip/lecture-row.jpg', slot: styles.orbitSeven },
+  { src: '/hackhive/orbit/crowd-overhead.webp', slot: styles.orbitEight },
+  { src: '/hackhive/filmstrip/study-pair.jpg', slot: styles.orbitNine },
+  { src: '/hackhive/filmstrip/checkin-desk.jpg', slot: styles.orbitTen },
+  { src: '/hackhive/filmstrip/noodles.jpg', slot: styles.orbitEleven },
+  { src: '/hackhive/filmstrip/pastries.jpg', slot: styles.orbitTwelve },
 ];
 
 const testimonials = [
@@ -337,11 +337,11 @@ export default function HackHiveStory() {
             />
           </svg>
           <div className={styles.orbitTrack}>
-          {orbitImages.map((src, index) => (
+          {orbitImages.map((image, index) => (
             <div
               ref={(item) => { orbitItemRefs.current[index] = item; }}
-              className={styles.orbitItem}
-              key={src}
+              className={`${styles.orbitItem} ${image.slot}`}
+              key={image.src}
               tabIndex={0}
               aria-label="HackHive memory"
               onMouseEnter={holdOrbit}
@@ -350,7 +350,7 @@ export default function HackHiveStory() {
               onBlur={resumeOrbit}
             >
               <div className={styles.orbitItemInner}>
-                <Image src={src} alt="" fill sizes="(max-width: 700px) 28vw, 130px" />
+                <Image src={image.src} alt="" fill sizes="(max-width: 700px) 28vw, 130px" />
                 {DEBUG_ORBIT && <span className={styles.debugCardBounds} />}
               </div>
             </div>

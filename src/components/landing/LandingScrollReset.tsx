@@ -2,12 +2,14 @@
 
 import { useEffect } from 'react';
 
-/** Homepage always opens at the top; chapter scroll gates must not fight restore. */
+/** Homepage opens at the top, except a return to the corkboard. */
 export default function LandingScrollReset() {
   useEffect(() => {
     const previous = window.history.scrollRestoration;
     window.history.scrollRestoration = 'manual';
-    window.scrollTo(0, 0);
+    if (window.location.hash !== '#hackhive-archive') {
+      window.scrollTo(0, 0);
+    }
 
     return () => {
       window.history.scrollRestoration = previous;

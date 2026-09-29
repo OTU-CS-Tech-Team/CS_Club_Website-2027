@@ -88,7 +88,8 @@ export default function ProjectDetailView({
     <div className={styles.detailPage}>
       <div className={styles.detailShell}>
         <Link
-          href="/#hackhive-heading"
+          href="/#hackhive-archive"
+          scroll={false}
           className={`${styles.backLink} ${handwrittenClass ?? ''}`}
         >
           ← return to homepage
