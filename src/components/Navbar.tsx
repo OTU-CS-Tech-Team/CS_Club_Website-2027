@@ -358,9 +358,9 @@ export default function Navbar() {
         <nav className={styles.bar} aria-label="Primary">
           <Link href="/" className={styles.brand} aria-label="CS Club home">
             <img
-              src="/cs-club-mark.png"
+              src="/cs_club_logo.png"
               alt=""
-              width={36}
+              width={46}
               height={36}
               className={styles.brandMark}
             />
@@ -460,9 +460,19 @@ export default function Navbar() {
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               onClick={() => setMenuOpen((open) => !open)}
             >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                aria-hidden="true"
+              >
                 <path
-                  d={menuOpen ? "M5 5l10 10M15 5 5 15" : "M3 6h14M3 10h14M3 14h14"}
+                  d={
+                    menuOpen
+                      ? "M5 5l10 10M15 5 5 15"
+                      : "M3 6h14M3 10h14M3 14h14"
+                  }
                   stroke="currentColor"
                   strokeWidth="1.6"
                   strokeLinecap="round"
