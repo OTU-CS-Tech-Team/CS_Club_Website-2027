@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import styles from './testimonialBadge.module.css';
 
-type Portrait = { src: string; alt: string };
+type Portrait = { src: string; alt: string; position?: string };
 type TestimonialOption = { names: string; portraits: Portrait[] };
 
 type TestimonialBadgeProps = {
@@ -138,7 +138,7 @@ export default function TestimonialBadge({ options, selectedIndex, onSelect }: T
         <div className={`${styles.portraits} ${selected.portraits.length > 1 ? styles.portraitsPair : ''}`}>
           {selected.portraits.map((portrait) => (
             <div className={styles.portrait} key={portrait.alt}>
-              <Image src={portrait.src} alt={portrait.alt} fill sizes="(max-width: 620px) 120px, 160px" />
+              <Image src={portrait.src} alt={portrait.alt} fill sizes="(max-width: 620px) 120px, 160px" style={portrait.position ? { objectPosition: portrait.position } : undefined} />
             </div>
           ))}
         </div>

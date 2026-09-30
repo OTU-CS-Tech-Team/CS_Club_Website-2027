@@ -172,13 +172,19 @@ export const sponsorsTeam: TeamMember[] = [
 ];
 export const advisors: TeamMember[] = [
     {
+        Image: "/Images/Yousaf.jpg",
+        name: "Yousaf",
+        role: "Executive Advisor",
+        link: "https://www.linkedin.com/in/yousafajan/?isSelfProfile=false",
+    },
+    {
         Image: "/Images/Kevin.jpg",
         name: "Kevin",
         role: "Executive Advisor",
         link: "https://www.linkedin.com/in/kevintheinnovator/",
     },
     {
-        Image: "/Images/Wasay.jpg",
+        Image: "/Images/Wasay.png",
         name: "Wasay",
         role: "Executive Advisor",
         link: "https://www.linkedin.com/in/wasayaamir/",
