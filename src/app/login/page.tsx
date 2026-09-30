@@ -22,18 +22,20 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
   const [alerts, setAlerts] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // The OAuth callback bounces back here with ?error=... when sign-in is refused.
   useEffect(() => {
     const reason = new URLSearchParams(window.location.search).get('error');
-    if (reason === 'sso') setStatus('Sign-in did not complete. Try again.');
-    if (reason === 'domain') setStatus(EMAIL_DOMAIN_MESSAGE);
+    if (reason === 'sso') setError('Sign-in did not complete. Try again.');
+    if (reason === 'domain') setError(EMAIL_DOMAIN_MESSAGE);
   }, []);
 
   async function handleGoogle() {
     setStatus('');
+    setError('');
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -44,7 +46,7 @@ export default function LoginPage() {
       },
     });
     if (error) {
-      setStatus(error.message);
+      setError(error.message);
       setLoading(false);
     }
     // On success the browser leaves for Google, so nothing to reset here.
@@ -53,6 +55,7 @@ export default function LoginPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus('');
+    setError('');
 
     if (mode === 'reset') {
       setLoading(true);
@@ -61,12 +64,13 @@ export default function LoginPage() {
       });
       setLoading(false);
       // Same message either way on success so the form doesn't reveal which emails have accounts.
-      setStatus(error ? error.message : 'If that email has an account, a reset link is on its way. Open it in this browser.');
+      if (error) setError(error.message);
+      else setStatus('If that email has an account, a reset link is on its way. Open it in this browser.');
       return;
     }
 
     if (mode === 'signup' && !isAllowedAuthEmail(email)) {
-      setStatus(EMAIL_DOMAIN_MESSAGE);
+      setError(EMAIL_DOMAIN_MESSAGE);
       return;
     }
 
@@ -82,7 +86,7 @@ export default function LoginPage() {
       });
       if (error) {
         setLoading(false);
-        setStatus(error.message);
+        setError(error.message);
         return;
       }
 
@@ -119,7 +123,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      setStatus(error.message);
+      setError(error.message);
       return;
     }
     router.push(nextPath());
@@ -161,7 +165,7 @@ export default function LoginPage() {
           </label>
         )}
         {mode === 'signin' ? (
-          <button type="button" className="link-button auth-forgot" onClick={() => { setMode('reset'); setStatus(''); }}>
+          <button type="button" className="link-button auth-forgot" onClick={() => { setMode('reset'); setStatus(''); setError(''); }}>
             Forgot password?
           </button>
         ) : null}
@@ -195,13 +199,20 @@ export default function LoginPage() {
         onClick={() => {
           setMode(mode === 'signin' ? 'signup' : 'signin');
           setStatus('');
+          setError('');
         }}
       >
         {mode === 'signin' ? 'New here? Create an account' : mode === 'reset' ? 'Back to sign in' : 'Already have an account? Sign in'}
       </button>
 
+      {error && (
+        <p role="alert" className={styles.error}>
+          {error}
+        </p>
+      )}
+
       {status && (
-        <p role="status" aria-live="polite">
+        <p role="status" aria-live="polite" className={styles.success}>
           {status}
         </p>
       )}

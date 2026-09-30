@@ -3,7 +3,7 @@
   justify-content: center;
   padding: 2rem 1.25rem 3rem;
   background: #fff;
-  color: #111;
+  color: #1b003f;
 }
 
 .stack {
@@ -27,7 +27,15 @@
 
 .stack > p {
   margin-top: 0;
-  color: #444;
+  color: #1b003f;
+}
+
+.stack > .error {
+  color: #a51d2d;
+}
+
+.stack > .success {
+  color: #1e7b34;
 }
 
 .page {

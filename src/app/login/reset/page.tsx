@@ -58,7 +58,7 @@ export default function ResetPasswordPage() {
         <h1>Set a new password</h1>
         {expired ? (
           <>
-            <p role="status">{EXPIRED}</p>
+            <p role="alert" className={styles.error}>{EXPIRED}</p>
             <Link href="/login">Back to log in</Link>
           </>
         ) : (
@@ -78,7 +78,7 @@ export default function ResetPasswordPage() {
               </label>
               <button type="submit" disabled={loading}>Save password</button>
             </form>
-            {status && <p role="status" aria-live="polite">{status}</p>}
+            {status && <p role="alert" className={styles.error}>{status}</p>}
           </>
         )}
       </div>
