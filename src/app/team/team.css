@@ -383,6 +383,14 @@
   object-position: center 20%;
 }
 
+/* Wasay's photo is a wide shot: shift it so his face is centred and zoom in.
+   The clip-path keeps the visible circle the same size after scaling (43.5% * 1.15 = 50%). */
+.teamCard > img[src="/Images/Wasay.png"] {
+  object-position: 62% center;
+  transform: scale(1.15);
+  clip-path: circle(43.5%);
+}
+
 .teamCard h3 {
   margin: 0 0 0.15rem;
   font-size: clamp(0.8rem, 8.5cqw, 1.6rem);

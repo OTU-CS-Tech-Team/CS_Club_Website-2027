@@ -49,7 +49,7 @@ const testimonials = [
   {
     names: 'Wasay',
     role: 'Co-Founder of HackHive & Former President @ OTU CS Club',
-    portraits: [{ src: '/Images/Wasay.jpg', alt: 'Wasay' }],
+    portraits: [{ src: '/Images/Wasay.png', alt: 'Wasay', position: '61% center' }],
     quote:
       "HackHive isn't just something I built, it's something I actually believe in. I co-founded it in 2023 because I kept meeting insanely talented people at this university who had nowhere to show what they could do. That never sat right with me, so a friend and I decided to build the stage ourselves. Watching it grow into Durham Region's largest hackathon still doesn't feel real some days. But the numbers were never the point, it was always about giving people a real shot. It's the thing I'm proudest of from my time here.",
   },
