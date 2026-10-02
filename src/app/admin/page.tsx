@@ -19,6 +19,29 @@ function applicationText(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+async function loadEventGuests(adminClient: ReturnType<typeof createAdminClient>, eventIds: string[]) {
+  const withAttendance = await adminClient
+    .from('event_guests')
+    .select('id, event_id, name, email, student_id, suggestions, confirmed, attended_at, rsvped')
+    .in('event_id', eventIds);
+
+  if (!withAttendance.error) return withAttendance;
+
+  const message = withAttendance.error.message ?? '';
+  const missingColumn = withAttendance.error.code === 'PGRST204' || message.includes('attended_at') || message.includes('rsvped');
+  if (!missingColumn) return withAttendance;
+
+  const basic = await adminClient
+    .from('event_guests')
+    .select('id, event_id, name, email, student_id, suggestions, confirmed')
+    .in('event_id', eventIds);
+
+  return {
+    data: (basic.data ?? []).map((guest) => ({ ...guest, attended_at: null as string | null, rsvped: true })),
+    error: basic.error,
+  };
+}
+
 function toApplication(row: Record<string, unknown>, index: number): JobApplication {
   const recovered = recoverPackedIdeas(typeof row.ideas === 'string' ? row.ideas : null);
   const answers = normalizeAnswers(row.answers);
@@ -207,10 +230,7 @@ export default async function AdminPage() {
           .from('event_rsvps')
           .select('event_id, user_id, year_of_study, suggestions')
           .in('event_id', eventIds),
-        adminClient
-          .from('event_guests')
-          .select('id, event_id, name, email, student_id, suggestions, confirmed')
-          .in('event_id', eventIds),
+        loadEventGuests(adminClient, eventIds),
         // All stamps, not just current events: stamps from deleted events have a null event_id but still count toward passport points.
         adminClient
           .from('passport_stamps')
@@ -231,7 +251,10 @@ export default async function AdminPage() {
         const walkIns = stamps
           .filter((stamp) => stamp.event_id && loadedEventIds.has(stamp.event_id) && !rsvpKeys.has(`${stamp.event_id}:${stamp.user_id}`))
           .map((stamp) => ({ event_id: stamp.event_id as string, user_id: stamp.user_id, year_of_study: null, suggestions: null }));
-        const memberRows = [...(memberResult.data ?? []), ...walkIns];
+        const memberRows = [
+          ...(memberResult.data ?? []).map((row) => ({ ...row, rsvped: true })),
+          ...walkIns.map((row) => ({ ...row, rsvped: false })),
+        ];
         const memberIds = Array.from(new Set(memberRows.map((row) => row.user_id)));
         const profileResult = memberIds.length
           ? await adminClient.from('profiles').select('id, full_name, email').in('id', memberIds)
@@ -251,6 +274,13 @@ export default async function AdminPage() {
             pointsByUser.set(stamp.user_id, (pointsByUser.get(stamp.user_id) ?? 0) + stamp.points);
           }
 
+          const memberEmailKeys = new Set(
+            memberRows.flatMap((row) => {
+              const email = String(profiles.get(row.user_id)?.email ?? '').trim().toLowerCase();
+              return email ? [`${row.event_id}:${email}`] : [];
+            }),
+          );
+
           attendees = [
             ...memberRows.map((rsvp): EventAttendee => {
               const profile = profiles.get(rsvp.user_id);
@@ -265,20 +295,24 @@ export default async function AdminPage() {
                 points: pointsByUser.get(rsvp.user_id) ?? 0,
                 kind: 'member',
                 status: attendedMembers.has(`${rsvp.event_id}:${rsvp.user_id}`) ? 'attended' : 'confirmed',
+                rsvped: rsvp.rsvped,
               };
             }),
-            ...(guestResult.data ?? []).map((guest): EventAttendee => ({
-              id: `guest:${guest.id}`,
-              event_id: guest.event_id,
-              name: guest.name || guest.email || 'Guest',
-              email: guest.email ?? '',
-              student_id: guest.student_id ?? null,
-              year_of_study: null,
-              suggestions: guest.suggestions ?? null,
-              points: null,
-              kind: 'guest',
-              status: guest.confirmed ? 'confirmed' : 'pending',
-            })),
+            ...(guestResult.data ?? [])
+              .filter((guest) => !memberEmailKeys.has(`${guest.event_id}:${String(guest.email ?? '').trim().toLowerCase()}`))
+              .map((guest): EventAttendee => ({
+                id: `guest:${guest.id}`,
+                event_id: guest.event_id,
+                name: guest.name || guest.email || 'Guest',
+                email: guest.email ?? '',
+                student_id: guest.student_id ?? null,
+                year_of_study: null,
+                suggestions: guest.suggestions ?? null,
+                points: null,
+                kind: 'guest',
+                status: guest.attended_at ? 'attended' : guest.confirmed ? 'confirmed' : 'pending',
+                rsvped: guest.rsvped !== false,
+              })),
           ];
         }
       }

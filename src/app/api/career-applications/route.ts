@@ -91,16 +91,16 @@ export async function POST(request: Request) {
   const jobId = read('jobId');
   const resume = form.get('resume');
 
-  if (!firstName || !lastName || !email || !studentId || !year || !program || !jobId) {
+  if (!jobId || !studentId) {
     return NextResponse.json({ error: 'Please complete all required fields.' }, { status: 400 });
   }
   if (Object.entries({ firstName, lastName, email, studentId, program, ideas }).some(([field, value]) => value.length > fieldLimits[field as keyof typeof fieldLimits])) {
     return NextResponse.json({ error: 'One or more fields are too long.' }, { status: 400 });
   }
-  if (!/^[^\s@]+@ontariotechu\.net$/.test(email)) {
+  if (email && !/^[^\s@]+@ontariotechu\.net$/.test(email)) {
     return NextResponse.json({ error: 'Please use your Ontario Tech email address.' }, { status: 400 });
   }
-  if (!/^1\d{8}$/.test(studentId) || !allowedYears.has(year)) {
+  if (!/^1\d{8}$/.test(studentId) || (year && !allowedYears.has(year))) {
     return NextResponse.json({ error: 'Please check your student ID and year of study.' }, { status: 400 });
   }
 
@@ -145,16 +145,35 @@ export async function POST(request: Request) {
   if (!job) {
     return NextResponse.json({ error: 'This job posting is no longer available.' }, { status: 400 });
   }
-  if (!(resume instanceof File) || resume.size === 0) {
+  const presented = presentJob(typeof job.description === 'string' ? job.description : '', job.sections);
+  const fields = presented.fields;
+  if (fields.name && (!firstName || !lastName)) {
+    return NextResponse.json({ error: 'Please enter your first and last name.' }, { status: 400 });
+  }
+  if (fields.email && !email) {
+    return NextResponse.json({ error: 'Please enter your Ontario Tech email.' }, { status: 400 });
+  }
+  if (fields.year && !year) {
+    return NextResponse.json({ error: 'Please select your year of study.' }, { status: 400 });
+  }
+  if (fields.program && !program) {
+    return NextResponse.json({ error: 'Please enter your program of study.' }, { status: 400 });
+  }
+  const hasResume = resume instanceof File && resume.size > 0;
+  if (fields.resume && !hasResume) {
     return NextResponse.json({ error: 'Please upload your resume.' }, { status: 400 });
   }
-  const resumeBytes = Buffer.from(await resume.arrayBuffer());
-  const resumeProblem = pdfError(resume, resumeBytes);
-  if (resumeProblem) return NextResponse.json({ error: resumeProblem }, { status: 400 });
-  const presented = presentJob(typeof job.description === 'string' ? job.description : '', job.sections);
+  let resumeBytes: Buffer | null = null;
+  if (hasResume && resume instanceof File) {
+    resumeBytes = Buffer.from(await resume.arrayBuffer());
+    const resumeProblem = pdfError(resume, resumeBytes);
+    if (resumeProblem) return NextResponse.json({ error: resumeProblem }, { status: 400 });
+  }
   const answerResult = readQuestionAnswers(presented.questions, read);
   if (!answerResult.ok) return NextResponse.json({ error: answerResult.message }, { status: 400 });
-  if (!allowUpload([`ip:${clientAddress(request)}`, `email:${email}`])) {
+  const limitKeys = [`ip:${clientAddress(request)}`];
+  if (email) limitKeys.push(`email:${email}`);
+  if (!allowUpload(limitKeys)) {
     return NextResponse.json({ error: 'Too many applications were sent from this address. Try again later.' }, { status: 429 });
   }
   let admin;
@@ -163,8 +182,12 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: 'Resume uploads are not configured yet.' }, { status: 503 });
   }
-  const storedResume = await storeResume(admin, jobId, resumeBytes);
-  if ('error' in storedResume) return NextResponse.json({ error: storedResume.error }, { status: 400 });
+  let resumePath: string | null = null;
+  if (resumeBytes) {
+    const storedResume = await storeResume(admin, jobId, resumeBytes);
+    if ('error' in storedResume) return NextResponse.json({ error: storedResume.error }, { status: 400 });
+    resumePath = storedResume.path;
+  }
   const application = {
     job_id: jobId,
     first_name: firstName,
@@ -174,7 +197,7 @@ export async function POST(request: Request) {
     year_of_study: year,
     program_of_study: program,
     ideas: ideas || null,
-    resume_path: storedResume.path,
+    resume_path: resumePath,
     answers: answerResult.answers,
   };
   let { error } = await admin.from('career_applications').insert(application);
@@ -182,16 +205,16 @@ export async function POST(request: Request) {
     const { answers: _answers, resume_path: _resumePath, ...withoutAnswers } = application;
     ({ error } = await admin.from('career_applications').insert({
       ...withoutAnswers,
-      ideas: packApplicationFallback(ideas, answerResult.answers, storedResume.path),
+      ideas: packApplicationFallback(ideas, answerResult.answers, resumePath ?? ''),
     }));
   }
 
   if (error) {
     console.error('Unable to save application', { code: error.code, message: error.message });
-    await removeResume(admin, storedResume.path);
+    if (resumePath) await removeResume(admin, resumePath);
     return NextResponse.json({ error: 'We could not save your application. Please try again.' }, { status: 500 });
   }
   const role = typeof job.title === 'string' && job.title.trim() ? job.title.trim() : 'this role';
-  await sendApplicationReceivedEmail(email, role);
+  if (email) await sendApplicationReceivedEmail(email, role);
   return NextResponse.json({ ok: true });
 }

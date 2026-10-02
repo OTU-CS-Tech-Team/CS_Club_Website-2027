@@ -19,7 +19,8 @@ export type JobSection =
   | { kind: 'duties'; body: string }
   | { kind: 'experience'; body: string }
   | { kind: 'section'; id: string; title: string; body: string }
-  | { kind: 'question'; id: string; prompt: string; required: boolean };
+  | { kind: 'question'; id: string; prompt: string; required: boolean }
+  | { kind: 'fields'; name: boolean; email: boolean; year: boolean; program: boolean; resume: boolean };
 
 export type JobContentBlock = {
   id: string;
@@ -34,6 +35,14 @@ export type JobQuestion = {
   required: boolean;
 };
 
+export type ApplicationFields = {
+  name: boolean;
+  email: boolean;
+  year: boolean;
+  program: boolean;
+  resume: boolean;
+};
+
 export type ClubJob = {
   id: string;
   title: string;
@@ -45,6 +54,7 @@ export type ClubJob = {
   location?: string | null;
   content?: JobContentBlock[];
   questions?: JobQuestion[];
+  fields?: ApplicationFields;
   created_by?: string | null;
   created_at?: string;
   updated_at?: string;
@@ -76,4 +86,6 @@ export type EventAttendee = {
   points: number | null;
   kind: 'member' | 'guest';
   status: 'attended' | 'confirmed' | 'pending';
+  /** False when they were recorded at the door and never RSVP'd. */
+  rsvped: boolean;
 };

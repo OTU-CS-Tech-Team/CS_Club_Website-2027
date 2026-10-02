@@ -105,6 +105,13 @@ export default function CareerApplicationForm({ job }: { job: ClubJob }) {
   const [resumeName, setResumeName] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const resumeRef = useRef<HTMLInputElement>(null);
+  const required = {
+    name: job.fields?.name !== false,
+    email: job.fields?.email !== false,
+    year: job.fields?.year !== false,
+    program: job.fields?.program !== false,
+    resume: job.fields?.resume !== false,
+  };
 
   function chooseResume(file: File | undefined) {
     if (!file) return;
@@ -128,20 +135,20 @@ export default function CareerApplicationForm({ job }: { job: ClubJob }) {
     event.preventDefault();
     setError('');
     const formData = new FormData(event.currentTarget);
-    const requiredFields: Array<[string, string]> = [
-      ['firstName', 'your first name'],
-      ['lastName', 'your last name'],
-      ['email', 'your Ontario Tech email'],
-      ['studentId', 'your student ID'],
-      ['year', 'your year of study'],
-      ['program', 'your program of study'],
+    const requiredFields: Array<[string, string, boolean]> = [
+      ['firstName', 'your first name', required.name],
+      ['lastName', 'your last name', required.name],
+      ['email', 'your Ontario Tech email', required.email],
+      ['studentId', 'your student ID', true],
+      ['year', 'your year of study', required.year],
+      ['program', 'your program of study', required.program],
     ];
-    const missing = requiredFields.find(([name]) => !String(formData.get(name) ?? '').trim());
+    const missing = requiredFields.find(([name, , needed]) => needed && !String(formData.get(name) ?? '').trim());
     if (missing) {
       setError(`Please enter ${missing[1]}.`);
       return;
     }
-    if (!resumeRef.current?.files?.[0]) {
+    if (required.resume && !resumeRef.current?.files?.[0]) {
       setError('Please upload your resume.');
       return;
     }
@@ -202,14 +209,17 @@ export default function CareerApplicationForm({ job }: { job: ClubJob }) {
               <div className={styles.formGrid}>
                 <label>
                   First name
-                  <input name="firstName" autoComplete="given-name" aria-required="true" />
+                  {required.name ? null : <span className={styles.optionalHint}>Optional</span>}
+                  <input name="firstName" autoComplete="given-name" aria-required={required.name} />
                 </label>
                 <label>
                   Last name
-                  <input name="lastName" autoComplete="family-name" aria-required="true" />
+                  {required.name ? null : <span className={styles.optionalHint}>Optional</span>}
+                  <input name="lastName" autoComplete="family-name" aria-required={required.name} />
                 </label>
                 <label className={styles.fullWidth}>
                   Ontario Tech email
+                  {required.email ? null : <span className={styles.optionalHint}>Optional</span>}
                   <input
                     type="email"
                     name="email"
@@ -217,7 +227,7 @@ export default function CareerApplicationForm({ job }: { job: ClubJob }) {
                     placeholder="first.last@ontariotechu.net"
                     pattern="^[^\s@]+@ontariotechu\.net$"
                     title="Use your @ontariotechu.net email address."
-                    aria-required="true"
+                    aria-required={required.email}
                   />
                 </label>
                 <label>
@@ -233,14 +243,17 @@ export default function CareerApplicationForm({ job }: { job: ClubJob }) {
                 </label>
                 <label>
                   Year of study
+                  {required.year ? null : <span className={styles.optionalHint}>Optional</span>}
                   <YearSelect />
                 </label>
                 <label className={styles.fullWidth}>
                   Program of study
-                  <input name="program" placeholder="e.g. Computer Science" aria-required="true" />
+                  {required.program ? null : <span className={styles.optionalHint}>Optional</span>}
+                  <input name="program" placeholder="e.g. Computer Science" aria-required={required.program} />
                 </label>
                 <div className={`${styles.fullWidth} ${styles.resumeField}`}>
                   Resume
+                  {required.resume ? null : <span className={styles.optionalHint}>Optional</span>}
                   <button
                     className={`${styles.dropZone} ${dragOver ? styles.dropZoneActive : ''}`}
                     type="button"

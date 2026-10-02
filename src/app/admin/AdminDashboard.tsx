@@ -17,8 +17,8 @@ import {
   type AdminActionState,
 } from './actions';
 import styles from './admin.module.css';
-import { createQuestionId, createSectionId, MAX_CUSTOM_SECTIONS, MAX_JOB_QUESTIONS, MAX_QUESTION_PROMPT, MAX_SECTION_BODY, MAX_SECTION_TITLE } from '@/lib/jobSections';
-import type { JobContentBlock, JobQuestion } from '@/types/content';
+import { APPLICATION_FIELD_IDS, APPLICATION_FIELD_LABELS, createQuestionId, createSectionId, DEFAULT_APPLICATION_FIELDS, MAX_CUSTOM_SECTIONS, MAX_JOB_QUESTIONS, MAX_QUESTION_PROMPT, MAX_SECTION_BODY, MAX_SECTION_TITLE } from '@/lib/jobSections';
+import type { ApplicationFields, JobContentBlock, JobQuestion } from '@/types/content';
 import { CategoryPicker, DatePicker, TimePicker } from './CustomPickers';
 
 const initialState: AdminActionState = { ok: false, message: '' };
@@ -255,12 +255,14 @@ function JobEditor({ job, onDone, onSuccess, onPreview }: { job: ClubJob | null;
     { id: 'ideal-experience', title: 'Ideal experience', body: '', builtin: 'experience' as const },
   ]).map((block) => ({ ...block, key: block.id })));
   const [questions, setQuestions] = useState(() => (job?.questions ?? []).map((question) => ({ ...question, key: question.id })));
+  const [fields, setFields] = useState<ApplicationFields>(() => ({ ...DEFAULT_APPLICATION_FIELDS, ...job?.fields }));
 
   const questionCount = questions.length;
   const customCount = content.filter((block) => !block.builtin).length;
   const posting = JSON.stringify({
     content: content.map(({ id, title, body, builtin }) => ({ id, title, body, builtin })),
     questions: questions.map(({ id, prompt, required }) => ({ id, prompt, required })),
+    fields,
   });
 
   function postingError(data: FormData) {
@@ -440,12 +442,19 @@ function JobEditor({ job, onDone, onSuccess, onPreview }: { job: ClubJob | null;
         <label className={styles.checkLabel}><input name="isActive" type="checkbox" defaultChecked={job?.is_active ?? true} />Visible on the careers page</label>
       </div>
       <div className={styles.formGrid} hidden={step !== 'application'}>
-        <p className={`${styles.hint} ${styles.wide}`}>Every application includes these. Add anything else you want to ask below.</p>
+        <p className={`${styles.hint} ${styles.wide}`}>These fields are on every application. Choose whether each one is required, then add anything else you want to ask below.</p>
         <div className={styles.sectionStack}>
-          {['First and last name', 'Ontario Tech email', 'Year of study', 'Program', 'Resume'].map((label) => (
-            <div className={styles.defaultQuestion} key={label}>
-              {label}
-              <span>Included</span>
+          {APPLICATION_FIELD_IDS.map((id) => (
+            <div className={styles.defaultQuestion} key={id}>
+              {APPLICATION_FIELD_LABELS[id]}
+              <button
+                type="button"
+                className={fields[id] ? styles.requirementOn : styles.requirementOff}
+                aria-pressed={fields[id]}
+                onClick={() => setFields((current) => ({ ...current, [id]: !current[id] }))}
+              >
+                {fields[id] ? 'Required' : 'Optional'}
+              </button>
             </div>
           ))}
           {questions.map((question, index) => (
@@ -979,17 +988,72 @@ function ResponsesDialog({
   );
 }
 
+function isCountedRsvp(attendee: EventAttendee) {
+  return attendee.rsvped && attendee.status !== 'pending';
+}
+
+function AttendeesDialog({
+  event,
+  attendees,
+  onClose,
+}: {
+  event: ManagedEvent;
+  attendees: EventAttendee[];
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const closeOnEscape = (keyboardEvent: KeyboardEvent) => {
+      if (keyboardEvent.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [onClose]);
+
+  const sorted = [...attendees].sort((first, second) => first.name.localeCompare(second.name));
+
+  return (
+    <div className={styles.dialogBackdrop} role="presentation" onMouseDown={(mouseEvent) => { if (mouseEvent.target === mouseEvent.currentTarget) onClose(); }}>
+      <section className={`${styles.dialog} ${styles.rsvpDialog}`} role="dialog" aria-modal="true" aria-labelledby="attendees-dialog-title">
+        <div className={styles.previewHeader}>
+          <div>
+            <p className={styles.kicker}>Attendance</p>
+            <h2 id="attendees-dialog-title">{event.title}</h2>
+          </div>
+          <button className={styles.previewClose} type="button" onClick={onClose} aria-label="Close attendees">×</button>
+        </div>
+        <p className={styles.hint}>{sorted.length} attended{event.date ? ` · ${event.date}` : ''}</p>
+        {sorted.length ? (
+          <div className={styles.rsvpRoster} aria-label={`Attendees for ${event.title}`}>
+            {sorted.map((attendee) => (
+              <article className={styles.rsvpRow} key={attendee.id}>
+                <div className={styles.rsvpIdentity}>
+                  <strong>{attendee.name}</strong>
+                  <span>{attendee.email || 'Email unavailable'}</span>
+                  <small>{attendee.kind === 'member' ? `Member · ${attendee.points ?? 0} pts` : 'Guest'}</small>
+                </div>
+                <span className={styles.rsvpAttended}>Attended</span>
+              </article>
+            ))}
+          </div>
+        ) : <p className={styles.empty}>No one has been checked in to this event yet.</p>}
+      </section>
+    </div>
+  );
+}
+
 function EventMetrics({ events, attendees, loadError }: { events: ManagedEvent[]; attendees: EventAttendee[]; loadError: string }) {
   // 'all' or a single event id — scopes every tile, the list, and the export.
   const [scope, setScope] = useState('all');
+  const [attendeeEvent, setAttendeeEvent] = useState<ManagedEvent | null>(null);
 
   if (loadError) return <section className={styles.collection}><p className={styles.error} role="alert">{loadError}</p></section>;
 
   const scopedEvents = scope === 'all' ? events : events.filter((event) => event.id === scope);
   const scoped = scope === 'all' ? attendees : attendees.filter((attendee) => attendee.event_id === scope);
   const attended = scoped.filter((attendee) => attendee.status === 'attended');
-  const rsvps = scoped.filter((attendee) => attendee.status !== 'pending');
-  const showRate = rsvps.length ? Math.round((attended.length / rsvps.length) * 100) : 0;
+  const rsvps = scoped.filter(isCountedRsvp);
+  const showed = attended.filter((attendee) => attendee.rsvped);
+  const showRate = rsvps.length ? Math.round((showed.length / rsvps.length) * 100) : 0;
   const uniqueAttendees = new Set(attended.map((attendee) => attendee.email || attendee.id)).size;
   const suggestions = scoped.filter((attendee) => attendee.suggestions);
 
@@ -1043,11 +1107,25 @@ function EventMetrics({ events, attendees, loadError }: { events: ManagedEvent[]
           {rankedEvents.map(({ event, count }) => (
             <article className={styles.item} key={event.id}>
               <div className={styles.itemBody}><p className={styles.itemMeta}>{event.date}</p><h3>{event.title}</h3></div>
-              <div className={styles.itemControls}><span className={styles.statusLive}>{count} attended</span></div>
+              <div className={styles.itemControls}>
+                <div className={styles.attendedRow}>
+                  <button type="button" onClick={() => setAttendeeEvent(event)} aria-label={`View attendees for ${event.title}`}>
+                    View
+                  </button>
+                  <span className={styles.statusLive}>{count} attended</span>
+                </div>
+              </div>
             </article>
           ))}
         </div>
       ) : <p className={styles.empty}>No check-ins recorded yet.</p>}
+      {attendeeEvent ? (
+        <AttendeesDialog
+          event={attendeeEvent}
+          attendees={attended.filter((attendee) => attendee.event_id === attendeeEvent.id)}
+          onClose={() => setAttendeeEvent(null)}
+        />
+      ) : null}
       {suggestions.length ? (
         <div className={styles.scrollList} aria-label="Event suggestions">
           {suggestions.map((attendee) => (
@@ -1140,6 +1218,10 @@ export default function AdminDashboard({
   const filteredEvents = events.filter((event) => {
     const matchesSearch = !deferredEventQuery || [event.title, event.location, event.date].some((value) => value.toLowerCase().includes(deferredEventQuery));
     return matchesSearch && (eventFilter === 'all' || eventStatus(event, now) === eventFilter);
+  }).sort((first, second) => {
+    const firstTime = first.starts_at ? new Date(first.starts_at).getTime() : Number.POSITIVE_INFINITY;
+    const secondTime = second.starts_at ? new Date(second.starts_at).getTime() : Number.POSITIVE_INFINITY;
+    return firstTime - secondTime;
   });
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch = !deferredJobQuery || [job.title, job.category].some((value) => value.toLowerCase().includes(deferredJobQuery));
@@ -1159,7 +1241,7 @@ export default function AdminDashboard({
       </header>
       <nav className={styles.tabs} aria-label="Dashboard sections">
         <button type="button" className={tab === 'events' ? styles.activeTab : ''} onClick={() => setTab('events')}>Events <span>{events.length}</span></button>
-        <button type="button" className={tab === 'metrics' ? styles.activeTab : ''} onClick={() => setTab('metrics')}>Metrics <span>{attendees.filter((attendee) => attendee.status !== 'pending').length}</span></button>
+        <button type="button" className={tab === 'metrics' ? styles.activeTab : ''} onClick={() => setTab('metrics')}>Metrics <span>{attendees.filter(isCountedRsvp).length}</span></button>
         <button type="button" className={tab === 'jobs' ? styles.activeTab : ''} onClick={() => setTab('jobs')}>Jobs <span>{jobs.length}</span></button>
         <button type="button" className={tab === 'newsletter' ? styles.activeTab : ''} onClick={() => setTab('newsletter')}>Newsletter <span>{subscribers.length}</span></button>
       </nav>
@@ -1182,10 +1264,10 @@ export default function AdminDashboard({
             </div>
           </div>
           {!loadErrors.events && filteredEvents.length ? <>
-            <div className={eventsExpanded ? styles.expandedEventScroll : styles.eventPreviewList} tabIndex={eventsExpanded ? 0 : undefined} aria-label="Event results">
+            <div className={styles.eventPreviewList} aria-label="Event results">
             {visibleEvents.map((event) => {
               const status = eventStatus(event, now);
-              const rsvpCount = attendees.filter((attendee) => attendee.event_id === event.id && attendee.status !== 'pending').length;
+              const rsvpCount = attendees.filter((attendee) => attendee.event_id === event.id && isCountedRsvp(attendee)).length;
               return <article className={styles.item} key={event.id}>
                 {event.images[0] ? <img className={styles.itemImage} src={event.images[0]} alt="" loading="lazy" /> : <div className={styles.itemImagePlaceholder} aria-hidden="true">CS</div>}
                 <div className={styles.itemBody}><p className={styles.itemMeta}>{event.date} / {event.time}</p><h3>{event.title}</h3><p>{event.location}</p><p className={styles.audit}>{auditLabel(event.created_by, creatorEmails, event.updated_at)}</p></div>
@@ -1195,7 +1277,7 @@ export default function AdminDashboard({
             </div>
             {hasMoreEvents ? <div className={styles.loadMoreRow}>
               <button className={styles.loadMoreButton} type="button" onClick={() => setEventsExpanded((expanded) => !expanded)}>{eventsExpanded ? 'Show first four' : 'Load more'}</button>
-              <span>{eventsExpanded ? `Scroll to browse all ${filteredEvents.length} events` : `${filteredEvents.length - 4} more events`}</span>
+              <span>{eventsExpanded ? `Showing all ${filteredEvents.length} events` : `${filteredEvents.length - 4} more events`}</span>
             </div> : null}
           </> : !loadErrors.events ? <p className={styles.empty}>No events match those filters.</p> : null}
         </section>

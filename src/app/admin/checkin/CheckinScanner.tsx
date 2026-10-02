@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import QrScanner from "qr-scanner";
 
 QrScanner.WORKER_PATH = "/qr-scanner-worker.min.js";
@@ -33,6 +34,7 @@ export default function CheckinScanner({
   events: EventOption[];
   rsvps: Rsvp[];
 }) {
+  const router = useRouter();
   const [eventId, setEventId] = useState("");
   const [phase, setPhase] = useState<Phase>("scanning");
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -59,6 +61,11 @@ export default function CheckinScanner({
   useEffect(() => {
     eventIdRef.current = eventId;
   }, [eventId]);
+
+  function checkedInMessage(data: { name?: string; event?: string; points?: number | null }) {
+    const points = typeof data.points === "number" ? ` (+${data.points} pts)` : "";
+    return `✅ ${data.name} checked in to ${data.event}${points}`;
+  }
 
   async function postAttendance(body: Record<string, unknown>) {
     const response = await fetch("/api/admin/attendance", {
@@ -274,12 +281,9 @@ export default function CheckinScanner({
         token,
       });
 
-      setFeedback(
-        ok
-          ? `✅ ${data.name} checked in to ${data.event} (+${data.points} pts)`
-          : `⚠️ ${data.error ?? "Check-in failed"}`,
-      );
+      setFeedback(ok ? checkedInMessage(data) : `⚠️ ${data.error ?? "Check-in failed"}`);
 
+      if (ok) router.refresh();
       setPhase("done");
     } catch {
       /*
@@ -309,14 +313,12 @@ export default function CheckinScanner({
         email,
       });
 
-      setFeedback(
-        ok
-          ? `✅ ${data.name} checked in to ${data.event} (+${data.points} pts)`
-          : `⚠️ ${data.error ?? "Check-in failed"}`,
-      );
+      setFeedback(ok ? checkedInMessage(data) : `⚠️ ${data.error ?? "Check-in failed"}`);
 
       if (ok) {
         setEmail("");
+        setJustCheckedIn((prev) => new Set(prev).add(`${eventId}:${email.trim().toLowerCase()}`));
+        router.refresh();
       }
     } catch {
       setFeedback("⚠️ Network error — try again");
@@ -334,14 +336,11 @@ export default function CheckinScanner({
         email: rsvp.email,
       });
 
-      setFeedback(
-        ok
-          ? `✅ ${data.name} checked in to ${data.event} (+${data.points} pts)`
-          : `⚠️ ${data.error ?? "Check-in failed"}`,
-      );
+      setFeedback(ok ? checkedInMessage(data) : `⚠️ ${data.error ?? "Check-in failed"}`);
 
       if (ok) {
-        setJustCheckedIn((prev) => new Set(prev).add(rsvp.email));
+        setJustCheckedIn((prev) => new Set(prev).add(`${eventId}:${rsvp.email.trim().toLowerCase()}`));
+        router.refresh();
       }
     } catch {
       setFeedback("⚠️ Network error — try again");
@@ -472,7 +471,7 @@ export default function CheckinScanner({
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="member@email.com"
+            placeholder="first.last@ontariotechu.net"
           />
         </label>
 
@@ -493,7 +492,7 @@ export default function CheckinScanner({
 
           <ul className="rsvp-list">
             {currentRsvps.map((rsvp) => {
-              const attended = rsvp.attended || justCheckedIn.has(rsvp.email);
+              const attended = rsvp.attended || justCheckedIn.has(`${eventId}:${rsvp.email.trim().toLowerCase()}`);
 
               return (
                 <li key={rsvp.email}>

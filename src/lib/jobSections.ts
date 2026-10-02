@@ -1,8 +1,27 @@
-import type { JobContentBlock, JobQuestion, JobSection } from '@/types/content';
+import type { ApplicationFields, JobContentBlock, JobQuestion, JobSection } from '@/types/content';
 
 export const MAX_JOB_QUESTIONS = 12;
 export const MAX_CUSTOM_SECTIONS = 8;
-export const MAX_STORED_SECTIONS = 3 + MAX_CUSTOM_SECTIONS + MAX_JOB_QUESTIONS;
+export const MAX_STORED_SECTIONS = 3 + MAX_CUSTOM_SECTIONS + MAX_JOB_QUESTIONS + 1;
+
+export const APPLICATION_FIELD_IDS = ['name', 'email', 'year', 'program', 'resume'] as const satisfies ReadonlyArray<keyof ApplicationFields>;
+export type ApplicationFieldId = (typeof APPLICATION_FIELD_IDS)[number];
+
+export const APPLICATION_FIELD_LABELS: Record<ApplicationFieldId, string> = {
+  name: 'First and last name',
+  email: 'Ontario Tech email',
+  year: 'Year of study',
+  program: 'Program',
+  resume: 'Resume',
+};
+
+export const DEFAULT_APPLICATION_FIELDS: ApplicationFields = {
+  name: true,
+  email: true,
+  year: true,
+  program: true,
+  resume: true,
+};
 export const MAX_QUESTION_PROMPT = 200;
 export const MAX_QUESTION_ANSWER = 2000;
 export const MAX_SECTION_TITLE = 80;
@@ -25,6 +44,17 @@ export function createQuestionId() {
 
 export function createSectionId() {
   return `s${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
+}
+
+export function fieldsFrom(value: unknown): ApplicationFields {
+  const fields = { ...DEFAULT_APPLICATION_FIELDS };
+  if (!Array.isArray(value)) return fields;
+  const record = value.find((item) => item && typeof item === 'object' && (item as { kind?: unknown }).kind === 'fields') as Partial<ApplicationFields> | undefined;
+  if (!record) return fields;
+  for (const id of APPLICATION_FIELD_IDS) {
+    if (typeof record[id] === 'boolean') fields[id] = record[id];
+  }
+  return fields;
 }
 
 function questionsFrom(value: unknown) {
@@ -104,7 +134,7 @@ export function presentJob(description: string, stored: unknown) {
   const content = contentFrom(source, visible).map((block) => (
     block.builtin === 'description' ? { ...block, body: visible } : block
   ));
-  return { description: visible, content, questions };
+  return { description: visible, content, questions, fields: fieldsFrom(source) };
 }
 
 function isDefaultPosting(sections: JobSection[]) {
@@ -133,7 +163,7 @@ export function parseSubmittedPosting(
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     return { ok: false, message: 'The job details could not be read. Try again.' };
   }
-  const record = parsed as { content?: unknown; questions?: unknown };
+  const record = parsed as { content?: unknown; questions?: unknown; fields?: unknown };
   if (!Array.isArray(record.content)) return { ok: false, message: 'Add a role description before saving.' };
 
   const sections: JobSection[] = [];
@@ -197,6 +227,22 @@ export function parseSubmittedPosting(
   }
   if (questionIds.size > MAX_JOB_QUESTIONS) {
     return { ok: false, message: `You can add up to ${MAX_JOB_QUESTIONS} application questions.` };
+  }
+
+  const fields = { ...DEFAULT_APPLICATION_FIELDS };
+  if (record.fields != null) {
+    if (typeof record.fields !== 'object' || Array.isArray(record.fields)) {
+      return { ok: false, message: 'The application fields could not be read.' };
+    }
+    const submitted = record.fields as Partial<Record<ApplicationFieldId, unknown>>;
+    for (const id of APPLICATION_FIELD_IDS) {
+      if (submitted[id] === undefined) continue;
+      if (typeof submitted[id] !== 'boolean') return { ok: false, message: 'The application fields could not be read.' };
+      fields[id] = submitted[id];
+    }
+  }
+  if (APPLICATION_FIELD_IDS.some((id) => !fields[id])) {
+    sections.push({ kind: 'fields', ...fields });
   }
   if (sections.length > MAX_STORED_SECTIONS) {
     return { ok: false, message: 'This posting has too many sections and questions to save together.' };

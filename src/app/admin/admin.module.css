@@ -300,10 +300,17 @@
   font-weight: 600;
 }
 
-.defaultQuestion span {
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 500;
+.defaultQuestion button {
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+  height: 2rem;
+  padding: 0 0.7rem;
+  color: var(--ink);
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
 .formSection {
@@ -618,6 +625,26 @@
   justify-items: end;
   gap: 0.9rem;
 }
+
+.attendedRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.attendedRow button {
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  padding: 0 0 0.2rem;
+  color: var(--ink);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.attendedRow button:hover { opacity: 0.55; }
 
 .itemActions .deleteButton { color: var(--danger); }
 
