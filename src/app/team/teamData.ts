@@ -70,7 +70,7 @@ export const marketingTeam: TeamMember[] = [
     {
         Image: "/Images/Amitav.jpg",
         name: "Amitav",
-        role: "UI/UX Designer",
+        role: "UI/UX Officer",
         link: "https://www.linkedin.com/in/amitav-sonawane/",
     },
     {
