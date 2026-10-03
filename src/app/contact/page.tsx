@@ -25,8 +25,8 @@ const hand = Caveat({
 
 export default function ContactPage() {
   return (
-    <div className={`${styles.contactPage} ${mono.variable} ${hand.variable}`}>
-      <ContactScene />
+    <div className={`${styles.contactPage} ${styles.vars} ${mono.variable} ${hand.variable}`}>
+      <ContactScene fontClasses={`${styles.vars} ${mono.variable} ${hand.variable}`} />
     </div>
   );
 }

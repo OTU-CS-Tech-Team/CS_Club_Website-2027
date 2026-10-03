@@ -20,6 +20,7 @@ type LetterModalProps = {
   onClose: () => void;
   onSuccess: (ref: string, category: SuggestionCategory, hasEmail: boolean) => void;
   mailboxPosition?: { x: number; y: number };
+  portalClassName?: string;
 };
 
 type AnimPhase = 'idle' | 'folding' | 'flying' | 'done';
@@ -28,7 +29,7 @@ const REDUCE_MOTION =
   typeof window !== 'undefined' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPosition }: LetterModalProps) {
+export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPosition, portalClassName }: LetterModalProps) {
   const [state, formAction, pending] = useActionState<SuggestionState, FormData>(submitSuggestion, {
     status: 'idle',
   });
@@ -517,5 +518,10 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
   );
 
   if (!mounted) return null;
-  return createPortal(modalContent, document.body);
+  
+  const portalContent = portalClassName ? (
+    <div className={portalClassName}>{modalContent}</div>
+  ) : modalContent;
+  
+  return createPortal(portalContent, document.body);
 }

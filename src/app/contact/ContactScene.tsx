@@ -38,7 +38,11 @@ function useSupportsWebGL() {
   return supports;
 }
 
-export default function ContactScene() {
+type ContactSceneProps = {
+  fontClasses?: string;
+};
+
+export default function ContactScene({ fontClasses }: ContactSceneProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [flagUp, setFlagUp] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
@@ -212,6 +216,7 @@ export default function ContactScene() {
         onClose={closeModal}
         onSuccess={handleSuccess}
         mailboxPosition={hintPos.x > 0 ? hintPos : undefined}
+        portalClassName={fontClasses}
       />
 
       {/* Success Toast */}
