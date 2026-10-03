@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback, useState, useActionState } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import {
   SUGGESTION_CATEGORIES,
@@ -46,6 +47,11 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
   const [serverError, setServerError] = useState<string | null>(null);
   const [animPhase, setAnimPhase] = useState<AnimPhase>('idle');
   const [envelopePos, setEnvelopePos] = useState({ x: 0, y: 0, scale: 1, rotation: 0 });
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const resetForm = useCallback(() => {
     setCategory('event_idea');
@@ -292,7 +298,7 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
     state.status === 'error' && state.fieldErrors ? state.fieldErrors : clientErrors;
   const formError = serverError || (state.status === 'error' && state.message ? state.message : null);
 
-  return (
+  const modalContent = (
     <div
       className={styles.letterBackdrop}
       role="dialog"
@@ -509,4 +515,7 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
       )}
     </div>
   );
+
+  if (!mounted) return null;
+  return createPortal(modalContent, document.body);
 }
