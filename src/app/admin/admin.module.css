@@ -1076,10 +1076,58 @@
 .rsvpConfirmed { color: #3d5274; background: #edf2f8; }
 .rsvpPending { color: #705a21; background: #f7f0d9; }
 
+.unreadBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  margin-left: 0.35rem;
+  border-radius: 999px;
+  padding: 0 0.35rem;
+  color: #fff;
+  background: #246246;
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.suggestionItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1rem;
+  min-height: 5.5rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.suggestionBody { min-width: 0; }
+
+.suggestionMessage {
+  margin: 0.35rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.suggestionSender {
+  margin: 0.45rem 0 0 !important;
+  color: #888 !important;
+  font-size: 0.72rem !important;
+}
+
 @media (max-width: 720px) {
   .page { width: min(100% - 2rem, 1120px); padding-top: 2rem; }
   .header { align-items: flex-start; }
-  .tabs { overflow-x: auto; }
+  .tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-bottom: 1px;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs button { flex-shrink: 0; white-space: nowrap; }
   .collectionHead { align-items: flex-start; }
   .formGrid { grid-template-columns: 1fr; }
   .formGrid label { grid-column: 1; }
@@ -1091,6 +1139,8 @@
   .editorActions button { width: 100%; }
   .rsvpSummary { grid-template-columns: 1fr; }
   .rsvpSummary div + div { border-top: 1px solid var(--line); border-left: 0; padding-left: 0; }
+  .suggestionItem { grid-template-columns: 1fr; }
+  .suggestionItem .itemControls { grid-column: 1; }
 }
 
 @media (max-width: 480px) {

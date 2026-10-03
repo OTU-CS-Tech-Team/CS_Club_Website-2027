@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { JetBrains_Mono } from 'next/font/google';
+import { getFooterSocials } from '@/data/socials';
 import styles from './footer.module.css';
 
 const mono = JetBrains_Mono({
@@ -35,24 +36,12 @@ const columns = [
     title: 'join',
     links: [
       { href: '/careers', label: 'open roles' },
+      { href: '/contact', label: 'contact us' },
     ],
   },
 ] as const;
 
-const socials = [
-  {
-    href: 'https://discord.com/invite/J9AyT8XADz',
-    label: 'discord',
-  },
-  {
-    href: 'https://www.instagram.com/otu.csclub/',
-    label: 'instagram',
-  },
-  {
-    href: 'https://www.linkedin.com/company/otu-cs-club/',
-    label: 'linkedin',
-  },
-] as const;
+const socials = getFooterSocials();
 
 export default function Footer() {
   return (
@@ -89,14 +78,14 @@ export default function Footer() {
             <h2 className={styles.heading}>connect</h2>
             <ul className={styles.list}>
               {socials.map((social) => (
-                <li key={social.href}>
+                <li key={social.id}>
                   <a
                     href={social.href}
                     className={styles.link}
                     target="_blank"
                     rel="noreferrer noopener"
                   >
-                    {social.label}
+                    {social.label.toLowerCase()}
                   </a>
                 </li>
               ))}

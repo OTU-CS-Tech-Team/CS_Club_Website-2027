@@ -2,18 +2,20 @@
 
 import { startTransition, useActionState, useCallback, useDeferredValue, useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import type { ClubJob, EventAttendee, JobApplication, ManagedEvent } from '@/types/content';
+import type { ClubJob, ClubSuggestion, EventAttendee, JobApplication, ManagedEvent, SuggestionCategory, SuggestionStatus } from '@/types/content';
 import type { MailingListSubscriber } from '@/lib/members';
 import { validateEventForm } from '@/lib/eventFormValidation';
 import {
   deleteEvent,
   deleteJob,
+  deleteSuggestion,
   openApplicationResume,
   removeAttendee,
   saveEvent,
   saveJob,
   sendNewsletter,
   signOut,
+  updateSuggestionStatus,
   type AdminActionState,
 } from './actions';
 import styles from './admin.module.css';
@@ -1144,6 +1146,29 @@ function EventMetrics({ events, attendees, loadError }: { events: ManagedEvent[]
 
 type EventStatusFilter = 'all' | 'upcoming' | 'past' | 'draft';
 type JobStatusFilter = 'all' | 'live' | 'hidden' | 'expired';
+type SuggestionStatusFilter = 'all' | 'new' | 'read' | 'archived';
+type SuggestionCategoryFilter = 'all' | SuggestionCategory;
+
+const SUGGESTION_CATEGORY_LABELS: Record<SuggestionCategory, string> = {
+  event_idea: 'Event idea',
+  workshop: 'Workshop',
+  feedback: 'Feedback',
+  just_saying_hi: 'Just saying hi',
+  other: 'Other',
+};
+
+const SUGGESTION_CSV_HEADER = ['Category', 'Message', 'Name', 'Email', 'Status', 'Received'];
+
+function suggestionCsvRow(suggestion: ClubSuggestion): string[] {
+  return [
+    SUGGESTION_CATEGORY_LABELS[suggestion.category],
+    suggestion.message,
+    suggestion.name ?? '',
+    suggestion.email ?? '',
+    suggestion.status,
+    new Date(suggestion.created_at).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' }),
+  ];
+}
 
 function eventStatus(event: ManagedEvent, now: number) {
   if (event.is_published === false) return 'draft' as const;
@@ -1157,6 +1182,244 @@ function jobStatus(job: ClubJob, now: number) {
   return 'live' as const;
 }
 
+function DeleteSuggestionDialog({ suggestion, onClose, onComplete }: { suggestion: ClubSuggestion; onClose: () => void; onComplete: (state: AdminActionState) => void }) {
+  const [state, action, pending] = useActionState(deleteSuggestion, initialState);
+
+  useEffect(() => {
+    if (state.ok) {
+      onComplete(state);
+      onClose();
+    }
+  }, [state, onClose, onComplete]);
+
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !pending) onClose();
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [onClose, pending]);
+
+  const preview = suggestion.message.length > 80 ? `${suggestion.message.slice(0, 80)}…` : suggestion.message;
+
+  return (
+    <div className={styles.dialogBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !pending) onClose(); }}>
+      <section className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="delete-suggestion-title">
+        <p className={styles.kicker}>Permanent action</p>
+        <h2 id="delete-suggestion-title">Delete suggestion?</h2>
+        <p>This will permanently remove: <strong>"{preview}"</strong></p>
+        {state.message && !state.ok ? <p className={styles.error} role="alert">{state.message}</p> : null}
+        <form action={action}>
+          <input type="hidden" name="id" value={suggestion.id} />
+          <div className={styles.dialogActions}>
+            <button className={styles.textButton} type="button" onClick={onClose} disabled={pending}>Keep it</button>
+            <button className={styles.deleteConfirmButton} type="submit" disabled={pending}>{pending ? 'Deleting...' : 'Delete suggestion'}</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  );
+}
+
+function SuggestionsPanel({
+  suggestions,
+  loadError,
+  onSuccess,
+}: {
+  suggestions: ClubSuggestion[];
+  loadError: string;
+  onSuccess: (message: string) => void;
+}) {
+  const router = useRouter();
+  const [query, setQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<SuggestionCategoryFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<SuggestionStatusFilter>('all');
+  const [deleting, setDeleting] = useState<ClubSuggestion | null>(null);
+  const [updating, setUpdating] = useState<string | null>(null);
+  const deferredQuery = useDeferredValue(query.trim().toLowerCase());
+
+  const completeDelete = useCallback((state: AdminActionState) => {
+    onSuccess(state.message);
+    router.refresh();
+  }, [onSuccess, router]);
+
+  async function handleStatusChange(suggestion: ClubSuggestion, newStatus: SuggestionStatus) {
+    setUpdating(suggestion.id);
+    const result = await updateSuggestionStatus(suggestion.id, newStatus);
+    setUpdating(null);
+    if (result.ok) {
+      onSuccess(result.message);
+      router.refresh();
+    } else {
+      onSuccess(result.message);
+    }
+  }
+
+  const filtered = suggestions.filter((suggestion) => {
+    const matchesSearch = !deferredQuery ||
+      suggestion.message.toLowerCase().includes(deferredQuery) ||
+      (suggestion.name?.toLowerCase().includes(deferredQuery) ?? false) ||
+      (suggestion.email?.toLowerCase().includes(deferredQuery) ?? false);
+    const matchesCategory = categoryFilter === 'all' || suggestion.category === categoryFilter;
+    const matchesStatus = statusFilter === 'all' || suggestion.status === statusFilter;
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
+  const newCount = suggestions.filter((s) => s.status === 'new').length;
+
+  if (loadError) {
+    return (
+      <section className={styles.collection} aria-labelledby="dropbox-heading">
+        <div className={styles.collectionHead}>
+          <div><p className={styles.kicker}>Anonymous feedback</p><h2 id="dropbox-heading">Drop box</h2></div>
+        </div>
+        <p className={styles.error} role="alert">{loadError}</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className={styles.collection} aria-labelledby="dropbox-heading">
+      <div className={styles.collectionHead}>
+        <div>
+          <p className={styles.kicker}>Anonymous feedback</p>
+          <h2 id="dropbox-heading">Drop box</h2>
+          <span>{filtered.length} shown{newCount > 0 ? ` · ${newCount} unread` : ''}</span>
+        </div>
+        {suggestions.length > 0 && (
+          <button
+            className={styles.textButton}
+            type="button"
+            onClick={() => downloadCsv(csvFileName('suggestions'), SUGGESTION_CSV_HEADER, filtered.map(suggestionCsvRow))}
+          >
+            Export CSV
+          </button>
+        )}
+      </div>
+      <div className={styles.filters}>
+        <label className={styles.filterField}>
+          <span className={styles.srOnly}>Search suggestions</span>
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search message, name, or email"
+          />
+        </label>
+        <div className={styles.filterRow}>
+          <label>
+            <span className={styles.srOnly}>Filter by category</span>
+            <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value as SuggestionCategoryFilter)}>
+              <option value="all">All categories</option>
+              {Object.entries(SUGGESTION_CATEGORY_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          </label>
+          <div className={styles.filterChips} aria-label="Filter suggestions by status">
+            {(['all', 'new', 'read', 'archived'] as const).map((filter) => (
+              <button
+                type="button"
+                key={filter}
+                className={statusFilter === filter ? styles.filterChipActive : styles.filterChip}
+                onClick={() => setStatusFilter(filter)}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      {filtered.length > 0 ? (
+        <div className={styles.fiveRowScroll} tabIndex={0} aria-label="Suggestion results">
+          {filtered.map((suggestion) => (
+            <article className={styles.suggestionItem} key={suggestion.id}>
+              <div className={styles.suggestionBody}>
+                <p className={styles.itemMeta}>
+                  {SUGGESTION_CATEGORY_LABELS[suggestion.category]} · {new Date(suggestion.created_at).toLocaleDateString('en-CA', { dateStyle: 'medium' })}
+                </p>
+                <p className={styles.suggestionMessage}>{suggestion.message}</p>
+                {(suggestion.name || suggestion.email) && (
+                  <p className={styles.suggestionSender}>
+                    {suggestion.name && <span>{suggestion.name}</span>}
+                    {suggestion.name && suggestion.email && ' · '}
+                    {suggestion.email && <span>{suggestion.email}</span>}
+                  </p>
+                )}
+              </div>
+              <div className={styles.itemControls}>
+                <span className={
+                  suggestion.status === 'new' ? styles.statusLive :
+                  suggestion.status === 'archived' ? styles.statusPast :
+                  styles.statusDraft
+                }>
+                  {suggestion.status}
+                </span>
+                <div className={styles.itemActions}>
+                  {suggestion.status === 'new' && (
+                    <button
+                      type="button"
+                      onClick={() => handleStatusChange(suggestion, 'read')}
+                      disabled={updating === suggestion.id}
+                    >
+                      {updating === suggestion.id ? 'Updating...' : 'Mark read'}
+                    </button>
+                  )}
+                  {suggestion.status === 'read' && (
+                    <button
+                      type="button"
+                      onClick={() => handleStatusChange(suggestion, 'new')}
+                      disabled={updating === suggestion.id}
+                    >
+                      {updating === suggestion.id ? 'Updating...' : 'Mark new'}
+                    </button>
+                  )}
+                  {suggestion.status !== 'archived' && (
+                    <button
+                      type="button"
+                      onClick={() => handleStatusChange(suggestion, 'archived')}
+                      disabled={updating === suggestion.id}
+                    >
+                      Archive
+                    </button>
+                  )}
+                  {suggestion.status === 'archived' && (
+                    <button
+                      type="button"
+                      onClick={() => handleStatusChange(suggestion, 'new')}
+                      disabled={updating === suggestion.id}
+                    >
+                      Restore
+                    </button>
+                  )}
+                  <button
+                    className={styles.deleteButton}
+                    type="button"
+                    onClick={() => setDeleting(suggestion)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className={styles.empty}>
+          {suggestions.length === 0 ? 'No suggestions received yet.' : 'No suggestions match those filters.'}
+        </p>
+      )}
+      {deleting && (
+        <DeleteSuggestionDialog
+          suggestion={deleting}
+          onClose={() => setDeleting(null)}
+          onComplete={completeDelete}
+        />
+      )}
+    </section>
+  );
+}
+
 export default function AdminDashboard({
   email,
   events,
@@ -1167,6 +1430,7 @@ export default function AdminDashboard({
   creatorEmails,
   attendees,
   applications,
+  suggestions,
   loadErrors,
 }: {
   email: string;
@@ -1178,9 +1442,11 @@ export default function AdminDashboard({
   creatorEmails: Record<string, string>;
   attendees: EventAttendee[];
   applications: JobApplication[];
-  loadErrors: { events: string; jobs: string; attendance: string; applications: string };
+  suggestions: ClubSuggestion[];
+  loadErrors: { events: string; jobs: string; attendance: string; applications: string; suggestions: string };
 }) {
-  const [tab, setTab] = useState<'events' | 'metrics' | 'jobs' | 'newsletter'>('events');
+  const [tab, setTab] = useState<'events' | 'metrics' | 'jobs' | 'dropbox' | 'newsletter'>('events');
+  const unreadSuggestions = suggestions.filter((s) => s.status === 'new').length;
   const [editingEvent, setEditingEvent] = useState<ManagedEvent | null>(null);
   const [editingJob, setEditingJob] = useState<ClubJob | null>(null);
   const [eventEditorOpen, setEventEditorOpen] = useState(false);
@@ -1243,6 +1509,7 @@ export default function AdminDashboard({
         <button type="button" className={tab === 'events' ? styles.activeTab : ''} onClick={() => setTab('events')}>Events <span>{events.length}</span></button>
         <button type="button" className={tab === 'metrics' ? styles.activeTab : ''} onClick={() => setTab('metrics')}>Metrics <span>{attendees.filter(isCountedRsvp).length}</span></button>
         <button type="button" className={tab === 'jobs' ? styles.activeTab : ''} onClick={() => setTab('jobs')}>Jobs <span>{jobs.length}</span></button>
+        <button type="button" className={tab === 'dropbox' ? styles.activeTab : ''} onClick={() => setTab('dropbox')}>Drop box {unreadSuggestions > 0 ? <span className={styles.unreadBadge}>{unreadSuggestions}</span> : <span>{suggestions.length}</span>}</button>
         <button type="button" className={tab === 'newsletter' ? styles.activeTab : ''} onClick={() => setTab('newsletter')}>Newsletter <span>{subscribers.length}</span></button>
       </nav>
       {notice ? <div className={styles.notification} role={notice.ok ? 'status' : 'alert'}><span className={styles.notificationMark} aria-hidden="true">{notice.ok ? '•' : '!'}</span><span>{notice.message}</span><button type="button" onClick={() => setNotice(null)} aria-label="Dismiss notification">×</button></div> : null}
@@ -1302,6 +1569,9 @@ export default function AdminDashboard({
             return <article className={styles.item} key={job.id}><div className={styles.itemBody}><p className={styles.itemMeta}>{job.category}{job.closes_at ? ` / Closes ${torontoDateValue(job.closes_at)}` : ' / Open until filled'}</p><h3>{job.title}</h3>{job.commitment || job.location ? <p>{[job.commitment, job.location].filter(Boolean).join(' · ')}</p> : null}<p className={styles.audit}>{auditLabel(job.created_by, creatorEmails, job.updated_at)}</p></div><div className={styles.itemControls}><span className={status === 'live' ? styles.statusLive : status === 'expired' ? styles.statusPast : styles.statusDraft}>{status}</span><div className={styles.itemActions}><button type="button" onClick={() => setReviewJob(job)} aria-label={`Review responses for ${job.title}`}>Responses {applicationCounts.get(job.id) ?? 0}</button><button type="button" onClick={() => { setEditingJob(job); setJobEditorOpen(true); }}>Edit</button><button className={styles.deleteButton} type="button" onClick={() => setDeleting({ type: 'job', id: job.id, title: job.title })}>Delete</button></div></div></article>;
           })}</div> : !loadErrors.jobs ? <p className={styles.empty}>No jobs match those filters.</p> : null}
         </section>
+      </main> : null}
+      {tab === 'dropbox' ? <main className={styles.workspace}>
+        <SuggestionsPanel suggestions={suggestions} loadError={loadErrors.suggestions} onSuccess={showSuccess} />
       </main> : null}
       {tab === 'newsletter' ? newsletterConfigured ? <main className={styles.workspace}>
           <NewsletterEditor recipientCount={subscribers.length} onSuccess={showSuccess} />

@@ -9,7 +9,7 @@ import {
   getCreatorEmailsBatched,
 } from '@/lib/admin-cache';
 import { isMissingColumnError, missingColumnName, normalizeAnswers, recoverPackedIdeas } from '@/lib/jobSections';
-import type { EventAttendee, JobApplication } from '@/types/content';
+import type { ClubSuggestion, EventAttendee, JobApplication } from '@/types/content';
 import AdminDashboard from './AdminDashboard';
 
 export const metadata = {
@@ -105,6 +105,7 @@ export default async function AdminPage() {
     .maybeSingle();
   if (!admin) redirect('/login');
 
+  // Use cached data for events, jobs, subscribers, newsletters (from #49)
   const [eventsData, jobsData, subscribers, newsletters] = await Promise.all([
     getCachedEvents(),
     getCachedJobs(),
@@ -135,11 +136,37 @@ export default async function AdminPage() {
   let applicationsLoadError = applicationsData.error;
 
   let attendees: EventAttendee[] = [];
+  // Suggestions are loaded fresh (not cached) to ensure drop box reads latest letters
+  let suggestions: ClubSuggestion[] = [];
   let attendanceLoadError = adminClient
     ? ''
     : 'RSVP information is unavailable because secure server access is not configured.';
+  let suggestionsLoadError = adminClient
+    ? ''
+    : 'Suggestions are unavailable because secure server access is not configured.';
 
   if (adminClient) {
+    // Load suggestions fresh (not through cache)
+    const suggestionsResult = await adminClient
+      .from('suggestions')
+      .select('id, category, message, name, email, status, created_at')
+      .order('created_at', { ascending: false })
+      .limit(300);
+
+    if (suggestionsResult.error) {
+      if (suggestionsResult.error.code === '42P01') {
+        suggestionsLoadError = '';
+      } else {
+        console.error('Unable to load suggestions', {
+          code: suggestionsResult.error.code,
+          message: suggestionsResult.error.message,
+        });
+        suggestionsLoadError = 'Suggestions could not be loaded. Refresh the page and try again.';
+      }
+    } else {
+      suggestions = (suggestionsResult.data ?? []) as ClubSuggestion[];
+    }
+
     const eventIds = eventRows.map((event) => event.id).filter(Boolean);
     if (eventIds.length) {
       const [memberResult, guestResult, stampResult] = await Promise.all([
@@ -246,7 +273,8 @@ export default async function AdminPage() {
       creatorEmails={creatorEmails}
       attendees={attendees}
       applications={applications}
-      loadErrors={{ events: eventsLoadError, jobs: jobsLoadError, attendance: attendanceLoadError, applications: applicationsLoadError }}
+      suggestions={suggestions}
+      loadErrors={{ events: eventsLoadError, jobs: jobsLoadError, attendance: attendanceLoadError, applications: applicationsLoadError, suggestions: suggestionsLoadError }}
     />
   );
 }
