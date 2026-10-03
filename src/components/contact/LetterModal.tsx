@@ -48,7 +48,6 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
   const [message, setMessage] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [submissionId, setSubmissionId] = useState<string>('');
   const [clientErrors, setClientErrors] = useState<SuggestionFieldErrors>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [animPhase, setAnimPhase] = useState<AnimPhase>('idle');
@@ -72,7 +71,6 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
     setMessage('');
     setName('');
     setEmail('');
-    setSubmissionId('');
     setClientErrors({});
     setServerError(null);
     setAnimPhase('idle');
@@ -141,11 +139,22 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
     }, 1400);
   }, [onSuccess, resetForm, startFoldingAnimation, completeAnimation]);
 
+  const submitAction = useCallback((formData: FormData) => {
+    const id = crypto.randomUUID();
+    currentSubmissionIdRef.current = id;
+    formData.set('submissionId', id);
+    formAction(formData);
+  }, [formAction]);
+
   useEffect(() => {
     if (state.status === 'idle') return;
     
     const resultSubmissionId = state.submissionId;
-    if (!resultSubmissionId) return;
+    if (!resultSubmissionId) {
+      setAnimPhase('idle');
+      setServerError('Something went wrong. Please try again.');
+      return;
+    }
     if (resultSubmissionId !== currentSubmissionIdRef.current) return;
     if (handledSubmissionIdRef.current === resultSubmissionId) return;
     
@@ -169,6 +178,22 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
       }
     }
   }, [state, onSuccess, resetForm, runSendAnimation]);
+
+  useEffect(() => {
+    if (!pending && animPhase === 'idle') return;
+    if (!currentSubmissionIdRef.current) return;
+
+    const submissionIdAtStart = currentSubmissionIdRef.current;
+    const timeoutId = setTimeout(() => {
+      if (currentSubmissionIdRef.current === submissionIdAtStart && 
+          handledSubmissionIdRef.current !== submissionIdAtStart) {
+        setAnimPhase('idle');
+        setServerError('The request timed out. Please try again.');
+      }
+    }, 20000);
+
+    return () => clearTimeout(timeoutId);
+  }, [pending, animPhase]);
 
   useEffect(() => {
     if (isOpen) {
@@ -274,9 +299,6 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
       firstErrorField?.focus();
       return;
     }
-    const newSubmissionId = crypto.randomUUID();
-    setSubmissionId(newSubmissionId);
-    currentSubmissionIdRef.current = newSubmissionId;
     setClientErrors({});
     setServerError(null);
     if (!REDUCE_MOTION) {
@@ -300,7 +322,7 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
       <div className={styles.letterScroller}>
         <form
           ref={formRef}
-          action={formAction}
+          action={submitAction}
           className={`${styles.letterForm} ${animPhase !== 'idle' ? styles.letterFormFading : ''}`}
           noValidate
           onSubmit={handleSubmit}
@@ -447,7 +469,6 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
             </div>
 
             <input type="hidden" name="startedAt" value={startedAtRef.current} />
-            <input type="hidden" name="submissionId" value={submissionId} />
 
             {formError && (
               <p className={styles.formError} role="alert">

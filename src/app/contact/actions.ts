@@ -59,7 +59,7 @@ export async function submitSuggestion(
   _prev: SuggestionState,
   formData: FormData
 ): Promise<SuggestionState> {
-  const submissionId = text(formData, 'submissionId') || crypto.randomUUID();
+  const submissionId = text(formData, 'submissionId');
   
   try {
     const category = text(formData, 'category');
