@@ -249,7 +249,7 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
         <form
           ref={formRef}
           action={formAction}
-          className={styles.letterForm}
+          className={`${styles.letterForm} ${animPhase !== 'idle' ? styles.letterFormFading : ''}`}
           noValidate
           onSubmit={handleSubmit}
         >

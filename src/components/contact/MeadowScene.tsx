@@ -636,30 +636,26 @@ export default function MeadowScene({
       STACKED = stackedMQ?.matches ?? false;
       if (STACKED && slotRef?.current) {
         const w = document.documentElement.clientWidth;
-        const vh = window.innerHeight;
-        const uiH = uiEl?.offsetHeight ?? vh;
+        const h = uiEl?.offsetHeight ?? window.innerHeight;
         const r = slotRef.current.getBoundingClientRect();
-        const slotH = r.height;
-        const slotBot = r.bottom;
-        const key = [w, uiH, Math.round(slotH), Math.round(slotBot)].join();
+        const top = r.top + window.scrollY;
+        const bot = r.bottom + window.scrollY;
+        const key = [w, h, Math.round(top), Math.round(bot)].join();
         if (key === lastSize) return;
         lastSize = key;
-        container.style.height = uiH + 'px';
-        renderer.setSize(w, uiH, false);
-        camera.aspect = w / uiH;
-
-        const mbPxTarget = Math.min(slotH * 0.6, w * 0.9, 320);
-        const mbPx = Math.max(140, mbPxTarget);
-        const baseFrac = slotBot / uiH;
-        const baseNdc = 1 - 2 * (baseFrac - 0.04);
-        const horizonNdc = baseNdc + (mbPx / uiH) * 0.55;
-        
-        baseRef.current.D = 6.8;
-        const tanHalf = MB_H / (mbPx / uiH * 2 * baseRef.current.D);
-        camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(tanHalf));
-        baseRef.current.sy = -horizonNdc;
-        baseRef.current.camY = mailbox.position.y + 0.35;
-        baseRef.current.sx = 0;
+        container.style.height = h + 'px';
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        const basePx = bot - Math.min(30, r.height * 0.07);
+        const mbPx = Math.max(160, Math.min(basePx - (top + 104), 380, w * 1.1));
+        baseRef.current.D = 7.4;
+        const f = mbPx * baseRef.current.D / MB_H;
+        camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan((h / 2) / f));
+        const t = (h / 2) / f;
+        const horizonPx = basePx - 0.5 * mbPx;
+        baseRef.current.sy = 1 - 2 * horizonPx / h;
+        baseRef.current.camY = mailbox.position.y - ((1 - 2 * basePx / h) - baseRef.current.sy) * baseRef.current.D * t;
+        baseRef.current.sx = 0.03;
         camera.updateProjectionMatrix();
         applyShift();
         return;
