@@ -325,6 +325,8 @@ export default function MeadowScene({
       scatterGrass(Math.round(70000 * K), { x0: -6.5, x1: 4.5, z0: -3.5, z1: 3.2 }, [0.22, 0.46], 1);
       scatterGrass(Math.round(50000 * K), { x0: -14, x1: 9, z0: -14, z1: -3.5 }, [0.25, 0.5], 1.5);
       scatterGrass(Math.round(26000 * K), { x0: -30, x1: 20, z0: -34, z1: -14 }, [0.3, 0.55], 2.6);
+      // Near-camera grass to fill bottom edge on wide desktops
+      scatterGrass(Math.round(8000 * K), { x0: -8, x1: 8, z0: 3.2, z1: 6.5 }, [0.18, 0.38], 0.9);
     } else {
       const S = Math.min(2, Math.max(0.9, window.innerWidth / 390));
       scatterGrass(Math.round(19000 * S), { hw: halfW, z0: -3.5, z1: 4.8 }, [0.22, 0.46], 1.1);
