@@ -1,18 +1,22 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { CLUB_EMAIL } from '@/data/socials';
 import styles from './EmailCopyEnhancer.module.css';
 
 type PopupState = 'hidden' | 'tooltip' | 'copied';
 
+const EDGE_MARGIN = 8;
+
 export default function EmailCopyEnhancer() {
   const [popupState, setPopupState] = useState<PopupState>('hidden');
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [adjustedStyle, setAdjustedStyle] = useState<{ left: number; arrowOffset: number } | null>(null);
   const [mounted, setMounted] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const emailLinkRef = useRef<HTMLAnchorElement | null>(null);
+  const popupRef = useRef<HTMLDivElement | null>(null);
   const popupStateRef = useRef<PopupState>('hidden');
 
   popupStateRef.current = popupState;
@@ -31,8 +35,35 @@ export default function EmailCopyEnhancer() {
         x: rect.left + rect.width / 2,
         y: rect.top - 8,
       });
+      setAdjustedStyle(null);
     }
   }, []);
+
+  useLayoutEffect(() => {
+    if (popupState === 'hidden' || !popupRef.current) {
+      return;
+    }
+
+    const popup = popupRef.current;
+    const rect = popup.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const iconCenterX = position.x;
+
+    let newLeft = iconCenterX;
+    let arrowOffset = 0;
+
+    if (rect.left < EDGE_MARGIN) {
+      newLeft = EDGE_MARGIN + rect.width / 2;
+      arrowOffset = iconCenterX - newLeft;
+    } else if (rect.right > viewportWidth - EDGE_MARGIN) {
+      newLeft = viewportWidth - EDGE_MARGIN - rect.width / 2;
+      arrowOffset = iconCenterX - newLeft;
+    }
+
+    if (newLeft !== iconCenterX) {
+      setAdjustedStyle({ left: newLeft, arrowOffset });
+    }
+  }, [popupState, position.x]);
 
   useEffect(() => {
     setMounted(true);
@@ -156,30 +187,37 @@ export default function EmailCopyEnhancer() {
 
   if (!mounted) return null;
 
+  const popupLeft = adjustedStyle?.left ?? position.x;
+  const arrowOffset = adjustedStyle?.arrowOffset ?? 0;
+  const popupStyle = {
+    left: popupLeft,
+    top: position.y,
+    '--arrow-offset': `${arrowOffset}px`,
+  } as React.CSSProperties;
+
   return createPortal(
     <div className={styles.enhancerContainer}>
       {popupState === 'tooltip' && (
         <div
+          ref={popupRef}
           className={styles.tooltip}
           role="tooltip"
-          style={{ left: position.x, top: position.y }}
+          style={popupStyle}
         >
           Copy our email
         </div>
       )}
       {popupState === 'copied' && (
         <div
+          ref={popupRef}
           className={styles.copied}
           role="status"
           aria-live="polite"
-          style={{ left: position.x, top: position.y }}
+          style={popupStyle}
         >
           ✓ Copied {CLUB_EMAIL}
         </div>
       )}
-      <span className={styles.srOnly} aria-live="polite">
-        {popupState === 'copied' ? `Copied ${CLUB_EMAIL}` : ''}
-      </span>
     </div>,
     document.body
   );
