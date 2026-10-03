@@ -200,11 +200,11 @@ export default function ContactScene({ fontClasses }: ContactSceneProps) {
         </main>
       </div>
 
-      {/* Mailbox tap hint for stacked layouts */}
+      {/* Mailbox tap hint for stacked and tablet layouts */}
       {hintVisible && isStacked && !modalOpen && hintPos.x > 0 && (
         <div
           className={`${styles.mailboxHintLabel} ${styles.hintPop}`}
-          style={{ left: hintPos.x, top: hintPos.y - 20 }}
+          style={{ left: hintPos.x, top: hintPos.y + 30 }}
           onClick={openModal}
           role="button"
           tabIndex={0}

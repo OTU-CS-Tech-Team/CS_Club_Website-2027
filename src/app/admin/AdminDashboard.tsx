@@ -1234,7 +1234,7 @@ function SuggestionsPanel({
 }: {
   suggestions: ClubSuggestion[];
   loadError: string;
-  onSuccess: (message: string) => void;
+  onSuccess: (message: string, ok?: boolean) => void;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState('');
@@ -1251,13 +1251,16 @@ function SuggestionsPanel({
 
   async function handleStatusChange(suggestion: ClubSuggestion, newStatus: SuggestionStatus) {
     setUpdating(suggestion.id);
-    const result = await updateSuggestionStatus(suggestion.id, newStatus);
-    setUpdating(null);
-    if (result.ok) {
-      onSuccess(result.message);
-      router.refresh();
-    } else {
-      onSuccess(result.message);
+    try {
+      const result = await updateSuggestionStatus(suggestion.id, newStatus);
+      if (result.ok) {
+        onSuccess(result.message);
+        router.refresh();
+      } else {
+        onSuccess(result.message, false);
+      }
+    } finally {
+      setUpdating(null);
     }
   }
 
@@ -1478,7 +1481,7 @@ export default function AdminDashboard({
     setEditingJob(null);
     setJobEditorOpen(false);
   }, []);
-  const showSuccess = useCallback((message: string) => setNotice({ ok: true, message }), []);
+  const showSuccess = useCallback((message: string, ok = true) => setNotice({ ok, message }), []);
   const completeDelete = useCallback((state: AdminActionState) => setNotice(state), []);
   const closePreview = useCallback(() => setPreview(null), []);
   const now = Date.now();
