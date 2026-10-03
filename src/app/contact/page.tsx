@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { JetBrains_Mono, Caveat } from 'next/font/google';
 import ContactScene from './ContactScene';
+import EmailCopyEnhancer from '@/components/contact/EmailCopyEnhancer';
 import styles from './contact.module.css';
 
 export const metadata: Metadata = {
@@ -27,6 +28,7 @@ export default function ContactPage() {
   return (
     <div className={`${styles.contactPage} ${styles.vars} ${mono.variable} ${hand.variable}`}>
       <ContactScene fontClasses={`${styles.vars} ${mono.variable} ${hand.variable}`} />
+      <EmailCopyEnhancer />
     </div>
   );
 }

@@ -1,0 +1,73 @@
+.enhancerContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.tooltip,
+.copied {
+  position: fixed;
+  transform: translateX(-50%) translateY(-100%);
+  padding: 0.5rem 0.875rem;
+  background: rgba(255, 255, 255, 0.8);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  backdrop-filter: blur(22px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 999px;
+  box-shadow: 0 10px 28px -10px rgba(16, 48, 92, 0.55);
+  color: #0f1722;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.tooltip::after,
+.copied::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(255, 255, 255, 0.8);
+}
+
+.copied {
+  color: #1f7a4d;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(calc(-100% + 4px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-100%);
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Only hide tooltip via JS, not CSS media query, to avoid false positives */
+
+@media (prefers-reduced-motion: reduce) {
+  .tooltip,
+  .copied {
+    animation: none;
+  }
+}
