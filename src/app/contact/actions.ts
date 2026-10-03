@@ -14,14 +14,15 @@ import {
 } from '@/lib/suggestionValidation';
 
 export type SuggestionState =
-  | { status: 'idle' }
+  | { status: 'idle'; submissionId?: undefined }
   | {
       status: 'error';
+      submissionId: string;
       message?: string;
       fieldErrors?: SuggestionFieldErrors;
       values?: SuggestionFields;
     }
-  | { status: 'success'; ref: string; category: SuggestionCategory };
+  | { status: 'success'; submissionId: string; ref: string; category: SuggestionCategory };
 
 const MIN_FILL_TIME_MS = 3000;
 const DROP_BOX_CLOSED_MSG = 'The drop box is closed right now. Email us instead.';
@@ -58,6 +59,8 @@ export async function submitSuggestion(
   _prev: SuggestionState,
   formData: FormData
 ): Promise<SuggestionState> {
+  const submissionId = text(formData, 'submissionId') || crypto.randomUUID();
+  
   try {
     const category = text(formData, 'category');
     const message = text(formData, 'message');
@@ -69,7 +72,7 @@ export async function submitSuggestion(
     const values: SuggestionFields = { category, message, name, email };
 
     if (website) {
-      return { status: 'success', ref: 'CS-0000', category: 'other' };
+      return { status: 'success', submissionId, ref: 'CS-0000', category: 'other' };
     }
 
     const startedAt = parseInt(startedAtStr, 10);
@@ -82,6 +85,7 @@ export async function submitSuggestion(
     ) {
       return {
         status: 'error',
+        submissionId,
         message: 'That was quick, give it a second and send again.',
         values,
       };
@@ -89,17 +93,17 @@ export async function submitSuggestion(
 
     const fieldErrors = validateSuggestion(values);
     if (hasValidationErrors(fieldErrors)) {
-      return { status: 'error', fieldErrors, values };
+      return { status: 'error', submissionId, fieldErrors, values };
     }
 
     if (!isAdminClientConfigured()) {
-      return { status: 'error', message: DROP_BOX_CLOSED_MSG, values };
+      return { status: 'error', submissionId, message: DROP_BOX_CLOSED_MSG, values };
     }
 
     const ipHash = await getIpHash();
     if (!ipHash) {
       console.error('submitSuggestion: no hash secret configured');
-      return { status: 'error', message: DROP_BOX_CLOSED_MSG, values };
+      return { status: 'error', submissionId, message: DROP_BOX_CLOSED_MSG, values };
     }
 
     const adminClient = createAdminClient();
@@ -119,11 +123,12 @@ export async function submitSuggestion(
       });
 
       if (isTableOrFunctionMissing(error)) {
-        return { status: 'error', message: DROP_BOX_CLOSED_MSG, values };
+        return { status: 'error', submissionId, message: DROP_BOX_CLOSED_MSG, values };
       }
 
       return {
         status: 'error',
+        submissionId,
         message: 'The drop box is jammed. Try again in a minute.',
         values,
       };
@@ -134,6 +139,7 @@ export async function submitSuggestion(
     if (!result || result.status === 'rate_limited') {
       return {
         status: 'error',
+        submissionId,
         message: 'The mailbox is full right now. Try again in a few minutes.',
         values,
       };
@@ -142,6 +148,7 @@ export async function submitSuggestion(
     if (result.status !== 'ok' || !result.id) {
       return {
         status: 'error',
+        submissionId,
         message: 'The drop box is jammed. Try again in a minute.',
         values,
       };
@@ -152,6 +159,7 @@ export async function submitSuggestion(
     const ref = `CS-${String(result.id).slice(0, 4).toUpperCase()}`;
     return {
       status: 'success',
+      submissionId,
       ref,
       category: category as SuggestionCategory,
     };
@@ -159,6 +167,7 @@ export async function submitSuggestion(
     console.error('submitSuggestion failed', error);
     return {
       status: 'error',
+      submissionId,
       message: 'The drop box is jammed. Try again in a minute.',
     };
   }
