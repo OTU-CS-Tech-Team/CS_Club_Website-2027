@@ -57,6 +57,41 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
     setAnimPhase('idle');
   }, []);
 
+  const startOptimisticAnimation = useCallback(() => {
+    const form = formRef.current;
+    if (!form) return;
+    const rect = form.getBoundingClientRect();
+    setEnvelopePos({
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height * 0.3,
+      scale: 1,
+      rotation: 0,
+    });
+    setAnimPhase('folding');
+
+    setTimeout(() => {
+      const targetX = mailboxPosition?.x ?? window.innerWidth / 2;
+      const targetY = mailboxPosition?.y ?? window.innerHeight * 0.75;
+      setEnvelopePos({
+        x: targetX,
+        y: targetY,
+        scale: 0.35,
+        rotation: -8,
+      });
+      setAnimPhase('flying');
+    }, 600);
+  }, [mailboxPosition]);
+
+  const completeAnimation = useCallback(() => {
+    setAnimPhase('done');
+    const ps = pendingSuccessRef.current;
+    if (ps) {
+      onSuccess(ps.ref, ps.category, ps.hasEmail);
+      pendingSuccessRef.current = null;
+    }
+    resetForm();
+  }, [onSuccess, resetForm]);
+
   const runSendAnimation = useCallback(() => {
     const form = formRef.current;
     if (!form) {
@@ -106,7 +141,24 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
         resetForm();
       } else {
         pendingSuccessRef.current = { ref: state.ref, category: state.category, hasEmail: !!email.trim() };
-        runSendAnimation();
+        if (animPhase === 'flying') {
+          setTimeout(completeAnimation, 800);
+        } else if (animPhase === 'folding') {
+          setTimeout(() => {
+            const targetX = mailboxPosition?.x ?? window.innerWidth / 2;
+            const targetY = mailboxPosition?.y ?? window.innerHeight * 0.75;
+            setEnvelopePos({
+              x: targetX,
+              y: targetY,
+              scale: 0.35,
+              rotation: -8,
+            });
+            setAnimPhase('flying');
+            setTimeout(completeAnimation, 800);
+          }, 400);
+        } else {
+          runSendAnimation();
+        }
       }
     } else if (state.status === 'error') {
       setAnimPhase('idle');
@@ -123,7 +175,7 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
         setEmail(state.values.email);
       }
     }
-  }, [state, onSuccess, resetForm, email]);
+  }, [state, onSuccess, resetForm, email, animPhase, mailboxPosition, completeAnimation, runSendAnimation]);
 
   useEffect(() => {
     if (isOpen) {
@@ -229,6 +281,9 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
     }
     setClientErrors({});
     setServerError(null);
+    if (!REDUCE_MOTION) {
+      startOptimisticAnimation();
+    }
   };
 
   if (!isOpen) return null;
