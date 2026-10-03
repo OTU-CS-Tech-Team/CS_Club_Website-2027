@@ -27,8 +27,8 @@ function useSupportsWebGL() {
       }
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const saveData = (navigator as { connection?: { saveData?: boolean } }).connection?.saveData;
-      const lowMemory = (navigator as { deviceMemory?: number }).deviceMemory !== undefined && 
-                        (navigator as { deviceMemory?: number }).deviceMemory! < 4;
+      const deviceMemory = (navigator as { deviceMemory?: number }).deviceMemory;
+      const lowMemory = typeof deviceMemory === 'number' && deviceMemory < 4;
       setSupports(!reduceMotion && !saveData && !lowMemory);
     } catch {
       setSupports(false);
