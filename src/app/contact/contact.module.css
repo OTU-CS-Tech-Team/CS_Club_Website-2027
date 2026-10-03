@@ -250,10 +250,10 @@
 
 /* Mailbox tap hint */
 .mailboxHintLabel {
-  position: absolute;
+  position: fixed;
   z-index: 20;
   pointer-events: none;
-  transform: translate(-50%, -100%);
+  transform: translateX(-50%);
 }
 
 .mailboxHintInner {
@@ -299,11 +299,11 @@
 @keyframes hintPopIn {
   from {
     opacity: 0;
-    transform: translate(-50%, -85%);
+    transform: translateX(-50%) translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -100%);
+    transform: translateX(-50%) translateY(0);
   }
 }
 
@@ -1004,7 +1004,6 @@
   }
 
   .mailboxHintLabel {
-    position: absolute;
     cursor: pointer;
     pointer-events: auto;
   }
@@ -1036,18 +1035,101 @@
   }
 }
 
+/* Send animation overlay */
+.sendAnimOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.animEnvelope {
+  position: absolute;
+  left: var(--env-x, 50%);
+  top: var(--env-y, 50%);
+  transform: translate(-50%, -50%) scale(var(--env-scale, 1)) rotate(var(--env-rotate, 0deg));
+  transition: left 0.65s cubic-bezier(0.34, 1.56, 0.64, 1),
+              top 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform, left, top;
+}
+
+.animEnvelopeBody {
+  position: relative;
+  width: 160px;
+  height: 100px;
+  background: linear-gradient(180deg, #f8f4e8 0%, #f0eadb 100%);
+  border-radius: 6px;
+  box-shadow: 0 12px 40px rgba(10, 30, 60, 0.35);
+  overflow: hidden;
+}
+
+.animEnvelopeFlap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 55%;
+  background: #ebe3cf;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top center;
+  transition: transform 0.4s ease;
+}
+
+.animFolding .animEnvelopeFlap {
+  transform: rotateX(180deg);
+}
+
+.animEnvelopeSeal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #b8473b, #8e2a23 55%, #5e1813 100%);
+  box-shadow: inset 0 -3px 6px rgba(40, 0, 0, 0.4), 0 3px 8px rgba(60, 10, 0, 0.3);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-hand), cursive;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #f6d9a8;
+  opacity: 0;
+  transition: opacity 0.3s 0.35s;
+}
+
+.animFolding .animEnvelopeSeal,
+.animFlying .animEnvelopeSeal {
+  opacity: 1;
+}
+
+.animDone {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .writeButton,
   .socialLink,
   .submitButton,
   .toast,
-  .hintPop {
+  .hintPop,
+  .animEnvelope,
+  .animEnvelopeFlap,
+  .animEnvelopeSeal {
     transition: none;
     animation: none;
   }
 
   .mailboxHintDot {
     animation: none;
+  }
+
+  .sendAnimOverlay {
+    display: none;
   }
 }

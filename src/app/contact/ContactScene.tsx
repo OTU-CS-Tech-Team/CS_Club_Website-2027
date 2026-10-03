@@ -45,10 +45,19 @@ export default function ContactScene() {
   const [toastData, setToastData] = useState({ ref: '', category: '', hasEmail: false });
   const [posterVisible, setPosterVisible] = useState(true);
   const [hintVisible, setHintVisible] = useState(false);
+  const [hintPos, setHintPos] = useState({ x: 0, y: 0 });
+  const [isStacked, setIsStacked] = useState(false);
   const slotRef = useRef<HTMLDivElement>(null);
 
   const supportsWebGL = useSupportsWebGL();
-  const isStacked = typeof window !== 'undefined' && window.matchMedia('(max-width: 1023.98px)').matches;
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1023.98px)');
+    setIsStacked(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsStacked(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const openModal = useCallback(() => setModalOpen(true), []);
   const closeModal = useCallback(() => setModalOpen(false), []);
@@ -56,6 +65,10 @@ export default function ContactScene() {
   const handleFirstFrame = useCallback(() => {
     setPosterVisible(false);
     setHintVisible(true);
+  }, []);
+
+  const handleHintPosition = useCallback((x: number, y: number) => {
+    setHintPos({ x, y });
   }, []);
 
   const handleSuccess = useCallback((ref: string, category: SuggestionCategory, hasEmail: boolean) => {
@@ -100,6 +113,7 @@ export default function ContactScene() {
             onMailboxClick={openModal}
             flagUp={flagUp}
             onFirstFrame={handleFirstFrame}
+            onHintPosition={handleHintPosition}
             stacked={isStacked}
             slotRef={slotRef}
           />
@@ -176,10 +190,10 @@ export default function ContactScene() {
       </div>
 
       {/* Mailbox tap hint for stacked layouts */}
-      {hintVisible && isStacked && !modalOpen && (
+      {hintVisible && isStacked && !modalOpen && hintPos.x > 0 && (
         <div
-          className={`${styles.mailboxHintLabel}`}
-          style={{ left: '50%', top: '50%' }}
+          className={`${styles.mailboxHintLabel} ${styles.hintPop}`}
+          style={{ left: hintPos.x, top: hintPos.y - 20 }}
           onClick={openModal}
           role="button"
           tabIndex={0}
@@ -193,7 +207,12 @@ export default function ContactScene() {
       )}
 
       {/* Letter Modal */}
-      <LetterModal isOpen={modalOpen} onClose={closeModal} onSuccess={handleSuccess} />
+      <LetterModal
+        isOpen={modalOpen}
+        onClose={closeModal}
+        onSuccess={handleSuccess}
+        mailboxPosition={hintPos.x > 0 ? hintPos : undefined}
+      />
 
       {/* Success Toast */}
       <div

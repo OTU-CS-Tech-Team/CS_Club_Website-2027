@@ -18,9 +18,16 @@ type LetterModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (ref: string, category: SuggestionCategory, hasEmail: boolean) => void;
+  mailboxPosition?: { x: number; y: number };
 };
 
-export default function LetterModal({ isOpen, onClose, onSuccess }: LetterModalProps) {
+type AnimPhase = 'idle' | 'folding' | 'flying' | 'done';
+
+const REDUCE_MOTION =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPosition }: LetterModalProps) {
   const [state, formAction, pending] = useActionState<SuggestionState, FormData>(submitSuggestion, {
     status: 'idle',
   });
@@ -29,6 +36,7 @@ export default function LetterModal({ isOpen, onClose, onSuccess }: LetterModalP
   const messageRef = useRef<HTMLTextAreaElement>(null);
   const lastFocusRef = useRef<HTMLElement | null>(null);
   const startedAtRef = useRef<number>(0);
+  const pendingSuccessRef = useRef<{ ref: string; category: SuggestionCategory; hasEmail: boolean } | null>(null);
 
   const [category, setCategory] = useState<SuggestionCategory>('event_idea');
   const [message, setMessage] = useState('');
@@ -36,6 +44,8 @@ export default function LetterModal({ isOpen, onClose, onSuccess }: LetterModalP
   const [email, setEmail] = useState('');
   const [clientErrors, setClientErrors] = useState<SuggestionFieldErrors>({});
   const [serverError, setServerError] = useState<string | null>(null);
+  const [animPhase, setAnimPhase] = useState<AnimPhase>('idle');
+  const [envelopePos, setEnvelopePos] = useState({ x: 0, y: 0, scale: 1, rotation: 0 });
 
   const resetForm = useCallback(() => {
     setCategory('event_idea');
@@ -44,13 +54,62 @@ export default function LetterModal({ isOpen, onClose, onSuccess }: LetterModalP
     setEmail('');
     setClientErrors({});
     setServerError(null);
+    setAnimPhase('idle');
   }, []);
+
+  const runSendAnimation = useCallback(() => {
+    const form = formRef.current;
+    if (!form) {
+      const ps = pendingSuccessRef.current;
+      if (ps) {
+        onSuccess(ps.ref, ps.category, ps.hasEmail);
+        resetForm();
+      }
+      return;
+    }
+    const rect = form.getBoundingClientRect();
+    setEnvelopePos({
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height * 0.3,
+      scale: 1,
+      rotation: 0,
+    });
+    setAnimPhase('folding');
+
+    setTimeout(() => {
+      const targetX = mailboxPosition?.x ?? window.innerWidth / 2;
+      const targetY = mailboxPosition?.y ?? window.innerHeight * 0.75;
+      setEnvelopePos({
+        x: targetX,
+        y: targetY,
+        scale: 0.35,
+        rotation: -8,
+      });
+      setAnimPhase('flying');
+    }, 600);
+
+    setTimeout(() => {
+      setAnimPhase('done');
+      const ps = pendingSuccessRef.current;
+      if (ps) {
+        onSuccess(ps.ref, ps.category, ps.hasEmail);
+        pendingSuccessRef.current = null;
+      }
+      resetForm();
+    }, 1400);
+  }, [mailboxPosition, onSuccess, resetForm]);
 
   useEffect(() => {
     if (state.status === 'success') {
-      onSuccess(state.ref, state.category, !!email.trim());
-      resetForm();
+      if (REDUCE_MOTION) {
+        onSuccess(state.ref, state.category, !!email.trim());
+        resetForm();
+      } else {
+        pendingSuccessRef.current = { ref: state.ref, category: state.category, hasEmail: !!email.trim() };
+        runSendAnimation();
+      }
     } else if (state.status === 'error') {
+      setAnimPhase('idle');
       if (state.fieldErrors) {
         setClientErrors(state.fieldErrors);
       }
@@ -356,16 +415,43 @@ export default function LetterModal({ isOpen, onClose, onSuccess }: LetterModalP
                 <button
                   type="submit"
                   className={styles.submitButton}
-                  disabled={pending}
-                  aria-disabled={pending}
+                  disabled={pending || animPhase !== 'idle'}
+                  aria-disabled={pending || animPhase !== 'idle'}
                 >
-                  {pending ? 'Sending…' : 'Seal & send'}
+                  {pending && animPhase === 'idle' ? 'Sending…' : 'Seal & send'}
                 </button>
               </div>
             </div>
           </div>
         </form>
       </div>
+
+      {/* Send animation overlay */}
+      {animPhase !== 'idle' && (
+        <div
+          className={styles.sendAnimOverlay}
+          aria-hidden="true"
+          style={{
+            '--env-x': `${envelopePos.x}px`,
+            '--env-y': `${envelopePos.y}px`,
+            '--env-scale': envelopePos.scale,
+            '--env-rotate': `${envelopePos.rotation}deg`,
+          } as React.CSSProperties}
+        >
+          <div
+            className={`${styles.animEnvelope} ${
+              animPhase === 'folding' ? styles.animFolding :
+              animPhase === 'flying' ? styles.animFlying :
+              styles.animDone
+            }`}
+          >
+            <div className={styles.animEnvelopeBody}>
+              <div className={styles.animEnvelopeFlap} />
+              <div className={styles.animEnvelopeSeal}>CS</div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
