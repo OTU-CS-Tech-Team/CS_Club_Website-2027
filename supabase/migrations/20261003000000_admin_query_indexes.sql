@@ -1,5 +1,6 @@
 -- Performance indexes for admin dashboard and check-in queries.
 -- These are on frequently filtered/joined columns that lack indexes.
+-- Tables defined in this repo's migrations are indexed here.
 
 -- event_rsvps: filter by event_id on check-in and dashboard RSVP queries
 CREATE INDEX IF NOT EXISTS idx_event_rsvps_event_id ON event_rsvps(event_id);
@@ -15,7 +16,7 @@ CREATE INDEX IF NOT EXISTS idx_passport_stamps_user_id ON passport_stamps(user_i
 -- career_applications: filter by job_id for responses dialog
 CREATE INDEX IF NOT EXISTS idx_career_applications_job_id ON career_applications(job_id);
 
--- profiles: primary key is already indexed, but email lookups are common
+-- profiles: email lookups are common for matching RSVPs to profiles
 CREATE INDEX IF NOT EXISTS idx_profiles_email ON profiles(email);
 
 -- events: order by starts_at is common in admin and public queries
@@ -25,12 +26,7 @@ CREATE INDEX IF NOT EXISTS idx_events_starts_at ON events(starts_at DESC);
 CREATE INDEX IF NOT EXISTS idx_jobs_created_at ON jobs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_jobs_is_active ON jobs(is_active) WHERE is_active = true;
 
--- newsletters: order by sent_at for history
-CREATE INDEX IF NOT EXISTS idx_newsletters_sent_at ON newsletters(sent_at DESC);
-
 -- mailing_list_subscribers: filter by confirmed status
-CREATE INDEX IF NOT EXISTS idx_mailing_list_subscribers_confirmed 
+-- (email already has a unique constraint which creates an index)
+CREATE INDEX IF NOT EXISTS idx_mailing_list_subscribers_confirmed
   ON mailing_list_subscribers(confirmed) WHERE confirmed = true;
-
--- checkin_tokens: lookup by token for QR scan
-CREATE INDEX IF NOT EXISTS idx_checkin_tokens_token ON checkin_tokens(token);
