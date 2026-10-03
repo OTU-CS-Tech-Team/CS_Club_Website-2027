@@ -29,10 +29,8 @@ type Phase = "scanning" | "confirm" | "done";
 
 export default function CheckinScanner({
   events,
-  rsvps,
 }: {
   events: EventOption[];
-  rsvps: Rsvp[];
 }) {
   const router = useRouter();
   const [eventId, setEventId] = useState("");
@@ -43,6 +41,8 @@ export default function CheckinScanner({
   const [email, setEmail] = useState("");
   const [manualLoading, setManualLoading] = useState(false);
   const [justCheckedIn, setJustCheckedIn] = useState<Set<string>>(new Set());
+  const [rsvps, setRsvps] = useState<Rsvp[]>([]);
+  const [rsvpsLoading, setRsvpsLoading] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -60,6 +60,40 @@ export default function CheckinScanner({
 
   useEffect(() => {
     eventIdRef.current = eventId;
+  }, [eventId]);
+
+  useEffect(() => {
+    if (!eventId) {
+      setRsvps([]);
+      return;
+    }
+
+    let cancelled = false;
+    setRsvpsLoading(true);
+
+    fetch(`/api/admin/checkin-rsvps?eventId=${encodeURIComponent(eventId)}`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (!cancelled && data.rsvps) {
+          setRsvps(data.rsvps);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load RSVPs:', err);
+        if (!cancelled) setFeedback('Could not load RSVPs — check your connection');
+      })
+      .finally(() => {
+        if (!cancelled) setRsvpsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [eventId]);
 
   function checkedInMessage(data: { name?: string; event?: string; points?: number | null }) {
@@ -283,7 +317,15 @@ export default function CheckinScanner({
 
       setFeedback(ok ? checkedInMessage(data) : `⚠️ ${data.error ?? "Check-in failed"}`);
 
-      if (ok) router.refresh();
+      if (ok) {
+        router.refresh();
+        fetch(`/api/admin/checkin-rsvps?eventId=${encodeURIComponent(eventIdRef.current)}`)
+          .then((res) => res.json())
+          .then((refreshData) => {
+            if (refreshData.rsvps) setRsvps(refreshData.rsvps);
+          })
+          .catch(() => {});
+      }
       setPhase("done");
     } catch {
       /*
@@ -319,6 +361,12 @@ export default function CheckinScanner({
         setEmail("");
         setJustCheckedIn((prev) => new Set(prev).add(`${eventId}:${email.trim().toLowerCase()}`));
         router.refresh();
+        fetch(`/api/admin/checkin-rsvps?eventId=${encodeURIComponent(eventId)}`)
+          .then((res) => res.json())
+          .then((refreshData) => {
+            if (refreshData.rsvps) setRsvps(refreshData.rsvps);
+          })
+          .catch(() => {});
       }
     } catch {
       setFeedback("⚠️ Network error — try again");
@@ -341,6 +389,12 @@ export default function CheckinScanner({
       if (ok) {
         setJustCheckedIn((prev) => new Set(prev).add(`${eventId}:${rsvp.email.trim().toLowerCase()}`));
         router.refresh();
+        fetch(`/api/admin/checkin-rsvps?eventId=${encodeURIComponent(eventId)}`)
+          .then((res) => res.json())
+          .then((refreshData) => {
+            if (refreshData.rsvps) setRsvps(refreshData.rsvps);
+          })
+          .catch(() => {});
       }
     } catch {
       setFeedback("⚠️ Network error — try again");
@@ -378,6 +432,7 @@ export default function CheckinScanner({
             setPreview(null);
             setFeedback("");
             setPhase("scanning");
+            setJustCheckedIn(new Set());
           }}
         >
           <option value="">— pick today&apos;s event —</option>
@@ -486,33 +541,39 @@ export default function CheckinScanner({
         </p>
       )}
 
-      {currentRsvps.length > 0 && (
+      {eventId && (
         <div>
-          <h2>RSVP&apos;d ({currentRsvps.length})</h2>
+          <h2>RSVP&apos;d {rsvpsLoading ? '(loading...)' : `(${currentRsvps.length})`}</h2>
 
-          <ul className="rsvp-list">
-            {currentRsvps.map((rsvp) => {
-              const attended = rsvp.attended || justCheckedIn.has(`${eventId}:${rsvp.email.trim().toLowerCase()}`);
+          {rsvpsLoading ? (
+            <p style={{ color: '#666' }}>Loading attendees...</p>
+          ) : currentRsvps.length > 0 ? (
+            <ul className="rsvp-list">
+              {currentRsvps.map((rsvp) => {
+                const attended = rsvp.attended || justCheckedIn.has(`${eventId}:${rsvp.email.trim().toLowerCase()}`);
 
-              return (
-                <li key={rsvp.email}>
-                  {rsvp.name}
-                  {rsvp.yearOfStudy ? ` (${rsvp.yearOfStudy})` : ""}{" "}
-                  {attended ? (
-                    "✅"
-                  ) : (
-                    <button
-                      type="button"
-                      className="link-button"
-                      onClick={() => handleRsvpCheckIn(rsvp)}
-                    >
-                      Check in
-                    </button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+                return (
+                  <li key={rsvp.email}>
+                    {rsvp.name}
+                    {rsvp.yearOfStudy ? ` (${rsvp.yearOfStudy})` : ""}{" "}
+                    {attended ? (
+                      "✅"
+                    ) : (
+                      <button
+                        type="button"
+                        className="link-button"
+                        onClick={() => handleRsvpCheckIn(rsvp)}
+                      >
+                        Check in
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p style={{ color: '#666' }}>No RSVPs for this event yet.</p>
+          )}
         </div>
       )}
     </div>

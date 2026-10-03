@@ -1,4 +1,6 @@
+import { revalidateTag } from 'next/cache';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { ADMIN_CACHE_TAGS } from './admin-cache';
 
 /** Keep only the newest N newsletter history rows so the dashboard stays light. */
 export const NEWSLETTER_HISTORY_LIMIT = 4;
@@ -17,5 +19,7 @@ export async function pruneNewsletterHistory(
   const { error: deleteError } = await admin.from('newsletters').delete().in('id', staleIds);
   if (deleteError) {
     console.error('Unable to prune newsletter history', deleteError.message);
+  } else {
+    revalidateTag(ADMIN_CACHE_TAGS.newsletters);
   }
 }

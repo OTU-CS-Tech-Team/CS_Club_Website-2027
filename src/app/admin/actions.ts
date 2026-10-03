@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -10,6 +10,7 @@ import { sendBulkEmail, sendDirectEmail, newsletterEmailHtml, newsletterEmailTex
 import { getMailingListEmails } from '@/lib/members';
 import { pruneNewsletterHistory } from '@/lib/newsletters';
 import { isMissingColumnError, packJobDescription, parseSubmittedPosting, RESUME_PATH_PATTERN } from '@/lib/jobSections';
+import { ADMIN_CACHE_TAGS } from '@/lib/admin-cache';
 
 export type AdminActionState = {
   ok: boolean;
@@ -136,6 +137,7 @@ export async function saveEvent(
     return initialError(authorizationError(error) ?? 'Unable to save the event.');
   }
 
+  revalidateTag(ADMIN_CACHE_TAGS.events);
   revalidatePath('/');
   revalidatePath('/events');
   revalidatePath('/admin');
@@ -161,6 +163,7 @@ export async function deleteEvent(
   } catch (error) {
     return initialError(authorizationError(error) ?? 'Unable to delete the event.');
   }
+  revalidateTag(ADMIN_CACHE_TAGS.events);
   revalidatePath('/');
   revalidatePath('/events');
   revalidatePath('/admin');
@@ -290,6 +293,7 @@ export async function saveJob(
     return initialError(authorizationError(error) ?? 'Unable to save the job.');
   }
 
+  revalidateTag(ADMIN_CACHE_TAGS.jobs);
   revalidatePath('/careers', 'layout');
   revalidatePath('/admin');
   return { ok: true, message: originalId ? 'Job updated.' : 'Job created.' };
@@ -311,6 +315,7 @@ export async function deleteJob(
   } catch (error) {
     return initialError(authorizationError(error) ?? 'Unable to delete the job.');
   }
+  revalidateTag(ADMIN_CACHE_TAGS.jobs);
   revalidatePath('/careers', 'layout');
   revalidatePath('/admin');
   return { ok: true, message: 'Job deleted.' };
@@ -366,6 +371,7 @@ export async function sendNewsletter(
     }
 
     await pruneNewsletterHistory(admin);
+    revalidateTag(ADMIN_CACHE_TAGS.newsletters);
     revalidatePath('/admin');
     return {
       ok: true,

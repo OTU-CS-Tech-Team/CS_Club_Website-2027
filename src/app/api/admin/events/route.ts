@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isAdmin } from '@/lib/admin';
 import { torontoWallTime } from '@/lib/eventSchedule';
+import { ADMIN_CACHE_TAGS } from '@/lib/admin-cache';
 
 // The admin form's <input type="datetime-local"> sends a plain
 // "YYYY-MM-DDTHH:mm" with no timezone — stored as-is, Postgres treats it
@@ -56,6 +57,7 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
+    revalidateTag(ADMIN_CACHE_TAGS.events);
     revalidatePath('/');
     revalidatePath('/events');
     return NextResponse.json(data);
