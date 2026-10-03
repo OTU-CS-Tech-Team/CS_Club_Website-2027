@@ -33,12 +33,16 @@ export async function GET(request: Request) {
   try {
     const admin = createAdminClient();
 
-    const [rsvpsResult, profilesResult, stampsResult, guestsResult] = await Promise.all([
+    const [rsvpsResult, stampsResult, guestsResult] = await Promise.all([
       admin.from('event_rsvps').select('event_id, user_id, year_of_study').eq('event_id', eventId),
-      admin.from('profiles').select('id, full_name, email'),
       admin.from('passport_stamps').select('event_id, user_id').eq('event_id', eventId),
       admin.from('event_guests').select('event_id, name, email, attended_at, rsvped').eq('event_id', eventId),
     ]);
+
+    const userIds = Array.from(new Set((rsvpsResult.data ?? []).map((r) => r.user_id)));
+    const profilesResult = userIds.length
+      ? await admin.from('profiles').select('id, full_name, email').in('id', userIds)
+      : { data: [], error: null };
 
     const profileById = new Map((profilesResult.data ?? []).map((p) => [p.id, p]));
     const attendedSet = new Set((stampsResult.data ?? []).map((s) => `${s.event_id}:${s.user_id}`));

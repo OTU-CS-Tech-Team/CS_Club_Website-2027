@@ -1,10 +1,12 @@
 'use server';
 
+import { revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient, isAdminClientConfigured } from '@/lib/supabase/admin';
 import { sendDirectEmail } from '@/lib/email';
 import { mailingVerifyUrl, verifyMailingVerifyToken } from '@/lib/guestCancelToken';
+import { ADMIN_CACHE_TAGS } from '@/lib/admin-cache';
 
 export type MailingListResult = {
   ok: true;
@@ -119,6 +121,7 @@ export async function subscribeLoggedIn(): Promise<MailingListResult> {
     throw new Error(error.message || 'Could not join the mailing list.');
   }
 
+  revalidateTag(ADMIN_CACHE_TAGS.subscribers);
   return { ok: true };
 }
 
@@ -218,6 +221,7 @@ export async function confirmMailingSignup(token: string) {
       .update({ confirmed: true })
       .eq('id', data.id);
     if (error) return { ok: false as const, message: 'Could not confirm signup — try again.' };
+    revalidateTag(ADMIN_CACHE_TAGS.subscribers);
   }
 
   return { ok: true as const, message: "You're on the mailing list." };

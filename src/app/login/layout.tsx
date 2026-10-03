@@ -4,8 +4,6 @@ export const metadata: Metadata = {
   title: 'Log In',
 };
 
-export const dynamic = 'force-dynamic';
-
 export default function LoginLayout({
   children,
 }: {
