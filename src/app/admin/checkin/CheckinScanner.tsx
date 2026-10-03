@@ -29,10 +29,8 @@ type Phase = "scanning" | "confirm" | "done";
 
 export default function CheckinScanner({
   events,
-  rsvps,
 }: {
   events: EventOption[];
-  rsvps: Rsvp[];
 }) {
   const router = useRouter();
   const [eventId, setEventId] = useState("");
@@ -43,6 +41,8 @@ export default function CheckinScanner({
   const [email, setEmail] = useState("");
   const [manualLoading, setManualLoading] = useState(false);
   const [justCheckedIn, setJustCheckedIn] = useState<Set<string>>(new Set());
+  const [rsvps, setRsvps] = useState<Rsvp[]>([]);
+  const [rsvpsLoading, setRsvpsLoading] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -51,15 +51,41 @@ export default function CheckinScanner({
   const eventIdRef = useRef(eventId);
   const pendingTokenRef = useRef<string | null>(null);
 
-  // Used to make the scanner wait for a stable QR code
   const stableTokenRef = useRef<string | null>(null);
   const lockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // How long the QR needs to remain detected before freezing
   const LOCK_TIME = 500;
 
   useEffect(() => {
     eventIdRef.current = eventId;
+  }, [eventId]);
+
+  useEffect(() => {
+    if (!eventId) {
+      setRsvps([]);
+      return;
+    }
+
+    let cancelled = false;
+    setRsvpsLoading(true);
+
+    fetch(`/api/admin/checkin-rsvps?eventId=${encodeURIComponent(eventId)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && data.rsvps) {
+          setRsvps(data.rsvps);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load RSVPs:', err);
+      })
+      .finally(() => {
+        if (!cancelled) setRsvpsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [eventId]);
 
   function checkedInMessage(data: { name?: string; event?: string; points?: number | null }) {
@@ -87,16 +113,11 @@ export default function CheckinScanner({
     };
   }
 
-  /*
-   * Once the same QR code has been detected for long enough,
-   * actually capture/freeze the camera.
-   */
   async function captureQRCode(token: string) {
     if (pendingTokenRef.current) return;
 
     pendingTokenRef.current = token;
 
-    // Clear the stability timer
     if (lockTimerRef.current) {
       clearTimeout(lockTimerRef.current);
       lockTimerRef.current = null;
@@ -105,11 +126,6 @@ export default function CheckinScanner({
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
-    /*
-     * Capture the current video frame.
-     * This gives us the exact frame that was being displayed
-     * when the QR code was locked in.
-     */
     if (video && canvas && video.videoWidth) {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
@@ -121,17 +137,12 @@ export default function CheckinScanner({
       }
     }
 
-    // NOW stop scanning.
     scannerRef.current?.pause();
 
     setPreview(null);
     setFeedback("");
     setPhase("confirm");
 
-    /*
-     * Only looking up the person;
-     * we haven't actually checked them in yet.
-     */
     try {
       const { ok, data } = await postAttendance({
         token,
@@ -148,22 +159,11 @@ export default function CheckinScanner({
     }
   }
 
-  /*
-   * Called every time qr-scanner sees a QR code.
-   *
-   * Instead of immediately freezing:
-   *
-   * Detect -> wait -> confirm stability -> capture
-   */
   function handleScan(token: string) {
     if (pendingTokenRef.current || !eventIdRef.current) {
       return;
     }
 
-    /*
-     * If this is a different QR code, restart the stability
-     * timer.
-     */
     if (stableTokenRef.current !== token) {
       stableTokenRef.current = token;
 
@@ -172,11 +172,6 @@ export default function CheckinScanner({
       }
 
       lockTimerRef.current = setTimeout(() => {
-        /*
-         * Only capture if:
-         * 1. It's still the same QR code
-         * 2. Nothing else has already been captured
-         */
         if (stableTokenRef.current === token && !pendingTokenRef.current) {
           captureQRCode(token);
         }
@@ -184,18 +179,8 @@ export default function CheckinScanner({
 
       return;
     }
-
-    /*
-     * Same QR is still being detected.
-     *
-     * Nothing needs to happen here because the timer
-     * created above is already running.
-     */
   }
 
-  /*
-   * Start the camera when an event is selected.
-   */
   useEffect(() => {
     if (!videoRef.current || !eventId) {
       return;
@@ -243,9 +228,6 @@ export default function CheckinScanner({
     };
   }, [eventId]);
 
-  /*
-   * Reset everything and start scanning again.
-   */
   function resumeScanning() {
     pendingTokenRef.current = null;
     stableTokenRef.current = null;
@@ -264,9 +246,6 @@ export default function CheckinScanner({
     });
   }
 
-  /*
-   * Admin confirms the scanned person.
-   */
   async function handleConfirmScan() {
     const token = pendingTokenRef.current;
 
@@ -283,22 +262,23 @@ export default function CheckinScanner({
 
       setFeedback(ok ? checkedInMessage(data) : `⚠️ ${data.error ?? "Check-in failed"}`);
 
-      if (ok) router.refresh();
+      if (ok) {
+        router.refresh();
+        fetch(`/api/admin/checkin-rsvps?eventId=${encodeURIComponent(eventIdRef.current)}`)
+          .then((res) => res.json())
+          .then((refreshData) => {
+            if (refreshData.rsvps) setRsvps(refreshData.rsvps);
+          })
+          .catch(() => {});
+      }
       setPhase("done");
     } catch {
-      /*
-       * Nothing was recorded, so stay on the confirmation
-       * screen and allow the admin to try again.
-       */
       setFeedback("⚠️ Network error — not saved, tap Confirm again");
     } finally {
       setConfirming(false);
     }
   }
 
-  /*
-   * Manual email check-in.
-   */
   async function handleManualSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -319,6 +299,12 @@ export default function CheckinScanner({
         setEmail("");
         setJustCheckedIn((prev) => new Set(prev).add(`${eventId}:${email.trim().toLowerCase()}`));
         router.refresh();
+        fetch(`/api/admin/checkin-rsvps?eventId=${encodeURIComponent(eventId)}`)
+          .then((res) => res.json())
+          .then((refreshData) => {
+            if (refreshData.rsvps) setRsvps(refreshData.rsvps);
+          })
+          .catch(() => {});
       }
     } catch {
       setFeedback("⚠️ Network error — try again");
@@ -327,9 +313,6 @@ export default function CheckinScanner({
     }
   }
 
-  /*
-   * Check in someone directly from the RSVP list.
-   */
   async function handleRsvpCheckIn(rsvp: Rsvp) {
     try {
       const { ok, data } = await postAttendance({
@@ -341,6 +324,12 @@ export default function CheckinScanner({
       if (ok) {
         setJustCheckedIn((prev) => new Set(prev).add(`${eventId}:${rsvp.email.trim().toLowerCase()}`));
         router.refresh();
+        fetch(`/api/admin/checkin-rsvps?eventId=${encodeURIComponent(eventId)}`)
+          .then((res) => res.json())
+          .then((refreshData) => {
+            if (refreshData.rsvps) setRsvps(refreshData.rsvps);
+          })
+          .catch(() => {});
       }
     } catch {
       setFeedback("⚠️ Network error — try again");
@@ -362,11 +351,6 @@ export default function CheckinScanner({
           onChange={(event) => {
             setEventId(event.target.value);
 
-            /*
-             * Switching events tears down and rebuilds the scanner, so drop
-             * any held scan too — otherwise a pending confirm would check
-             * that person into the event we just switched to.
-             */
             pendingTokenRef.current = null;
             stableTokenRef.current = null;
 
@@ -378,6 +362,7 @@ export default function CheckinScanner({
             setPreview(null);
             setFeedback("");
             setPhase("scanning");
+            setJustCheckedIn(new Set());
           }}
         >
           <option value="">— pick today&apos;s event —</option>
@@ -396,12 +381,6 @@ export default function CheckinScanner({
         </p>
       ) : (
         <>
-          {/*
-           * Live camera.
-           *
-           * qr-scanner provides the QR detection outline while
-           * this is visible.
-           */}
           <video
             ref={videoRef}
             className="scanner-video"
@@ -411,9 +390,6 @@ export default function CheckinScanner({
             hidden={phase !== "scanning"}
           />
 
-          {/*
-           * Frozen camera frame.
-           */}
           <canvas
             ref={canvasRef}
             className="scanner-video"
@@ -486,33 +462,39 @@ export default function CheckinScanner({
         </p>
       )}
 
-      {currentRsvps.length > 0 && (
+      {eventId && (
         <div>
-          <h2>RSVP&apos;d ({currentRsvps.length})</h2>
+          <h2>RSVP&apos;d {rsvpsLoading ? '(loading...)' : `(${currentRsvps.length})`}</h2>
 
-          <ul className="rsvp-list">
-            {currentRsvps.map((rsvp) => {
-              const attended = rsvp.attended || justCheckedIn.has(`${eventId}:${rsvp.email.trim().toLowerCase()}`);
+          {rsvpsLoading ? (
+            <p style={{ color: '#666' }}>Loading attendees...</p>
+          ) : currentRsvps.length > 0 ? (
+            <ul className="rsvp-list">
+              {currentRsvps.map((rsvp) => {
+                const attended = rsvp.attended || justCheckedIn.has(`${eventId}:${rsvp.email.trim().toLowerCase()}`);
 
-              return (
-                <li key={rsvp.email}>
-                  {rsvp.name}
-                  {rsvp.yearOfStudy ? ` (${rsvp.yearOfStudy})` : ""}{" "}
-                  {attended ? (
-                    "✅"
-                  ) : (
-                    <button
-                      type="button"
-                      className="link-button"
-                      onClick={() => handleRsvpCheckIn(rsvp)}
-                    >
-                      Check in
-                    </button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+                return (
+                  <li key={rsvp.email}>
+                    {rsvp.name}
+                    {rsvp.yearOfStudy ? ` (${rsvp.yearOfStudy})` : ""}{" "}
+                    {attended ? (
+                      "✅"
+                    ) : (
+                      <button
+                        type="button"
+                        className="link-button"
+                        onClick={() => handleRsvpCheckIn(rsvp)}
+                      >
+                        Check in
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p style={{ color: '#666' }}>No RSVPs for this event yet.</p>
+          )}
         </div>
       )}
     </div>

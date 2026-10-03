@@ -199,9 +199,16 @@ export default function Navbar() {
       .eq("user_id", userId)
       .maybeSingle()
       .then(({ data }) => {
-        if (adminCheckedFor.current === userId) setIsAdminUser(!!data);
+        if (adminCheckedFor.current === userId) {
+          const isAdmin = !!data;
+          setIsAdminUser(isAdmin);
+          if (isAdmin) {
+            router.prefetch('/admin');
+            router.prefetch('/admin/checkin');
+          }
+        }
       });
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     const { data: listener } = createClient().auth.onAuthStateChange(

@@ -1,11 +1,16 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient, isAdminClientConfigured } from '@/lib/supabase/admin';
-import { mapDatabaseEvent } from '@/lib/content';
-import { getMailingListSubscribers, type MailingListSubscriber } from '@/lib/members';
-import { NEWSLETTER_HISTORY_LIMIT, pruneNewsletterHistory } from '@/lib/newsletters';
-import { isMissingColumnError, missingColumnName, normalizeAnswers, presentJob, recoverPackedIdeas } from '@/lib/jobSections';
-import type { ClubJob, EventAttendee, JobApplication, ManagedEvent } from '@/types/content';
+import {
+  getCachedEvents,
+  getCachedJobs,
+  getCachedSubscribers,
+  getCachedNewsletters,
+  getCreatorEmailsBatched,
+} from '@/lib/admin-cache';
+import { pruneNewsletterHistory } from '@/lib/newsletters';
+import { isMissingColumnError, missingColumnName, normalizeAnswers, recoverPackedIdeas } from '@/lib/jobSections';
+import type { EventAttendee, JobApplication } from '@/types/content';
 import AdminDashboard from './AdminDashboard';
 
 export const metadata = {
@@ -101,127 +106,46 @@ export default async function AdminPage() {
     .maybeSingle();
   if (!admin) redirect('/login');
 
-  const [eventsResult, jobsResult] = await Promise.all([
-    supabase.from('events').select('id, title, description, location, starts_at, ends_at, images, points, is_published, created_by, created_at, updated_at').order('starts_at', { ascending: false }),
-    supabase.from('jobs').select('id, title, category, description, is_active, closes_at, commitment, location, sections, created_by, created_at, updated_at').order('created_at', { ascending: false }),
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+
+  const [eventsData, jobsData, subscribers, newsletters] = await Promise.all([
+    getCachedEvents(supabaseUrl),
+    getCachedJobs(supabaseUrl),
+    getCachedSubscribers(),
+    getCachedNewsletters(),
   ]);
 
-  // Keep the dashboard usable while the additive content-controls migration rolls out.
-  let eventRows: ManagedEvent[];
-  let eventsLoadError = '';
-  if (eventsResult.error?.code === '42703') {
-    const legacyEventsResult = await supabase
-      .from('events')
-      .select('id, title, description, location, starts_at, ends_at, images, points, created_by, created_at, updated_at')
-      .order('starts_at', { ascending: false });
-    eventRows = (legacyEventsResult.data ?? [])
-      .map(mapDatabaseEvent)
-      .filter((event): event is ManagedEvent => event !== null);
-    if (legacyEventsResult.error) {
-      console.error('Unable to load dashboard events', {
-        code: legacyEventsResult.error.code,
-        message: legacyEventsResult.error.message,
-      });
-      eventsLoadError = 'Events could not be loaded. Refresh the page and try again.';
-    }
-  } else {
-    eventRows = (eventsResult.data ?? [])
-      .map(mapDatabaseEvent)
-      .filter((event): event is ManagedEvent => event !== null);
-    if (eventsResult.error) {
-      console.error('Unable to load dashboard events', {
-        code: eventsResult.error.code,
-        message: eventsResult.error.message,
-      });
-      eventsLoadError = 'Events could not be loaded. Refresh the page and try again.';
-    }
-  }
+  const eventRows = eventsData.events;
+  const eventsLoadError = eventsData.error;
+  const jobRows = jobsData.jobs;
+  const jobsLoadError = jobsData.error;
 
-  let jobRows: ClubJob[];
-  let jobsLoadError = '';
-  if (isMissingColumnError(jobsResult.error)) {
-    const currentJobsResult = await supabase
-      .from('jobs')
-      .select('id, title, category, description, is_active, closes_at, commitment, location, created_by, created_at, updated_at')
-      .order('created_at', { ascending: false });
-    let fallbackRows = currentJobsResult.data as ClubJob[] | null;
-    let fallbackError = currentJobsResult.error;
-    if (isMissingColumnError(currentJobsResult.error)) {
-      const legacyJobsResult = await supabase
-        .from('jobs')
-        .select('id, title, category, description, is_active, created_by, created_at, updated_at')
-        .order('created_at', { ascending: false });
-      fallbackRows = legacyJobsResult.data as ClubJob[] | null;
-      fallbackError = legacyJobsResult.error;
-    }
-    jobRows = ((fallbackRows ?? []) as Array<ClubJob & { sections?: unknown }>).map((job) => {
-      const { sections, ...rest } = job;
-      return { ...rest, ...presentJob(rest.description ?? '', sections) };
-    });
-    if (fallbackError) {
-      console.error('Unable to load dashboard jobs', {
-        code: fallbackError.code,
-        message: fallbackError.message,
-      });
-      jobsLoadError = 'Jobs could not be loaded. Refresh the page and try again.';
-    }
-  } else {
-    jobRows = ((jobsResult.data ?? []) as Array<ClubJob & { sections?: unknown }>).map((job) => {
-      const { sections, ...rest } = job;
-      return { ...rest, ...presentJob(rest.description ?? '', sections) };
-    });
-    if (jobsResult.error) {
-      console.error('Unable to load dashboard jobs', {
-        code: jobsResult.error.code,
-        message: jobsResult.error.message,
-      });
-      jobsLoadError = 'Jobs could not be loaded. Refresh the page and try again.';
-    }
-  }
+  const creatorIds = [...eventRows, ...jobRows]
+    .map((item) => item.created_by)
+    .filter((id): id is string => Boolean(id));
 
   const adminClientConfigured = isAdminClientConfigured();
   const adminClient = adminClientConfigured ? createAdminClient() : null;
-  const creatorEmails: Record<string, string> = {};
-  if (user.email) creatorEmails[user.id] = user.email;
 
-  if (adminClient) {
-    const creatorIds = Array.from(new Set(
-      [...eventRows, ...jobRows]
-        .map((item) => item.created_by)
-        .filter((id): id is string => Boolean(id) && id !== user.id),
-    ));
-    await Promise.all(creatorIds.map(async (creatorId) => {
-      const { data, error } = await adminClient.auth.admin.getUserById(creatorId);
-      if (!error && data.user?.email) creatorEmails[creatorId] = data.user.email;
-    }));
-  }
+  const [creatorEmails, applicationsData] = await Promise.all([
+    getCreatorEmailsBatched(creatorIds, user.email ?? undefined, user.id),
+    adminClient 
+      ? loadCareerApplications(adminClient)
+      : Promise.resolve({ rows: [] as JobApplication[], error: 'Applications are unavailable because secure server access is not configured.' }),
+  ]);
 
-  let subscribers: MailingListSubscriber[] = [];
-  let newsletters: Array<{ id: string; subject: string; recipient_count: number; sent_at: string }> = [];
+  const applications = applicationsData.rows;
+  let applicationsLoadError = applicationsData.error;
+
   let attendees: EventAttendee[] = [];
-  let applications: JobApplication[] = [];
-  let applicationsLoadError = adminClient
-    ? ''
-    : 'Applications are unavailable because secure server access is not configured.';
   let attendanceLoadError = adminClient
     ? ''
     : 'RSVP information is unavailable because secure server access is not configured.';
 
   if (adminClient) {
-    const loadedApplications = await loadCareerApplications(adminClient);
-    applications = loadedApplications.rows;
-    applicationsLoadError = loadedApplications.error;
-    await pruneNewsletterHistory(adminClient);
-    const [subscriberRows, newslettersResult] = await Promise.all([
-      getMailingListSubscribers(adminClient),
-      adminClient
-      .from('newsletters')
-      .select('id, subject, recipient_count, sent_at')
-      .order('sent_at', { ascending: false })
-      .limit(NEWSLETTER_HISTORY_LIMIT),
-    ]);
-    subscribers = subscriberRows;
-    newsletters = newslettersResult.data ?? [];
+    pruneNewsletterHistory(adminClient).catch((err) => {
+      console.error('Newsletter prune failed:', err);
+    });
 
     const eventIds = eventRows.map((event) => event.id).filter(Boolean);
     if (eventIds.length) {
@@ -231,7 +155,6 @@ export default async function AdminPage() {
           .select('event_id, user_id, year_of_study, suggestions')
           .in('event_id', eventIds),
         loadEventGuests(adminClient, eventIds),
-        // All stamps, not just current events: stamps from deleted events have a null event_id but still count toward passport points.
         adminClient
           .from('passport_stamps')
           .select('event_id, user_id, points'),
