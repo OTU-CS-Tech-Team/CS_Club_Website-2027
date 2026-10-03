@@ -183,6 +183,7 @@ export async function subscribeGuest(name: string, email: string): Promise<Maili
     throw err instanceof Error ? err : new Error('Could not send confirmation email.');
   }
 
+  revalidateTag(ADMIN_CACHE_TAGS.subscribers);
   return { ok: true, pendingVerification: true };
 }
 

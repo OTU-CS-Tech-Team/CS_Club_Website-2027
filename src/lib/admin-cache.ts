@@ -124,20 +124,24 @@ async function fetchNewslettersInternal(): Promise<SentNewsletter[]> {
 }
 
 export const getCachedEvents = unstable_cache(
-  async (supabaseUrl: string) => {
-    const { createClient } = await import('@/lib/supabase/server');
-    const supabase = await createClient();
-    return fetchEventsInternal(supabase);
+  async () => {
+    if (!isAdminClientConfigured()) {
+      return { events: [], error: 'Events are unavailable because secure server access is not configured.' };
+    }
+    const adminClient = createAdminClient();
+    return fetchEventsInternal(adminClient);
   },
   ['admin-events'],
   { tags: [ADMIN_CACHE_TAGS.events], revalidate: CACHE_REVALIDATE_SECONDS }
 );
 
 export const getCachedJobs = unstable_cache(
-  async (supabaseUrl: string) => {
-    const { createClient } = await import('@/lib/supabase/server');
-    const supabase = await createClient();
-    return fetchJobsInternal(supabase);
+  async () => {
+    if (!isAdminClientConfigured()) {
+      return { jobs: [], error: 'Jobs are unavailable because secure server access is not configured.' };
+    }
+    const adminClient = createAdminClient();
+    return fetchJobsInternal(adminClient);
   },
   ['admin-jobs'],
   { tags: [ADMIN_CACHE_TAGS.jobs], revalidate: CACHE_REVALIDATE_SECONDS }
@@ -182,6 +186,21 @@ export async function getCreatorEmailsBatched(
   for (const profile of profiles ?? []) {
     if (profile.email) {
       creatorEmails[profile.id] = profile.email;
+    }
+  }
+
+  const missingIds = uniqueIds.filter((id) => !creatorEmails[id]);
+  if (missingIds.length > 0) {
+    const authLookups = await Promise.all(
+      missingIds.map(async (id) => {
+        const { data } = await adminClient.auth.admin.getUserById(id);
+        return { id, email: data?.user?.email };
+      })
+    );
+    for (const { id, email } of authLookups) {
+      if (email) {
+        creatorEmails[id] = email;
+      }
     }
   }
 

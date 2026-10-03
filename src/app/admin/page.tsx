@@ -8,7 +8,6 @@ import {
   getCachedNewsletters,
   getCreatorEmailsBatched,
 } from '@/lib/admin-cache';
-import { pruneNewsletterHistory } from '@/lib/newsletters';
 import { isMissingColumnError, missingColumnName, normalizeAnswers, recoverPackedIdeas } from '@/lib/jobSections';
 import type { EventAttendee, JobApplication } from '@/types/content';
 import AdminDashboard from './AdminDashboard';
@@ -106,11 +105,9 @@ export default async function AdminPage() {
     .maybeSingle();
   if (!admin) redirect('/login');
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-
   const [eventsData, jobsData, subscribers, newsletters] = await Promise.all([
-    getCachedEvents(supabaseUrl),
-    getCachedJobs(supabaseUrl),
+    getCachedEvents(),
+    getCachedJobs(),
     getCachedSubscribers(),
     getCachedNewsletters(),
   ]);
@@ -143,10 +140,6 @@ export default async function AdminPage() {
     : 'RSVP information is unavailable because secure server access is not configured.';
 
   if (adminClient) {
-    pruneNewsletterHistory(adminClient).catch((err) => {
-      console.error('Newsletter prune failed:', err);
-    });
-
     const eventIds = eventRows.map((event) => event.id).filter(Boolean);
     if (eventIds.length) {
       const [memberResult, guestResult, stampResult] = await Promise.all([
