@@ -1,12 +1,13 @@
 'use server';
 
+import { createHmac } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { createAdminClient, isAdminClientConfigured } from '@/lib/supabase/admin';
+import { isTableOrFunctionMissing } from '@/lib/supabaseErrors';
 import {
   validateSuggestion,
   hasValidationErrors,
-  SUGGESTION_CATEGORIES,
   type SuggestionCategory,
   type SuggestionFieldErrors,
   type SuggestionFields,
@@ -23,90 +24,34 @@ export type SuggestionState =
   | { status: 'success'; ref: string; category: SuggestionCategory };
 
 const MIN_FILL_TIME_MS = 3000;
-const RATE_LIMIT_WINDOW_MINUTES = 10;
-const RATE_LIMIT_MAX_PER_WINDOW = 3;
-const RATE_LIMIT_MAX_PER_DAY = 10;
+const DROP_BOX_CLOSED_MSG = 'The drop box is closed right now. Email us instead.';
 
 function text(formData: FormData, field: string): string {
   return String(formData.get(field) ?? '').trim();
 }
 
-function hashSecret(): string {
+function getHashSecret(): string | null {
   return (
-    process.env.SUGGESTION_HASH_SECRET ??
-    process.env.GUEST_CANCEL_SECRET ??
-    process.env.CRON_SECRET ??
-    'fallback-suggestion-secret'
+    process.env.SUGGESTION_HASH_SECRET ||
+    process.env.CRON_SECRET ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    null
   );
 }
 
-async function sha256(input: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(input);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+function hmacSha256(input: string, secret: string): string {
+  return createHmac('sha256', secret).update(input).digest('hex');
 }
 
-async function getIpHash(): Promise<string> {
+async function getIpHash(): Promise<string | null> {
+  const secret = getHashSecret();
+  if (!secret) return null;
+
   const headersList = await headers();
+  const realIp = headersList.get('x-real-ip');
   const forwarded = headersList.get('x-forwarded-for');
-  const ip = forwarded?.split(',')[0]?.trim() ?? 'unknown';
-  return sha256(`${ip}:${hashSecret()}`);
-}
-
-async function cleanupOldRateLimits(adminClient: ReturnType<typeof createAdminClient>) {
-  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  await adminClient.from('suggestion_rate_limits').delete().lt('created_at', cutoff);
-}
-
-async function checkRateLimit(
-  adminClient: ReturnType<typeof createAdminClient>,
-  ipHash: string
-): Promise<{ allowed: boolean; reason?: string }> {
-  const now = new Date();
-  const windowStart = new Date(now.getTime() - RATE_LIMIT_WINDOW_MINUTES * 60 * 1000);
-  const dayStart = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-  const { data: recentEntries, error } = await adminClient
-    .from('suggestion_rate_limits')
-    .select('created_at')
-    .eq('ip_hash', ipHash)
-    .gte('created_at', dayStart.toISOString())
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Rate limit check failed', { code: error.code, message: error.message });
-    return { allowed: true };
-  }
-
-  const entries = recentEntries ?? [];
-  const windowCount = entries.filter(
-    (e) => new Date(e.created_at) >= windowStart
-  ).length;
-
-  if (windowCount >= RATE_LIMIT_MAX_PER_WINDOW) {
-    return {
-      allowed: false,
-      reason: 'The mailbox is full right now. Try again in a few minutes.',
-    };
-  }
-
-  if (entries.length >= RATE_LIMIT_MAX_PER_DAY) {
-    return {
-      allowed: false,
-      reason: 'The mailbox is full right now. Try again later.',
-    };
-  }
-
-  return { allowed: true };
-}
-
-async function recordRateLimit(
-  adminClient: ReturnType<typeof createAdminClient>,
-  ipHash: string
-) {
-  await adminClient.from('suggestion_rate_limits').insert({ ip_hash: ipHash });
+  const ip = realIp?.trim() || forwarded?.split(',')[0]?.trim() || 'unknown';
+  return hmacSha256(ip, secret);
 }
 
 export async function submitSuggestion(
@@ -128,8 +73,18 @@ export async function submitSuggestion(
     }
 
     const startedAt = parseInt(startedAtStr, 10);
-    if (!Number.isNaN(startedAt) && Date.now() - startedAt < MIN_FILL_TIME_MS) {
-      return { status: 'success', ref: 'CS-0000', category: 'other' };
+    const now = Date.now();
+    if (
+      !startedAtStr ||
+      Number.isNaN(startedAt) ||
+      startedAt > now ||
+      now - startedAt < MIN_FILL_TIME_MS
+    ) {
+      return {
+        status: 'error',
+        message: 'That was quick, give it a second and send again.',
+        values,
+      };
     }
 
     const fieldErrors = validateSuggestion(values);
@@ -138,46 +93,33 @@ export async function submitSuggestion(
     }
 
     if (!isAdminClientConfigured()) {
-      return {
-        status: 'error',
-        message: 'The drop box is closed right now. Email us instead.',
-        values,
-      };
+      return { status: 'error', message: DROP_BOX_CLOSED_MSG, values };
+    }
+
+    const ipHash = await getIpHash();
+    if (!ipHash) {
+      console.error('submitSuggestion: no hash secret configured');
+      return { status: 'error', message: DROP_BOX_CLOSED_MSG, values };
     }
 
     const adminClient = createAdminClient();
-    const ipHash = await getIpHash();
 
-    await cleanupOldRateLimits(adminClient);
-
-    const rateCheck = await checkRateLimit(adminClient, ipHash);
-    if (!rateCheck.allowed) {
-      return { status: 'error', message: rateCheck.reason, values };
-    }
-
-    const { data, error } = await adminClient
-      .from('suggestions')
-      .insert({
-        category: category as SuggestionCategory,
-        message: message.trim(),
-        name: name.trim() || null,
-        email: email.trim() || null,
-      })
-      .select('id')
-      .single();
+    const { data, error } = await adminClient.rpc('submit_suggestion', {
+      p_ip_hash: ipHash,
+      p_category: category as SuggestionCategory,
+      p_message: message.trim(),
+      p_name: name.trim() || null,
+      p_email: email.trim() || null,
+    });
 
     if (error) {
-      console.error('submitSuggestion insert failed', {
+      console.error('submitSuggestion rpc failed', {
         code: error.code,
         message: error.message,
       });
 
-      if (error.code === '42P01') {
-        return {
-          status: 'error',
-          message: 'The drop box is closed right now. Email us instead.',
-          values,
-        };
+      if (isTableOrFunctionMissing(error)) {
+        return { status: 'error', message: DROP_BOX_CLOSED_MSG, values };
       }
 
       return {
@@ -187,11 +129,27 @@ export async function submitSuggestion(
       };
     }
 
-    await recordRateLimit(adminClient, ipHash);
+    const result = Array.isArray(data) ? data[0] : data;
+
+    if (!result || result.status === 'rate_limited') {
+      return {
+        status: 'error',
+        message: 'The mailbox is full right now. Try again in a few minutes.',
+        values,
+      };
+    }
+
+    if (result.status !== 'ok' || !result.id) {
+      return {
+        status: 'error',
+        message: 'The drop box is jammed. Try again in a minute.',
+        values,
+      };
+    }
 
     revalidatePath('/admin');
 
-    const ref = `CS-${data.id.slice(0, 4).toUpperCase()}`;
+    const ref = `CS-${String(result.id).slice(0, 4).toUpperCase()}`;
     return {
       status: 'success',
       ref,

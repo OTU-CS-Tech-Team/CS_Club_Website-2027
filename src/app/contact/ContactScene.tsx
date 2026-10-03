@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { JetBrains_Mono } from 'next/font/google';
 import LetterModal from '@/components/contact/LetterModal';
 import { CATEGORY_LABELS, type SuggestionCategory } from '@/lib/suggestionValidation';
+import { SOCIALS } from '@/data/socials';
+import SocialIcon from '@/components/SocialIcon';
 import styles from './contact.module.css';
 
 const MeadowScene = dynamic(() => import('@/components/contact/MeadowScene'), {
@@ -13,21 +14,25 @@ const MeadowScene = dynamic(() => import('@/components/contact/MeadowScene'), {
   loading: () => null,
 });
 
-const mono = JetBrains_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500', '700'],
-  display: 'swap',
-});
-
 function useSupportsWebGL() {
   const [supports, setSupports] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl2');
-    const saveData = (navigator as { connection?: { saveData?: boolean } }).connection?.saveData;
-    const lowEnd = saveData || navigator.hardwareConcurrency <= 4;
-    setSupports(!!gl && !lowEnd);
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+      if (!gl) {
+        setSupports(false);
+        return;
+      }
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const saveData = (navigator as { connection?: { saveData?: boolean } }).connection?.saveData;
+      const lowMemory = (navigator as { deviceMemory?: number }).deviceMemory !== undefined && 
+                        (navigator as { deviceMemory?: number }).deviceMemory! < 4;
+      setSupports(!reduceMotion && !saveData && !lowMemory);
+    } catch {
+      setSupports(false);
+    }
   }, []);
 
   return supports;
@@ -37,39 +42,31 @@ export default function ContactScene() {
   const [modalOpen, setModalOpen] = useState(false);
   const [flagUp, setFlagUp] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
-  const [toastData, setToastData] = useState({ ref: '', category: '' });
-  const [sceneVisible, setSceneVisible] = useState(false);
+  const [toastData, setToastData] = useState({ ref: '', category: '', hasEmail: false });
+  const [posterVisible, setPosterVisible] = useState(true);
+  const [hintVisible, setHintVisible] = useState(false);
+  const slotRef = useRef<HTMLDivElement>(null);
 
   const supportsWebGL = useSupportsWebGL();
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setSceneVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '100px' }
-    );
-
-    const target = document.getElementById('dropbox');
-    if (target) observer.observe(target);
-
-    return () => observer.disconnect();
-  }, []);
+  const isStacked = typeof window !== 'undefined' && window.matchMedia('(max-width: 1023.98px)').matches;
 
   const openModal = useCallback(() => setModalOpen(true), []);
   const closeModal = useCallback(() => setModalOpen(false), []);
 
-  const handleSuccess = useCallback((ref: string, category: SuggestionCategory) => {
+  const handleFirstFrame = useCallback(() => {
+    setPosterVisible(false);
+    setHintVisible(true);
+  }, []);
+
+  const handleSuccess = useCallback((ref: string, category: SuggestionCategory, hasEmail: boolean) => {
     setFlagUp(true);
-    setToastData({ ref, category: CATEGORY_LABELS[category] });
+    setToastData({ ref, category: CATEGORY_LABELS[category], hasEmail });
     setToastVisible(true);
+    closeModal();
 
     const timeout = setTimeout(() => setToastVisible(false), 8000);
     return () => clearTimeout(timeout);
-  }, []);
+  }, [closeModal]);
 
   const handleWriteAnother = useCallback(() => {
     setToastVisible(false);
@@ -79,49 +76,126 @@ export default function ContactScene() {
 
   return (
     <>
-      <section id="dropbox" className={styles.sceneSection} aria-labelledby="dropbox-title">
-        <div className={styles.sceneWrap}>
+      {/* Scene container - fixed behind everything */}
+      <div className={styles.sceneContainer}>
+        {/* Gradient fallback */}
+        <div className={styles.sceneFallbackGradient} aria-hidden="true" />
+        
+        {/* Poster fallback */}
+        {posterVisible && (
           <Image
-            src="/concept-art.png"
-            alt="Illustration: the CS Club mailbox in a sunny meadow"
+            src="/concept-art.jpg"
+            alt=""
             fill
             className={styles.sceneFallback}
-            priority={false}
-            style={{ objectFit: 'cover' }}
+            priority
+            aria-hidden="true"
+            style={{ pointerEvents: 'none' }}
           />
+        )}
 
-          {supportsWebGL && sceneVisible && (
-            <MeadowScene onMailboxClick={openModal} flagUp={flagUp} />
-          )}
+        {/* 3D Scene */}
+        {supportsWebGL !== false && (
+          <MeadowScene
+            onMailboxClick={openModal}
+            flagUp={flagUp}
+            onFirstFrame={handleFirstFrame}
+            stacked={isStacked}
+            slotRef={slotRef}
+          />
+        )}
+      </div>
 
-          <div className={styles.sceneOverlay}>
-            <div className={styles.sceneOverlayInner}>
-              <div className={styles.sceneCard}>
-                <p className={`${styles.eyebrow} ${mono.className}`}>
-                  <span>02</span>
-                  <span className={styles.eyebrowRule} aria-hidden="true" />
-                  <span>The drop box</span>
-                </p>
-                <h2 id="dropbox-title" className={styles.sceneCardTitle}>
-                  Leave us a note.
-                </h2>
-                <p className={styles.sceneCardText}>
-                  Event ideas, workshop requests, feedback, or just a hello. Anonymous unless you
-                  sign it.
-                </p>
+      {/* Content wrapper */}
+      <div id="contact-ui" className={styles.contentWrapper}>
+        <main className={styles.mainContent}>
+          <div className={styles.cardsContainer}>
+            {/* Find Us Card */}
+            <section className={`${styles.glass} ${styles.findUsCard}`} aria-labelledby="findus">
+              <p className={styles.eyebrow}>
+                <span>01</span>
+                <span className={styles.eyebrowRule} aria-hidden="true" />
+                <span>Find us</span>
+              </p>
+              <h1 id="findus" className={styles.headline}>
+                Say hi. Drop an idea.
+              </h1>
+              <p className={styles.subtext}>
+                Questions, collabs or sponsorships: reach the execs on any of these.
+              </p>
+              <ul className={styles.socials} aria-label="Contact and socials">
+                {SOCIALS.map((social) => (
+                  <li key={social.id}>
+                    <a
+                      href={social.href}
+                      className={styles.socialLink}
+                      target={social.id === 'email' ? undefined : '_blank'}
+                      rel={social.id === 'email' ? undefined : 'noreferrer noopener'}
+                      aria-label={social.label}
+                      title={social.label}
+                    >
+                      <SocialIcon id={social.id} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            {/* Drop Box Card */}
+            <section className={`${styles.glass} ${styles.dropboxCard}`} aria-labelledby="dropbox-title">
+              <p className={styles.eyebrow}>
+                <span>02</span>
+                <span className={styles.eyebrowRule} aria-hidden="true" />
+                <span>The drop box</span>
+              </p>
+              <h2 id="dropbox-title" className={styles.dropboxTitle}>
+                Leave us a note.
+              </h2>
+              <p className={styles.dropboxText}>
+                Event ideas, workshop requests, feedback, or just a hello. Anonymous unless you sign it.
+              </p>
+              <div className={styles.writeButtonRow}>
                 <button type="button" className={styles.writeButton} onClick={openModal}>
-                  ✉ Write a letter
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                  Write a letter
                 </button>
+                <span className={styles.mailboxHint}>
+                  <span className={styles.mailboxHintDesktop}>or click the mailbox →</span>
+                  <span className={styles.mailboxHintMobile}>or tap the mailbox below ↓</span>
+                </span>
               </div>
-            </div>
+            </section>
           </div>
 
-          <p className={`${styles.sceneHint} ${mono.className}`}>tap the mailbox ✉</p>
-        </div>
-      </section>
+          {/* Scene slot for stacked layouts */}
+          <div ref={slotRef} className={styles.sceneSlot} aria-hidden="true" />
+        </main>
+      </div>
 
+      {/* Mailbox tap hint for stacked layouts */}
+      {hintVisible && isStacked && !modalOpen && (
+        <div
+          className={`${styles.mailboxHintLabel}`}
+          style={{ left: '50%', top: '50%' }}
+          onClick={openModal}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && openModal()}
+        >
+          <div className={styles.mailboxHintInner}>
+            <span className={styles.mailboxHintDot} aria-hidden="true" />
+            Tap to leave us a note
+          </div>
+        </div>
+      )}
+
+      {/* Letter Modal */}
       <LetterModal isOpen={modalOpen} onClose={closeModal} onSuccess={handleSuccess} />
 
+      {/* Success Toast */}
       <div
         className={styles.toast}
         data-visible={toastVisible}
@@ -134,6 +208,7 @@ export default function ContactScene() {
             <p className={styles.toastTitle}>Your letter is in the box!</p>
             <p className={styles.toastSub}>
               Ref #{toastData.ref} · {toastData.category}
+              {toastData.hasEmail && ' · we may reply by email'}
             </p>
           </div>
           <button type="button" className={styles.toastAgain} onClick={handleWriteAnother}>

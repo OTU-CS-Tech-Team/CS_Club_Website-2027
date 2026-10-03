@@ -5,7 +5,6 @@ import Image from 'next/image';
 import {
   SUGGESTION_CATEGORIES,
   CATEGORY_LABELS,
-  CATEGORY_EMOJI,
   validateSuggestion,
   hasValidationErrors,
   MESSAGE_MAX_LENGTH,
@@ -18,7 +17,7 @@ import styles from '@/app/contact/contact.module.css';
 type LetterModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (ref: string, category: SuggestionCategory) => void;
+  onSuccess: (ref: string, category: SuggestionCategory, hasEmail: boolean) => void;
 };
 
 export default function LetterModal({ isOpen, onClose, onSuccess }: LetterModalProps) {
@@ -36,6 +35,7 @@ export default function LetterModal({ isOpen, onClose, onSuccess }: LetterModalP
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [clientErrors, setClientErrors] = useState<SuggestionFieldErrors>({});
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const resetForm = useCallback(() => {
     setCategory('event_idea');
@@ -43,25 +43,35 @@ export default function LetterModal({ isOpen, onClose, onSuccess }: LetterModalP
     setName('');
     setEmail('');
     setClientErrors({});
+    setServerError(null);
   }, []);
 
   useEffect(() => {
     if (state.status === 'success') {
-      onSuccess(state.ref, state.category);
+      onSuccess(state.ref, state.category, !!email.trim());
       resetForm();
-      onClose();
-    } else if (state.status === 'error' && state.values) {
-      setCategory((state.values.category as SuggestionCategory) || 'event_idea');
-      setMessage(state.values.message);
-      setName(state.values.name);
-      setEmail(state.values.email);
+    } else if (state.status === 'error') {
+      if (state.fieldErrors) {
+        setClientErrors(state.fieldErrors);
+      }
+      if (state.message) {
+        setServerError(state.message);
+      }
+      if (state.values) {
+        setCategory((state.values.category as SuggestionCategory) || 'event_idea');
+        setMessage(state.values.message);
+        setName(state.values.name);
+        setEmail(state.values.email);
+      }
     }
-  }, [state, onSuccess, onClose, resetForm]);
+  }, [state, onSuccess, resetForm, email]);
 
   useEffect(() => {
     if (isOpen) {
       lastFocusRef.current = document.activeElement as HTMLElement;
       startedAtRef.current = Date.now();
+      setServerError(null);
+      setClientErrors({});
       document.body.style.overflow = 'hidden';
       setTimeout(() => messageRef.current?.focus({ preventScroll: true }), 60);
     } else {
@@ -71,6 +81,36 @@ export default function LetterModal({ isOpen, onClose, onSuccess }: LetterModalP
 
     return () => {
       document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  // Handle visualViewport for mobile keyboards
+  useEffect(() => {
+    if (!isOpen || typeof window === 'undefined') return;
+    
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const modal = document.querySelector('[role="dialog"]') as HTMLElement | null;
+    if (!modal) return;
+
+    const updateHeight = () => {
+      if (window.innerWidth >= 640) {
+        modal.style.height = '';
+        modal.style.top = '';
+        return;
+      }
+      modal.style.height = `${vv.height}px`;
+      modal.style.top = `${vv.offsetTop}px`;
+    };
+
+    vv.addEventListener('resize', updateHeight);
+    vv.addEventListener('scroll', updateHeight);
+    updateHeight();
+
+    return () => {
+      vv.removeEventListener('resize', updateHeight);
+      vv.removeEventListener('scroll', updateHeight);
     };
   }, [isOpen]);
 
@@ -110,6 +150,13 @@ export default function LetterModal({ isOpen, onClose, onSuccess }: LetterModalP
     }
   };
 
+  const clearErrorsOnEdit = useCallback(() => {
+    if (serverError) setServerError(null);
+    if (Object.keys(clientErrors).length > 0) {
+      setClientErrors({});
+    }
+  }, [serverError, clientErrors]);
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     const errors = validateSuggestion({ category, message, name, email });
     if (hasValidationErrors(errors)) {
@@ -122,13 +169,14 @@ export default function LetterModal({ isOpen, onClose, onSuccess }: LetterModalP
       return;
     }
     setClientErrors({});
+    setServerError(null);
   };
 
   if (!isOpen) return null;
 
   const displayErrors =
     state.status === 'error' && state.fieldErrors ? state.fieldErrors : clientErrors;
-  const formError = state.status === 'error' && state.message ? state.message : null;
+  const formError = serverError || (state.status === 'error' && state.message ? state.message : null);
 
   return (
     <div
@@ -180,10 +228,13 @@ export default function LetterModal({ isOpen, onClose, onSuccess }: LetterModalP
                       name="category"
                       value={cat}
                       checked={category === cat}
-                      onChange={() => setCategory(cat)}
+                      onChange={() => {
+                        setCategory(cat);
+                        clearErrorsOnEdit();
+                      }}
                     />
                     <span className={styles.categoryChipLabel}>
-                      {CATEGORY_EMOJI[cat]} {CATEGORY_LABELS[cat]}
+                      {CATEGORY_LABELS[cat]}
                     </span>
                   </label>
                 ))}
@@ -207,9 +258,7 @@ export default function LetterModal({ isOpen, onClose, onSuccess }: LetterModalP
                 value={message}
                 onChange={(e) => {
                   setMessage(e.target.value);
-                  if (displayErrors.message) {
-                    setClientErrors((prev) => ({ ...prev, message: undefined }));
-                  }
+                  clearErrorsOnEdit();
                 }}
                 maxLength={MESSAGE_MAX_LENGTH}
                 rows={6}
@@ -227,52 +276,60 @@ export default function LetterModal({ isOpen, onClose, onSuccess }: LetterModalP
               </div>
             </div>
 
-            <div className={styles.nameEmailGrid}>
-              <div className={styles.inputGroup}>
-                <label htmlFor="name">
-                  From <span className={styles.inputOptional}>(optional)</span>
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  className={styles.inputField}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  maxLength={120}
-                  autoComplete="name"
-                  placeholder="Leave blank to stay anonymous"
-                  aria-invalid={!!displayErrors.name}
-                />
-                {displayErrors.name && (
-                  <span className={styles.inputError} role="alert">
-                    {displayErrors.name}
-                  </span>
-                )}
-              </div>
+            {/* Combined From section */}
+            <fieldset className={styles.fromSection}>
+              <legend className={styles.fromLegend}>
+                From <span className={styles.fromOptional}>(optional)</span>
+              </legend>
+              <div className={styles.fromFields}>
+                <div className={styles.inputGroup}>
+                  <label htmlFor="name">Name</label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    className={styles.inputField}
+                    value={name}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      clearErrorsOnEdit();
+                    }}
+                    maxLength={120}
+                    autoComplete="name"
+                    placeholder="Leave blank to stay anonymous"
+                    aria-invalid={!!displayErrors.name}
+                  />
+                  {displayErrors.name && (
+                    <span className={styles.inputError} role="alert">
+                      {displayErrors.name}
+                    </span>
+                  )}
+                </div>
 
-              <div className={styles.inputGroup}>
-                <label htmlFor="email">
-                  Reply to <span className={styles.inputOptional}>(optional)</span>
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  className={styles.inputField}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  maxLength={254}
-                  autoComplete="email"
-                  placeholder="you@ontariotechu.net"
-                  aria-invalid={!!displayErrors.email}
-                  aria-describedby="email-error"
-                />
-                <span id="email-error" className={styles.inputError} aria-live="polite">
-                  {displayErrors.email}
-                </span>
+                <div className={styles.inputGroup}>
+                  <label htmlFor="email">Email</label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    className={styles.inputField}
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      clearErrorsOnEdit();
+                    }}
+                    maxLength={254}
+                    autoComplete="email"
+                    placeholder="you@ontariotechu.net"
+                    aria-invalid={!!displayErrors.email}
+                    aria-describedby="email-error"
+                  />
+                  <span id="email-error" className={styles.inputError} aria-live="polite">
+                    {displayErrors.email}
+                  </span>
+                </div>
               </div>
-            </div>
+            </fieldset>
 
             <div className={styles.honeypot} aria-hidden="true">
               <input name="website" tabIndex={-1} autoComplete="off" />
@@ -287,7 +344,7 @@ export default function LetterModal({ isOpen, onClose, onSuccess }: LetterModalP
             )}
 
             <div className={styles.submitRow}>
-              <p className={styles.submitNote}>
+              <p className={styles.privacyNote}>
                 Only club execs can read the drop box.{' '}
                 <span className={styles.anonBadge}>● Anonymous by default</span>
               </p>
@@ -302,7 +359,7 @@ export default function LetterModal({ isOpen, onClose, onSuccess }: LetterModalP
                   disabled={pending}
                   aria-disabled={pending}
                 >
-                  {pending ? 'Sending…' : 'Seal & send ✉'}
+                  {pending ? 'Sending…' : 'Seal & send'}
                 </button>
               </div>
             </div>

@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import { JetBrains_Mono, Caveat } from 'next/font/google';
-import { SOCIALS } from '@/data/socials';
-import SocialIcon from '@/components/SocialIcon';
 import ContactScene from './ContactScene';
 import styles from './contact.module.css';
 
@@ -27,35 +25,7 @@ const hand = Caveat({
 
 export default function ContactPage() {
   return (
-    <div className={`${styles.page} ${mono.variable} ${hand.variable}`}>
-      <section className={styles.section} aria-labelledby="findus">
-        <p className={styles.eyebrow}>
-          <span>01</span>
-          <span className={styles.eyebrowRule} aria-hidden="true" />
-          <span>Find us</span>
-        </p>
-        <h1 id="findus" className={styles.headline}>
-          Say hi. Drop an idea.
-        </h1>
-
-        <ul className={styles.socials} aria-label="Contact and socials">
-          {SOCIALS.map((social) => (
-            <li key={social.id}>
-              <a
-                href={social.href}
-                className={styles.socialLink}
-                target={social.id === 'email' ? undefined : '_blank'}
-                rel={social.id === 'email' ? undefined : 'noreferrer noopener'}
-                aria-label={social.label}
-                title={social.label}
-              >
-                <SocialIcon id={social.id} />
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
-
+    <div className={`${styles.contactPage} ${mono.variable} ${hand.variable}`}>
       <ContactScene />
     </div>
   );

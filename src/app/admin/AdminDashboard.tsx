@@ -62,7 +62,13 @@ function attendeeCsvRow(attendee: EventAttendee, event: ManagedEvent | undefined
 }
 
 function downloadCsv(filename: string, header: string[], rows: string[][]) {
-  const escapeCell = (value: string) => (/[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value);
+  const escapeCell = (value: string) => {
+    let escaped = value;
+    if (/^[=+\-@\t\r]/.test(escaped)) {
+      escaped = "'" + escaped;
+    }
+    return `"${escaped.replace(/"/g, '""')}"`;
+  };
   const csv = [header, ...rows].map((row) => row.map(escapeCell).join(',')).join('\r\n');
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
   const link = document.createElement('a');
