@@ -89,3 +89,17 @@ export type EventAttendee = {
   /** False when they were recorded at the door and never RSVP'd. */
   rsvped: boolean;
 };
+
+export type SuggestionCategory = 'event_idea' | 'workshop' | 'feedback' | 'just_saying_hi' | 'other';
+export type SuggestionStatus = 'new' | 'read' | 'archived';
+
+export type ClubSuggestion = {
+  id: string;
+  category: SuggestionCategory;
+  message: string;
+  name: string | null;
+  email: string | null;
+  status: SuggestionStatus;
+  created_at: string;
+  updated_at?: string;
+};

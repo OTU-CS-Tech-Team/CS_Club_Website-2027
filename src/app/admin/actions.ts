@@ -389,3 +389,55 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect('/login');
 }
+
+export async function updateSuggestionStatus(
+  id: string,
+  status: 'new' | 'read' | 'archived'
+): Promise<AdminActionState> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+    return initialError('Invalid suggestion identifier.');
+  }
+  if (!['new', 'read', 'archived'].includes(status)) {
+    return initialError('Invalid status.');
+  }
+
+  try {
+    await requireAdmin();
+    const admin = createAdminClient();
+    const { error } = await admin.from('suggestions').update({ status }).eq('id', id);
+    if (error) {
+      console.error('Unable to update suggestion status', { code: error.code, message: error.message });
+      return initialError('Could not update the suggestion.');
+    }
+  } catch (error) {
+    return initialError(authorizationError(error) ?? 'Could not update the suggestion.');
+  }
+
+  revalidatePath('/admin');
+  return { ok: true, message: status === 'archived' ? 'Archived.' : status === 'read' ? 'Marked as read.' : 'Marked as new.' };
+}
+
+export async function deleteSuggestion(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  const id = text(formData, 'id');
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+    return initialError('Invalid suggestion identifier.');
+  }
+
+  try {
+    await requireAdmin();
+    const admin = createAdminClient();
+    const { error } = await admin.from('suggestions').delete().eq('id', id);
+    if (error) {
+      console.error('Unable to delete suggestion', { code: error.code, message: error.message });
+      return initialError('Could not delete the suggestion.');
+    }
+  } catch (error) {
+    return initialError(authorizationError(error) ?? 'Could not delete the suggestion.');
+  }
+
+  revalidatePath('/admin');
+  return { ok: true, message: 'Suggestion deleted.' };
+}

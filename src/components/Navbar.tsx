@@ -84,6 +84,17 @@ const sections: NavSection[] = [
       },
     ],
   },
+  {
+    id: "contact",
+    label: "Contact",
+    links: [
+      {
+        href: "/contact",
+        label: "Contact Us",
+        description: "Socials, email, and how to reach the execs",
+      },
+    ],
+  },
 ];
 
 const adminSection: NavSection = {
