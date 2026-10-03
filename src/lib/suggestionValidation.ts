@@ -16,14 +16,6 @@ export const CATEGORY_LABELS: Record<SuggestionCategory, string> = {
   other: 'Other',
 };
 
-export const CATEGORY_EMOJI: Record<SuggestionCategory, string> = {
-  event_idea: '🎉',
-  workshop: '🛠',
-  feedback: '💬',
-  just_saying_hi: '👋',
-  other: '✨',
-};
-
 export type SuggestionFields = {
   category: string;
   message: string;

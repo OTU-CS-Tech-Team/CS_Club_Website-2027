@@ -61,10 +61,6 @@ export const SOCIALS: Social[] = [
   },
 ];
 
-export function getSocialsByIds(ids: SocialPlatform[]): Social[] {
-  return ids.map((id) => SOCIALS.find((s) => s.id === id)).filter((s): s is Social => !!s);
-}
-
 export function getFooterSocials(): Social[] {
   return SOCIALS.filter((s) => s.footer);
 }

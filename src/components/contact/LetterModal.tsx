@@ -39,6 +39,7 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
   const lastFocusRef = useRef<HTMLElement | null>(null);
   const startedAtRef = useRef<number>(0);
   const pendingSuccessRef = useRef<{ ref: string; category: SuggestionCategory; hasEmail: boolean } | null>(null);
+  const lastHandledRef = useRef<string | null>(null);
 
   const [category, setCategory] = useState<SuggestionCategory>('event_idea');
   const [message, setMessage] = useState('');
@@ -64,7 +65,7 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
     setAnimPhase('idle');
   }, []);
 
-  const startOptimisticAnimation = useCallback(() => {
+  const startFoldingAnimation = useCallback(() => {
     const form = formRef.current;
     if (!form) return;
     const rect = form.getBoundingClientRect();
@@ -75,18 +76,18 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
       rotation: 0,
     });
     setAnimPhase('folding');
+  }, []);
 
-    setTimeout(() => {
-      const targetX = mailboxPosition?.x ?? window.innerWidth / 2;
-      const targetY = mailboxPosition?.y ?? window.innerHeight * 0.75;
-      setEnvelopePos({
-        x: targetX,
-        y: targetY,
-        scale: 0.35,
-        rotation: -8,
-      });
-      setAnimPhase('flying');
-    }, 600);
+  const startFlyingAnimation = useCallback(() => {
+    const targetX = mailboxPosition?.x ?? window.innerWidth / 2;
+    const targetY = mailboxPosition?.y ?? window.innerHeight * 0.75;
+    setEnvelopePos({
+      x: targetX,
+      y: targetY,
+      scale: 0.35,
+      rotation: -8,
+    });
+    setAnimPhase('flying');
   }, [mailboxPosition]);
 
   const completeAnimation = useCallback(() => {
@@ -109,40 +110,22 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
       }
       return;
     }
-    const rect = form.getBoundingClientRect();
-    setEnvelopePos({
-      x: rect.left + rect.width / 2,
-      y: rect.top + rect.height * 0.3,
-      scale: 1,
-      rotation: 0,
-    });
-    setAnimPhase('folding');
+    startFoldingAnimation();
 
     setTimeout(() => {
-      const targetX = mailboxPosition?.x ?? window.innerWidth / 2;
-      const targetY = mailboxPosition?.y ?? window.innerHeight * 0.75;
-      setEnvelopePos({
-        x: targetX,
-        y: targetY,
-        scale: 0.35,
-        rotation: -8,
-      });
-      setAnimPhase('flying');
+      startFlyingAnimation();
     }, 600);
 
     setTimeout(() => {
-      setAnimPhase('done');
-      const ps = pendingSuccessRef.current;
-      if (ps) {
-        onSuccess(ps.ref, ps.category, ps.hasEmail);
-        pendingSuccessRef.current = null;
-      }
-      resetForm();
+      completeAnimation();
     }, 1400);
-  }, [mailboxPosition, onSuccess, resetForm]);
+  }, [onSuccess, resetForm, startFoldingAnimation, startFlyingAnimation, completeAnimation]);
 
   useEffect(() => {
     if (state.status === 'success') {
+      if (lastHandledRef.current === state.ref) return;
+      lastHandledRef.current = state.ref;
+      
       if (REDUCE_MOTION) {
         onSuccess(state.ref, state.category, !!email.trim());
         resetForm();
@@ -152,22 +135,18 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
           setTimeout(completeAnimation, 800);
         } else if (animPhase === 'folding') {
           setTimeout(() => {
-            const targetX = mailboxPosition?.x ?? window.innerWidth / 2;
-            const targetY = mailboxPosition?.y ?? window.innerHeight * 0.75;
-            setEnvelopePos({
-              x: targetX,
-              y: targetY,
-              scale: 0.35,
-              rotation: -8,
-            });
-            setAnimPhase('flying');
+            startFlyingAnimation();
             setTimeout(completeAnimation, 800);
           }, 400);
         } else {
           runSendAnimation();
         }
       }
-    } else if (state.status === 'error') {
+    } else if (state.status === 'error' && state.message) {
+      const errorKey = state.message + (state.fieldErrors ? JSON.stringify(state.fieldErrors) : '');
+      if (lastHandledRef.current === errorKey) return;
+      lastHandledRef.current = errorKey;
+      
       setAnimPhase('idle');
       if (state.fieldErrors) {
         setClientErrors(state.fieldErrors);
@@ -175,14 +154,15 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
       if (state.message) {
         setServerError(state.message);
       }
-      if (state.values) {
-        setCategory((state.values.category as SuggestionCategory) || 'event_idea');
-        setMessage(state.values.message);
-        setName(state.values.name);
-        setEmail(state.values.email);
-      }
+    } else if (state.status === 'error' && state.fieldErrors) {
+      const errorKey = 'field:' + JSON.stringify(state.fieldErrors);
+      if (lastHandledRef.current === errorKey) return;
+      lastHandledRef.current = errorKey;
+      
+      setAnimPhase('idle');
+      setClientErrors(state.fieldErrors);
     }
-  }, [state, onSuccess, resetForm, email, animPhase, mailboxPosition, completeAnimation, runSendAnimation]);
+  }, [state, onSuccess, resetForm, email, animPhase, completeAnimation, runSendAnimation, startFlyingAnimation]);
 
   useEffect(() => {
     if (isOpen) {
@@ -190,6 +170,7 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
       startedAtRef.current = Date.now();
       setServerError(null);
       setClientErrors({});
+      lastHandledRef.current = null;
       document.body.style.overflow = 'hidden';
       setTimeout(() => messageRef.current?.focus({ preventScroll: true }), 60);
     } else {
@@ -289,15 +270,17 @@ export default function LetterModal({ isOpen, onClose, onSuccess, mailboxPositio
     setClientErrors({});
     setServerError(null);
     if (!REDUCE_MOTION) {
-      startOptimisticAnimation();
+      startFoldingAnimation();
     }
   };
 
   if (!isOpen) return null;
 
-  const displayErrors =
-    state.status === 'error' && state.fieldErrors ? state.fieldErrors : clientErrors;
-  const formError = serverError || (state.status === 'error' && state.message ? state.message : null);
+  const stateIsStale = state.status === 'error' && lastHandledRef.current === null;
+  const displayErrors = stateIsStale ? clientErrors : 
+    (state.status === 'error' && state.fieldErrors ? state.fieldErrors : clientErrors);
+  const formError = stateIsStale ? serverError : 
+    (serverError || (state.status === 'error' && state.message ? state.message : null));
 
   const modalContent = (
     <div

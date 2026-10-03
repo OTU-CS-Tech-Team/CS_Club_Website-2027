@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import styles from '@/app/contact/contact.module.css';
 
 type MeadowSceneProps = {
   onMailboxClick: () => void;
@@ -26,13 +27,10 @@ export default function MeadowScene({
   slotRef,
 }: MeadowSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const animationIdRef = useRef<number>(0);
   const mailboxRef = useRef<THREE.Group | null>(null);
   const flagRef = useRef<THREE.Group | null>(null);
-  const clockRef = useRef<THREE.Clock | null>(null);
   const isVisibleRef = useRef(true);
   const mouseRef = useRef(new THREE.Vector2(-9, -9));
   const parallaxRef = useRef(new THREE.Vector2(0, 0));
@@ -62,22 +60,23 @@ export default function MeadowScene({
     const stackedMQ = typeof window !== 'undefined' ? window.matchMedia('(max-width: 1023.98px)') : null;
     let STACKED = stacked || (stackedMQ?.matches ?? false);
     const STACKED0 = STACKED;
+    const DPR_CAP = 1.5;
+    const dpr = Math.min(window.devicePixelRatio, DPR_CAP);
 
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       powerPreference: 'high-performance',
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile || STACKED ? 1.5 : 2));
+    renderer.setPixelRatio(dpr);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.05;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.domElement.className = styles.sceneCanvas;
     container.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
 
     const scene = new THREE.Scene();
-    sceneRef.current = scene;
     const HAZE = new THREE.Color('#d4e3ef');
     scene.fog = new THREE.FogExp2(HAZE, 0.013);
 
@@ -644,7 +643,7 @@ export default function MeadowScene({
         if (key === lastSize) return;
         lastSize = key;
         container.style.height = h + 'px';
-        renderer.setSize(w, h, false);
+        renderer.setSize(w, h);
         camera.aspect = w / h;
         const basePx = bot - Math.min(30, r.height * 0.07);
         const mbPx = Math.max(160, Math.min(basePx - (top + 104), 380, w * 1.1));
@@ -664,7 +663,7 @@ export default function MeadowScene({
       container.style.height = '';
       const w = window.innerWidth;
       const h = Math.max(window.innerHeight, document.documentElement.clientHeight);
-      renderer.setSize(w, h, false);
+      renderer.setSize(w, h);
       camera.aspect = w / h;
       const a = camera.aspect;
       let fit: { fov: number; frac: number; horizon: number; base: number; ndcX: number };
@@ -698,14 +697,13 @@ export default function MeadowScene({
 
     // Interaction
     const ray = new THREE.Raycaster();
-    const isTouch = typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches;
 
     function toCanvas(v: THREE.Vector3) {
       const p = v.clone().project(camera);
       return { x: (p.x * 0.5 + 0.5) * (renderer.domElement.clientWidth ?? 0), y: (-p.y * 0.5 + 0.5) * (renderer.domElement.clientHeight ?? 0) };
     }
 
-    const overUI = (el: EventTarget | null) => el && (el as HTMLElement).closest && (el as HTMLElement).closest('.glass,.glass-nav,a,button,input,textarea,[role="dialog"],.toast');
+    const overUI = (el: EventTarget | null) => el && (el as HTMLElement).closest && (el as HTMLElement).closest('[data-over-ui],a,button,input,textarea,[role="dialog"]');
 
     function setMouse(e: PointerEvent | MouseEvent) {
       const rect = renderer.domElement.getBoundingClientRect();
@@ -744,7 +742,6 @@ export default function MeadowScene({
 
     // Animation loop
     const clock = new THREE.Clock();
-    clockRef.current = clock;
     const T0 = 40;
 
     function tick() {
@@ -753,7 +750,7 @@ export default function MeadowScene({
         return;
       }
 
-      const dt = Math.min(clock.getDelta(), 0.05);
+      clock.getDelta();
       const t = clock.elapsedTime + T0;
       const tm = REDUCE_MOTION ? T0 : t;
       windUniformsRef.current.uTime.value = tm;
@@ -790,10 +787,13 @@ export default function MeadowScene({
         setHover(false);
       }
 
-      // Update hint position
+      // Update hint position (throttled to avoid setState every frame)
       const top = toCanvas(mailbox.localToWorld(new THREE.Vector3(0, 1.85, 0)));
-      hintPosRef.current = { x: top.x, y: top.y };
-      onHintPosition?.(top.x, top.y);
+      const prev = hintPosRef.current;
+      if (Math.abs(top.x - prev.x) > 1 || Math.abs(top.y - prev.y) > 1) {
+        hintPosRef.current = { x: top.x, y: top.y };
+        onHintPosition?.(top.x, top.y);
+      }
 
       renderer.render(scene, camera);
 
@@ -866,8 +866,4 @@ export default function MeadowScene({
   }, [flagUp]);
 
   return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
-}
-
-export function getHintPosition() {
-  return { x: 0, y: 0 };
 }

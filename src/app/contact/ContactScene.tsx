@@ -52,6 +52,7 @@ export default function ContactScene({ fontClasses }: ContactSceneProps) {
   const [hintPos, setHintPos] = useState({ x: 0, y: 0 });
   const [isStacked, setIsStacked] = useState(false);
   const slotRef = useRef<HTMLDivElement>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const supportsWebGL = useSupportsWebGL();
 
@@ -61,6 +62,12 @@ export default function ContactScene({ fontClasses }: ContactSceneProps) {
     const handler = (e: MediaQueryListEvent) => setIsStacked(e.matches);
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
   }, []);
 
   const openModal = useCallback(() => setModalOpen(true), []);
@@ -81,8 +88,8 @@ export default function ContactScene({ fontClasses }: ContactSceneProps) {
     setToastVisible(true);
     closeModal();
 
-    const timeout = setTimeout(() => setToastVisible(false), 8000);
-    return () => clearTimeout(timeout);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToastVisible(false), 8000);
   }, [closeModal]);
 
   const handleWriteAnother = useCallback(() => {
@@ -111,16 +118,18 @@ export default function ContactScene({ fontClasses }: ContactSceneProps) {
           />
         )}
 
-        {/* 3D Scene */}
+        {/* 3D Scene - positioned above fallbacks */}
         {supportsWebGL !== false && (
-          <MeadowScene
-            onMailboxClick={openModal}
-            flagUp={flagUp}
-            onFirstFrame={handleFirstFrame}
-            onHintPosition={handleHintPosition}
-            stacked={isStacked}
-            slotRef={slotRef}
-          />
+          <div className={styles.sceneWrapper}>
+            <MeadowScene
+              onMailboxClick={openModal}
+              flagUp={flagUp}
+              onFirstFrame={handleFirstFrame}
+              onHintPosition={handleHintPosition}
+              stacked={isStacked}
+              slotRef={slotRef}
+            />
+          </div>
         )}
       </div>
 
@@ -129,7 +138,7 @@ export default function ContactScene({ fontClasses }: ContactSceneProps) {
         <main className={styles.mainContent}>
           <div className={styles.cardsContainer}>
             {/* Find Us Card */}
-            <section className={`${styles.glass} ${styles.findUsCard}`} aria-labelledby="findus">
+            <section className={`${styles.glass} ${styles.findUsCard}`} aria-labelledby="findus" data-over-ui>
               <p className={styles.eyebrow}>
                 <span>01</span>
                 <span className={styles.eyebrowRule} aria-hidden="true" />
@@ -160,7 +169,7 @@ export default function ContactScene({ fontClasses }: ContactSceneProps) {
             </section>
 
             {/* Drop Box Card */}
-            <section className={`${styles.glass} ${styles.dropboxCard}`} aria-labelledby="dropbox-title">
+            <section className={`${styles.glass} ${styles.dropboxCard}`} aria-labelledby="dropbox-title" data-over-ui>
               <p className={styles.eyebrow}>
                 <span>02</span>
                 <span className={styles.eyebrowRule} aria-hidden="true" />
@@ -180,10 +189,8 @@ export default function ContactScene({ fontClasses }: ContactSceneProps) {
                   </svg>
                   Write a letter
                 </button>
-                <span className={styles.mailboxHint}>
-                  <span className={styles.mailboxHintDesktop}>or click the mailbox →</span>
-                  <span className={styles.mailboxHintMobile}>or tap the mailbox below ↓</span>
-                </span>
+                <span className={styles.mailboxHint}>or click the mailbox →</span>
+                <span className={styles.mailboxHintMobile}>or tap the mailbox below ↓</span>
               </div>
             </section>
           </div>
@@ -223,6 +230,7 @@ export default function ContactScene({ fontClasses }: ContactSceneProps) {
       <div
         className={styles.toast}
         data-visible={toastVisible}
+        data-over-ui
         role="status"
         aria-live="polite"
       >
