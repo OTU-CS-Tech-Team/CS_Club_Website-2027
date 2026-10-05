@@ -106,7 +106,7 @@ export const logisticsTeam: TeamMember[] = [
         link: "https://www.linkedin.com/in/aakashharen/",
     },
     {
-        Image: "/Images/Akeell.jpg",
+        Image: "/Images/Akeell.png",
         name: "Akeell",
         role: "Logistics Officer",
         link: "https://www.linkedin.com/in/akeell-parameswaran/",
