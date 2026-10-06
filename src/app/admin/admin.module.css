@@ -878,7 +878,12 @@
 }
 
 .deleteConfirmButton { border-color: var(--danger); background: var(--danger); }
-.previewDialog { width: min(40rem, 100%); }
+.previewDialog {
+  width: min(40rem, 100%);
+  max-height: calc(100dvh - 3rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
 .previewHeader { align-items: flex-start; }
 .previewClose { font-size: 1.5rem; line-height: 1; }
 
