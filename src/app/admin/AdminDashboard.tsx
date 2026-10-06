@@ -29,7 +29,8 @@ type SentNewsletter = { id: string; subject: string; recipient_count: number; se
 
 type ContentPreview =
   | { kind: 'event'; title: string; description: string; date: string; startTime: string; endTime: string; location: string; image: string; published: boolean }
-  | { kind: 'job'; title: string; description: string; category: string; closingDate: string; commitment: string; location: string; active: boolean; sections: Array<{ title: string; body: string }>; questions: string[] };
+  | { kind: 'job'; title: string; description: string; category: string; closingDate: string; commitment: string; location: string; active: boolean; sections: Array<{ title: string; body: string }>; questions: string[] }
+  | { kind: 'application'; title: string; fields: ApplicationFields; questions: Array<{ prompt: string; required: boolean }> };
 
 function torontoDateValue(value?: string | null) {
   if (!value) return '';
@@ -362,6 +363,19 @@ function JobEditor({ job, onDone, onSuccess, onPreview }: { job: ClubJob | null;
     if (!formRef.current) return;
     const data = new FormData(formRef.current);
     const title = String(data.get('title') ?? '').trim();
+    if (step === 'application') {
+      if (questions.some((question) => !question.prompt.trim())) {
+        setClientError('Enter a prompt for every application question.');
+        return;
+      }
+      onPreview({
+        kind: 'application',
+        title: title || 'Untitled role',
+        fields,
+        questions: questions.map((question) => ({ prompt: question.prompt.trim(), required: question.required !== false })),
+      });
+      return;
+    }
     const detailsError = postingError(data);
     if (detailsError) {
       setClientError(detailsError);
@@ -672,6 +686,33 @@ function DeleteDialog({ target, onClose, onComplete }: { target: DeleteTarget; o
   );
 }
 
+function ApplicationPreview({ fields, questions }: { fields: ApplicationFields; questions: Array<{ prompt: string; required: boolean }> }) {
+  const rows: Array<{ label: string; required: boolean; wide?: boolean; long?: boolean; placeholder?: string }> = [
+    { label: 'First name', required: fields.name },
+    { label: 'Last name', required: fields.name },
+    { label: 'Ontario Tech email', required: fields.email, wide: true, placeholder: 'first.last@ontariotechu.net' },
+    { label: 'Student ID', required: true, placeholder: '100123456' },
+    { label: 'Year of study', required: fields.year, placeholder: 'Select year' },
+    { label: 'Program of study', required: fields.program, wide: true, placeholder: 'e.g. Computer Science' },
+    { label: 'Resume', required: fields.resume, wide: true, placeholder: 'PDF only, up to 5 MB' },
+    ...questions.map((question) => ({ label: question.prompt, required: question.required, wide: true, long: true })),
+    { label: 'Got ideas for us?', required: false, wide: true, long: true, placeholder: 'Tell us what you would love to see from the club...' },
+  ];
+  return (
+    <div className={`${styles.formGrid} ${styles.previewForm}`}>
+      {rows.map((row, index) => (
+        <label className={row.wide ? styles.wide : undefined} key={`${row.label}-${index}`}>
+          <span className={styles.labelLine}>
+            {row.label}
+            {row.required ? null : <span className={styles.optional}>(optional)</span>}
+          </span>
+          {row.long ? <textarea rows={3} disabled placeholder={row.placeholder} /> : <input disabled placeholder={row.placeholder} />}
+        </label>
+      ))}
+    </div>
+  );
+}
+
 function PreviewDialog({ preview, onClose }: { preview: ContentPreview; onClose: () => void }) {
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -686,7 +727,7 @@ function PreviewDialog({ preview, onClose }: { preview: ContentPreview; onClose:
       <section className={`${styles.dialog} ${styles.previewDialog}`} role="dialog" aria-modal="true" aria-labelledby="preview-dialog-title">
         <div className={styles.previewHeader}>
           <div>
-            <p className={styles.kicker}>{preview.kind === 'event' ? 'Event preview' : 'Job preview'}</p>
+            <p className={styles.kicker}>{preview.kind === 'event' ? 'Event preview' : preview.kind === 'application' ? 'Application preview' : 'Job preview'}</p>
             <h2 id="preview-dialog-title">{preview.title}</h2>
           </div>
           <button className={styles.previewClose} type="button" onClick={onClose} aria-label="Close preview">×</button>
@@ -698,6 +739,8 @@ function PreviewDialog({ preview, onClose }: { preview: ContentPreview; onClose:
             <p>{preview.description}</p>
             <span className={preview.published ? styles.statusLive : styles.statusDraft}>{preview.published ? 'Published' : 'Draft'}</span>
           </>
+        ) : preview.kind === 'application' ? (
+          <ApplicationPreview fields={preview.fields} questions={preview.questions} />
         ) : (
           <>
             <p className={styles.previewMeta}>{[preview.category, preview.commitment, preview.location, preview.closingDate ? `Closes ${preview.closingDate}` : 'Open until filled'].filter(Boolean).join(' · ')}</p>

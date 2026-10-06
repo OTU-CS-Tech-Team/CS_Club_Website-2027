@@ -885,6 +885,13 @@
   overscroll-behavior: contain;
 }
 .previewHeader { align-items: flex-start; }
+.previewForm { margin-top: 1.25rem; }
+.previewForm input:disabled,
+.previewForm textarea:disabled {
+  background: var(--surface);
+  cursor: default;
+  resize: none;
+}
 .previewClose { font-size: 1.5rem; line-height: 1; }
 
 .previewImage,
