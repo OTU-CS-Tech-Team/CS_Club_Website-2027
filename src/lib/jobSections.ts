@@ -324,7 +324,7 @@ export function readQuestionAnswers(
   for (const question of questions) {
     const answer = read(`question:${question.id}`).trim();
     if (!answer) {
-      if (question.required) return { ok: false, message: `Please answer "${question.prompt}".` };
+      if (question.required !== false) return { ok: false, message: `Please answer "${question.prompt}".` };
       continue;
     }
     if (answer.length > MAX_QUESTION_ANSWER) return { ok: false, message: 'One of your answers is too long.' };

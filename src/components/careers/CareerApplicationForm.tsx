@@ -152,11 +152,17 @@ export default function CareerApplicationForm({ job }: { job: ClubJob }) {
       setError('Please upload your resume.');
       return;
     }
+    const form = event.currentTarget;
+    const questionField = (id: string) => {
+      const field = form.elements.namedItem(`question:${id}`);
+      return field instanceof HTMLTextAreaElement ? field : null;
+    };
     const unanswered = (job.questions ?? []).find((question) => (
-      question.required && !String(formData.get(`question:${question.id}`) ?? '').trim()
+      question.required !== false && !(questionField(question.id)?.value ?? '').trim()
     ));
     if (unanswered) {
       setError(`Please answer "${unanswered.prompt}".`);
+      questionField(unanswered.id)?.focus();
       return;
     }
 
@@ -286,9 +292,15 @@ export default function CareerApplicationForm({ job }: { job: ClubJob }) {
                   <label className={`${styles.fullWidth} ${styles.questionField}`} key={question.id}>
                     <span>
                       {question.prompt}
-                      {question.required ? null : <span className={styles.optionalHint}>Optional</span>}
+                      {question.required === false ? <span className={styles.optionalHint}>Optional</span> : null}
                     </span>
-                    <textarea name={`question:${question.id}`} rows={4} maxLength={2000} aria-required={question.required} />
+                    <textarea
+                      name={`question:${question.id}`}
+                      rows={4}
+                      maxLength={2000}
+                      required={question.required !== false}
+                      aria-required={question.required !== false}
+                    />
                   </label>
                 ))}
                 <label className={styles.fullWidth}>

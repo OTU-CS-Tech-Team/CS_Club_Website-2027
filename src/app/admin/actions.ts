@@ -295,6 +295,8 @@ export async function saveJob(
 
   revalidateTag(ADMIN_CACHE_TAGS.jobs);
   revalidatePath('/careers', 'layout');
+  revalidatePath(`/careers/${id}`);
+  revalidatePath(`/careers/${id}/apply`);
   revalidatePath('/admin');
   return { ok: true, message: originalId ? 'Job updated.' : 'Job created.' };
 }

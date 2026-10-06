@@ -341,6 +341,7 @@ function JobEditor({ job, onDone, onSuccess, onPreview }: { job: ClubJob | null;
       setClientError('Enter a prompt for every application question.');
       return;
     }
+    data.set('posting', posting);
     startTransition(() => {
       action(data);
     });
