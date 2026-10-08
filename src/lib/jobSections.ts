@@ -275,11 +275,97 @@ export function normalizeAnswers(value: unknown): JobAnswer[] {
   });
 }
 
-export function packApplicationFallback(ideas: string, answers: JobAnswer[], resumePath: string) {
-  const parts = [`${RESUME_PACK_MARKER}\n${resumePath}`];
-  if (answers.length) parts.push(`${ANSWERS_PACK_MARKER}\n${JSON.stringify(answers)}`);
-  if (ideas) parts.push(ideas);
-  return parts.join('\n\n').slice(0, 2000);
+export function packResumeFallback(ideas: string, resumePath: string) {
+  if (!resumePath) return ideas || null;
+  const prefix = `${RESUME_PACK_MARKER}\n${resumePath}`;
+  return ideas ? `${prefix}\n\n${ideas}` : prefix;
+}
+
+function unfinishedAnswer(fragment: string) {
+  if (!fragment.includes('"answer"')) return null;
+  let inString = false;
+  let escaped = false;
+  for (const char of fragment) {
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') inString = true;
+  }
+  if (!inString || escaped) return null;
+  try {
+    return JSON.parse(`${fragment}"}`);
+  } catch {
+    return null;
+  }
+}
+
+function readPackedJson(source: string): { value: unknown; rest: string } | null {
+  const start = source.search(/\S/);
+  if (start < 0) return null;
+  const text = source.slice(start);
+  const opener = text[0];
+  if (opener !== '[' && opener !== '{') return null;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  let elementStart = -1;
+  const complete: unknown[] = [];
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+    if (char === '[' || char === '{') {
+      if (opener === '[' && depth === 1 && char === '{') elementStart = index;
+      depth += 1;
+      continue;
+    }
+    if (char === ']' || char === '}') {
+      depth -= 1;
+      if (opener === '[' && char === '}' && depth === 1 && elementStart >= 0) {
+        try {
+          complete.push(JSON.parse(text.slice(elementStart, index + 1)));
+        } catch {
+          // Skip a damaged answer and keep the ones around it.
+        }
+        elementStart = -1;
+      }
+      if (depth === 0) {
+        try {
+          return { value: JSON.parse(text.slice(0, index + 1)), rest: text.slice(index + 1) };
+        } catch {
+          return complete.length ? { value: complete, rest: '' } : null;
+        }
+      }
+    }
+  }
+  if (elementStart >= 0) {
+    const partial = unfinishedAnswer(text.slice(elementStart));
+    if (partial) complete.push(partial);
+  }
+  return complete.length ? { value: complete, rest: '' } : null;
 }
 
 export function recoverPackedIdeas(raw: string | null): { ideas: string; answers: JobAnswer[]; resumePath: string | null } {
@@ -304,12 +390,14 @@ export function recoverPackedIdeas(raw: string | null): { ideas: string; answers
 
   const answersAt = text.indexOf(ANSWERS_PACK_MARKER);
   if (answersAt >= 0) {
-    const json = text.slice(answersAt + ANSWERS_PACK_MARKER.length).trim();
-    text = text.slice(0, answersAt);
-    try {
-      answers = normalizeAnswers(JSON.parse(json));
-    } catch {
-      answers = [];
+    const packed = readPackedJson(text.slice(answersAt + ANSWERS_PACK_MARKER.length));
+    const before = text.slice(0, answersAt).trim();
+    if (packed) {
+      answers = normalizeAnswers(packed.value);
+      const trailing = packed.rest.trim();
+      text = [before, trailing].filter(Boolean).join('\n\n');
+    } else {
+      text = before;
     }
   }
 

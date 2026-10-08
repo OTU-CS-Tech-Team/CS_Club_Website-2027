@@ -900,6 +900,14 @@ function applicantName(application: JobApplication) {
   return `${application.first_name} ${application.last_name}`.trim() || application.ontario_tech_email || 'Applicant';
 }
 
+function sameQuestion(answer: { id: string; prompt: string }, question: { id: string; prompt: string }) {
+  return answer.id === question.id || answer.prompt.trim() === question.prompt.trim();
+}
+
+function answerForQuestion(application: JobApplication, question: { id: string; prompt: string }) {
+  return application.answers.find((answer) => sameQuestion(answer, question));
+}
+
 function ResponsesDialog({
   job,
   applications,
@@ -957,10 +965,10 @@ function ResponsesDialog({
     ...(job.questions ?? []).map((question) => ({
       key: question.id,
       label: question.prompt,
-      value: selected.answers.find((answer) => answer.id === question.id)?.answer || 'Left blank',
+      value: answerForQuestion(selected, question)?.answer || 'Left blank',
     })),
     ...selected.answers
-      .filter((answer) => !(job.questions ?? []).some((question) => question.id === answer.id))
+      .filter((answer) => !(job.questions ?? []).some((question) => sameQuestion(answer, question)))
       .map((answer) => ({ key: answer.id || answer.prompt, label: answer.prompt, value: answer.answer || 'Left blank' })),
   ] : [];
 

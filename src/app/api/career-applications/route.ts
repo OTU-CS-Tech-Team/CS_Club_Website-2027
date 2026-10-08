@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendApplicationReceivedEmail } from '@/lib/email';
-import { isMissingColumnError, packApplicationFallback, presentJob, readQuestionAnswers } from '@/lib/jobSections';
+import { isMissingColumnError, missingColumnName, packResumeFallback, presentJob, readQuestionAnswers } from '@/lib/jobSections';
 
 type StorageClient = ReturnType<typeof createAdminClient>;
 
@@ -201,11 +201,11 @@ export async function POST(request: Request) {
     answers: answerResult.answers,
   };
   let { error } = await admin.from('career_applications').insert(application);
-  if (isMissingColumnError(error)) {
-    const { answers: _answers, resume_path: _resumePath, ...withoutAnswers } = application;
+  if (isMissingColumnError(error) && missingColumnName(error) === 'resume_path') {
+    const { resume_path: _resumePath, ...withoutResume } = application;
     ({ error } = await admin.from('career_applications').insert({
-      ...withoutAnswers,
-      ideas: packApplicationFallback(ideas, answerResult.answers, resumePath ?? ''),
+      ...withoutResume,
+      ideas: packResumeFallback(ideas, resumePath ?? ''),
     }));
   }
 
