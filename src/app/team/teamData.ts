@@ -92,23 +92,23 @@ export const marketingTeam: TeamMember[] = [
         link: "",
     },
 ];
-export const logisticsTeam: TeamMember[] = [
+export const operationsTeam: TeamMember[] = [
     {
         Image: "/Images/Ihsan.jpg",
         name: "Ihsan",
-        role: "Director of Logistics",
+        role: "Director of Operations",
         link: "https://www.linkedin.com/in/mohammad-ihsan-wadid-47596b36b/",
     },
     {
         Image: "/Images/Aakash.png",
         name: "Aakash",
-        role: "Tech Logistics Officer",
+        role: "Tech Operations Officer",
         link: "https://www.linkedin.com/in/aakashharen/",
     },
     {
         Image: "/Images/Akeell.png",
         name: "Akeell",
-        role: "Logistics Officer",
+        role: "Operations Officer",
         link: "https://www.linkedin.com/in/akeell-parameswaran/",
     },
 ];
@@ -180,7 +180,7 @@ export const advisors: TeamMember[] = [
     {
         Image: "/Images/Kevin.jpg",
         name: "Kevin",
-        role: "Executive Advisor",
+        role: "Executive Secretary",
         link: "https://www.linkedin.com/in/kevintheinnovator/",
     },
     {
@@ -213,7 +213,7 @@ export const teamData = {
   vicePresidents,
   tech: techTeam,
   marketing: marketingTeam,
-  logistics: logisticsTeam,
+  operations: operationsTeam,
   events: eventsTeam,
   sponsors: sponsorsTeam,
   advisors,
