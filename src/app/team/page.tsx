@@ -32,7 +32,7 @@ const groups: TeamGroup[] = [
   { id: "vice-presidents", name: "Vice Presidents", kind: "row", members: teamData.vicePresidents },
   { id: "tech", name: "Tech Team", kind: "tree", members: teamData.tech },
   { id: "marketing", name: "Marketing Team", kind: "tree", members: teamData.marketing },
-  { id: "logistics", name: "Logistics Team", kind: "tree", members: teamData.logistics },
+  { id: "operations", name: "Operations Team", kind: "tree", members: teamData.operations },
   { id: "events", name: "Events Team", kind: "tree", members: teamData.events },
   { id: "sponsors", name: "Sponsors Team", kind: "tree", members: teamData.sponsors },
   { id: "advisors", name: "Advisors", kind: "row", members: teamData.advisors },
