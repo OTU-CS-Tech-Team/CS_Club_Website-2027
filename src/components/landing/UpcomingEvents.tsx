@@ -339,7 +339,7 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
                 rel="noreferrer noopener"
                 className={styles.eventsEmptyCta}
               >
-                Join Discord
+                Join our Discord
               </a>
             </div>
           </div>
