@@ -146,15 +146,9 @@ export const eventsTeam: TeamMember[] = [
 ];
 export const sponsorsTeam: TeamMember[] = [
     {
-        Image: "/Images/Khalid.png",
-        name: "Khalid",
-        role: "Director of Sponsors",
-        link: "https://linkedin.com/in/Khalid",
-    },
-    {
         Image: "/Images/Monty.jpg",
         name: "Monty",
-        role: "Partnerships Officer",
+        role: "Director of Sponsors",
         link: "https://www.linkedin.com/in/monty-abdi-94a5a8371/",
     },
     {
