@@ -19,7 +19,7 @@ export type JobSection =
   | { kind: 'duties'; body: string }
   | { kind: 'experience'; body: string }
   | { kind: 'section'; id: string; title: string; body: string }
-  | { kind: 'question'; id: string; prompt: string; required: boolean }
+  | { kind: 'question'; id: string; prompt: string; required: boolean; type?: 'text' | 'choice'; options?: string[]; multiple?: boolean }
   | { kind: 'fields'; name: boolean; email: boolean; year: boolean; program: boolean; resume: boolean };
 
 export type JobContentBlock = {
@@ -29,10 +29,15 @@ export type JobContentBlock = {
   builtin: JobBuiltin | null;
 };
 
+export type JobQuestionType = 'text' | 'choice';
+
 export type JobQuestion = {
   id: string;
   prompt: string;
   required: boolean;
+  type?: JobQuestionType;
+  options?: string[];
+  multiple?: boolean;
 };
 
 export type ApplicationFields = {

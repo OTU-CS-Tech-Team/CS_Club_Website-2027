@@ -157,12 +157,19 @@ export default function CareerApplicationForm({ job }: { job: ClubJob }) {
       const field = form.elements.namedItem(`question:${id}`);
       return field instanceof HTMLTextAreaElement ? field : null;
     };
-    const unanswered = (job.questions ?? []).find((question) => (
-      question.required !== false && !(questionField(question.id)?.value ?? '').trim()
-    ));
+    const unanswered = (job.questions ?? []).find((question) => {
+      if (question.required === false) return false;
+      if (question.type === 'choice') {
+        const formDataEntries = formData.getAll(`question:${question.id}`);
+        return formDataEntries.length === 0 || formDataEntries.every((v) => !String(v).trim());
+      }
+      return !(questionField(question.id)?.value ?? '').trim();
+    });
     if (unanswered) {
       setError(`Please answer "${unanswered.prompt}".`);
-      questionField(unanswered.id)?.focus();
+      if (unanswered.type !== 'choice') {
+        questionField(unanswered.id)?.focus();
+      }
       return;
     }
 
@@ -289,19 +296,41 @@ export default function CareerApplicationForm({ job }: { job: ClubJob }) {
                   />
                 </div>
                 {(job.questions ?? []).map((question) => (
-                  <label className={`${styles.fullWidth} ${styles.questionField}`} key={question.id}>
-                    <span>
-                      {question.prompt}
-                      {question.required === false ? <span className={styles.optionalHint}>Optional</span> : null}
-                    </span>
-                    <textarea
-                      name={`question:${question.id}`}
-                      rows={4}
-                      maxLength={2000}
-                      required={question.required !== false}
-                      aria-required={question.required !== false}
-                    />
-                  </label>
+                  question.type === 'choice' ? (
+                    <fieldset className={`${styles.fullWidth} ${styles.choiceFieldset}`} key={question.id}>
+                      <legend className={styles.choiceLegend}>
+                        {question.prompt}
+                        {question.required === false ? <span className={styles.optionalHint}>Optional</span> : null}
+                      </legend>
+                      <div className={styles.choiceGroup} role="group" aria-label={question.prompt}>
+                        {(question.options ?? []).filter((opt) => opt.trim()).map((option, optIndex) => (
+                          <label className={styles.choiceLabel} key={optIndex}>
+                            <input
+                              type={question.multiple ? 'checkbox' : 'radio'}
+                              name={`question:${question.id}`}
+                              value={option}
+                              aria-required={question.required !== false}
+                            />
+                            <span>{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                  ) : (
+                    <label className={`${styles.fullWidth} ${styles.questionField}`} key={question.id}>
+                      <span>
+                        {question.prompt}
+                        {question.required === false ? <span className={styles.optionalHint}>Optional</span> : null}
+                      </span>
+                      <textarea
+                        name={`question:${question.id}`}
+                        rows={4}
+                        maxLength={2000}
+                        required={question.required !== false}
+                        aria-required={question.required !== false}
+                      />
+                    </label>
+                  )
                 ))}
                 <label className={styles.fullWidth}>
                   Got ideas for us?

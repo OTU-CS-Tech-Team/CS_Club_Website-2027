@@ -63,13 +63,26 @@ function questionsFrom(value: unknown) {
   if (!Array.isArray(value)) return questions;
   for (const item of value) {
     if (!item || typeof item !== 'object') continue;
-    const record = item as { kind?: unknown; id?: unknown; prompt?: unknown; required?: unknown };
+    const record = item as { kind?: unknown; id?: unknown; prompt?: unknown; required?: unknown; type?: unknown; options?: unknown; multiple?: unknown };
     if (record.kind !== 'question') continue;
     const id = typeof record.id === 'string' ? record.id : '';
     const prompt = typeof record.prompt === 'string' ? record.prompt.trim() : '';
     if (!QUESTION_ID.test(id) || !prompt || prompt.length > MAX_QUESTION_PROMPT || seen.has(id)) continue;
     seen.add(id);
-    questions.push({ id, prompt, required: record.required !== false });
+    const questionType = record.type === 'choice' ? 'choice' : 'text';
+    const question: JobQuestion = { id, prompt, required: record.required !== false };
+    if (questionType === 'choice') {
+      question.type = 'choice';
+      question.multiple = record.multiple === true;
+      if (Array.isArray(record.options)) {
+        question.options = record.options
+          .filter((opt): opt is string => typeof opt === 'string')
+          .map((opt) => opt.trim())
+          .filter((opt) => opt.length > 0)
+          .slice(0, 20);
+      }
+    }
+    questions.push(question);
   }
   return questions.slice(0, MAX_JOB_QUESTIONS);
 }
@@ -216,14 +229,26 @@ export function parseSubmittedPosting(
   const questionIds = new Set<string>();
   for (const item of questions) {
     if (!item || typeof item !== 'object') return { ok: false, message: 'One of the application questions is invalid.' };
-    const question = item as { id?: unknown; prompt?: unknown; required?: unknown };
+    const question = item as { id?: unknown; prompt?: unknown; required?: unknown; type?: unknown; options?: unknown; multiple?: unknown };
     const id = typeof question.id === 'string' ? question.id : '';
     const prompt = typeof question.prompt === 'string' ? question.prompt.trim() : '';
     if (!QUESTION_ID.test(id) || questionIds.has(id)) return { ok: false, message: 'One of the application questions is invalid.' };
     if (!prompt) return { ok: false, message: 'Enter a prompt for every application question.' };
     if (prompt.length > MAX_QUESTION_PROMPT) return { ok: false, message: 'A question prompt is too long.' };
     questionIds.add(id);
-    sections.push({ kind: 'question', id, prompt, required: question.required !== false });
+    
+    const questionType = question.type === 'choice' ? 'choice' : 'text';
+    if (questionType === 'choice') {
+      const options = Array.isArray(question.options)
+        ? question.options.filter((opt): opt is string => typeof opt === 'string').map((opt) => opt.trim()).filter((opt) => opt.length > 0)
+        : [];
+      if (options.length < 2) {
+        return { ok: false, message: `"${prompt}" needs at least 2 options.` };
+      }
+      sections.push({ kind: 'question', id, prompt, required: question.required !== false, type: 'choice', options, multiple: question.multiple === true });
+    } else {
+      sections.push({ kind: 'question', id, prompt, required: question.required !== false });
+    }
   }
   if (questionIds.size > MAX_JOB_QUESTIONS) {
     return { ok: false, message: `You can add up to ${MAX_JOB_QUESTIONS} application questions.` };
@@ -407,16 +432,42 @@ export function recoverPackedIdeas(raw: string | null): { ideas: string; answers
 export function readQuestionAnswers(
   questions: JobQuestion[],
   read: (name: string) => string,
+  readAll?: (name: string) => string[],
 ): { ok: true; answers: JobAnswer[] } | { ok: false; message: string } {
   const answers: JobAnswer[] = [];
   for (const question of questions) {
-    const answer = read(`question:${question.id}`).trim();
-    if (!answer) {
-      if (question.required !== false) return { ok: false, message: `Please answer "${question.prompt}".` };
-      continue;
+    if (question.type === 'choice') {
+      const validOptions = new Set(question.options ?? []);
+      let selectedValues: string[] = [];
+      if (question.multiple && readAll) {
+        selectedValues = readAll(`question:${question.id}`).filter((v) => v.trim());
+      } else {
+        const single = read(`question:${question.id}`).trim();
+        if (single) selectedValues = [single];
+      }
+      if (selectedValues.length === 0) {
+        if (question.required !== false) return { ok: false, message: `Please answer "${question.prompt}".` };
+        continue;
+      }
+      for (const val of selectedValues) {
+        if (!validOptions.has(val)) {
+          return { ok: false, message: `Invalid option selected for "${question.prompt}".` };
+        }
+      }
+      if (!question.multiple && selectedValues.length > 1) {
+        return { ok: false, message: `Only one option allowed for "${question.prompt}".` };
+      }
+      const answer = selectedValues.join(', ');
+      answers.push({ id: question.id, prompt: question.prompt, answer });
+    } else {
+      const answer = read(`question:${question.id}`).trim();
+      if (!answer) {
+        if (question.required !== false) return { ok: false, message: `Please answer "${question.prompt}".` };
+        continue;
+      }
+      if (answer.length > MAX_QUESTION_ANSWER) return { ok: false, message: 'One of your answers is too long.' };
+      answers.push({ id: question.id, prompt: question.prompt, answer });
     }
-    if (answer.length > MAX_QUESTION_ANSWER) return { ok: false, message: 'One of your answers is too long.' };
-    answers.push({ id: question.id, prompt: question.prompt, answer });
   }
   return { ok: true, answers };
 }
