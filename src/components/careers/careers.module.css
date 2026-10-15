@@ -385,6 +385,13 @@
   transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
+.formGrid .choiceLabel {
+  display: flex;
+  align-items: center;
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
 .choiceLabel:hover {
   border-color: #ccc;
   background: #f0f0f0;
@@ -403,6 +410,17 @@
   margin: 0;
   accent-color: #111;
   flex-shrink: 0;
+}
+
+.formGrid .choiceLabel input[type="checkbox"],
+.formGrid .choiceLabel input[type="radio"] {
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  width: 1.1rem;
+  height: 1.1rem;
 }
 
 .choiceLabel span {
