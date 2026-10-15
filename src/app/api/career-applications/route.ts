@@ -169,7 +169,8 @@ export async function POST(request: Request) {
     const resumeProblem = pdfError(resume, resumeBytes);
     if (resumeProblem) return NextResponse.json({ error: resumeProblem }, { status: 400 });
   }
-  const answerResult = readQuestionAnswers(presented.questions, read);
+  const readAll = (name: string) => form.getAll(name).map((v) => getText(v));
+  const answerResult = readQuestionAnswers(presented.questions, read, readAll);
   if (!answerResult.ok) return NextResponse.json({ error: answerResult.message }, { status: 400 });
   const limitKeys = [`ip:${clientAddress(request)}`];
   if (email) limitKeys.push(`email:${email}`);

@@ -408,6 +408,163 @@
   background: #f3f3f3;
 }
 
+.addQuestionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.choiceOptions {
+  display: grid;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.choiceToggle {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  width: max-content;
+}
+
+.choiceToggleOn,
+.choiceToggleOff {
+  border: 0;
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.choiceToggleOn {
+  color: #fff;
+  background: var(--ink);
+}
+
+.choiceToggleOff {
+  color: var(--muted);
+  background: #fff;
+}
+
+.choiceToggleOff:hover {
+  background: #f5f5f5;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.optionInput {
+  flex: 1;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+  font-size: 0.82rem;
+  background: #fff;
+}
+
+.optionInput:focus {
+  border-color: var(--ink);
+  outline: 1px solid var(--ink);
+  outline-offset: 0;
+}
+
+.removeOption {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid #e2e2e2;
+  border-radius: 6px;
+  padding: 0;
+  color: #666;
+  background: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.removeOption:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.removeOption:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.addOption {
+  border: 0;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.addOption:hover {
+  color: var(--ink);
+}
+
+.previewFieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.previewLegend {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  width: 100%;
+  margin-bottom: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.previewChoices {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.previewChoiceLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.88rem;
+  font-weight: 400;
+  color: #666;
+  cursor: default;
+}
+
+.previewChoiceLabel input {
+  accent-color: var(--ink);
+}
+
+.answerChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.answerChip {
+  display: inline-block;
+  border-radius: 6px;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #246246;
+  background: #e9f5ee;
+}
+
 .previewQuestions {
   display: grid;
   gap: 0.35rem;

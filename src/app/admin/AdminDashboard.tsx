@@ -30,7 +30,7 @@ type SentNewsletter = { id: string; subject: string; recipient_count: number; se
 type ContentPreview =
   | { kind: 'event'; title: string; description: string; date: string; startTime: string; endTime: string; location: string; image: string; published: boolean }
   | { kind: 'job'; title: string; description: string; category: string; closingDate: string; commitment: string; location: string; active: boolean; sections: Array<{ title: string; body: string }>; questions: string[] }
-  | { kind: 'application'; title: string; fields: ApplicationFields; questions: Array<{ prompt: string; required: boolean }> };
+  | { kind: 'application'; title: string; fields: ApplicationFields; questions: Array<{ prompt: string; required: boolean; type?: 'text' | 'choice'; options?: string[]; multiple?: boolean }> };
 
 function torontoDateValue(value?: string | null) {
   if (!value) return '';
@@ -263,14 +263,17 @@ function JobEditor({ job, onDone, onSuccess, onPreview }: { job: ClubJob | null;
     { id: 'what-youll-do', title: "What you'll do", body: '', builtin: 'duties' as const },
     { id: 'ideal-experience', title: 'Ideal experience', body: '', builtin: 'experience' as const },
   ]).map((block) => ({ ...block, key: block.id })));
-  const [questions, setQuestions] = useState(() => (job?.questions ?? []).map((question) => ({ ...question, key: question.id })));
+  const [questions, setQuestions] = useState(() => (job?.questions ?? []).map((question) => ({ ...question, key: question.id, options: question.options ?? [] })));
   const [fields, setFields] = useState<ApplicationFields>(() => ({ ...DEFAULT_APPLICATION_FIELDS, ...job?.fields }));
 
   const questionCount = questions.length;
   const customCount = content.filter((block) => !block.builtin).length;
   const posting = JSON.stringify({
     content: content.map(({ id, title, body, builtin }) => ({ id, title, body, builtin })),
-    questions: questions.map(({ id, prompt, required }) => ({ id, prompt, required })),
+    questions: questions.map(({ id, prompt, required, type, options, multiple }) => {
+      if (type === 'choice') return { id, prompt, required, type, options, multiple };
+      return { id, prompt, required };
+    }),
     fields,
   });
 
@@ -294,13 +297,17 @@ function JobEditor({ job, onDone, onSuccess, onPreview }: { job: ClubJob | null;
     setClientError('');
   }
 
-  function addQuestion() {
+  function addQuestion(questionType: 'text' | 'choice' = 'text') {
     if (questionCount >= MAX_JOB_QUESTIONS) {
       setClientError(`You can add up to ${MAX_JOB_QUESTIONS} extra questions.`);
       return;
     }
     const id = createQuestionId();
-    setQuestions((current) => [...current, { key: id, id, prompt: '', required: true }]);
+    if (questionType === 'choice') {
+      setQuestions((current) => [...current, { key: id, id, prompt: '', required: true, type: 'choice', options: ['', ''], multiple: false }]);
+    } else {
+      setQuestions((current) => [...current, { key: id, id, prompt: '', required: true, options: [] }]);
+    }
     setClientError('');
   }
 
@@ -342,6 +349,11 @@ function JobEditor({ job, onDone, onSuccess, onPreview }: { job: ClubJob | null;
       setClientError('Enter a prompt for every application question.');
       return;
     }
+    const invalidChoice = questions.find((question) => question.type === 'choice' && (question.options ?? []).filter((opt) => opt.trim()).length < 2);
+    if (invalidChoice) {
+      setClientError(`"${invalidChoice.prompt || 'Choice question'}" needs at least 2 non-empty options.`);
+      return;
+    }
     data.set('posting', posting);
     startTransition(() => {
       action(data);
@@ -368,11 +380,22 @@ function JobEditor({ job, onDone, onSuccess, onPreview }: { job: ClubJob | null;
         setClientError('Enter a prompt for every application question.');
         return;
       }
+      const invalidChoice = questions.find((question) => question.type === 'choice' && (question.options ?? []).filter((opt) => opt.trim()).length < 2);
+      if (invalidChoice) {
+        setClientError(`"${invalidChoice.prompt || 'Choice question'}" needs at least 2 non-empty options.`);
+        return;
+      }
       onPreview({
         kind: 'application',
         title: title || 'Untitled role',
         fields,
-        questions: questions.map((question) => ({ prompt: question.prompt.trim(), required: question.required !== false })),
+        questions: questions.map((question) => ({
+          prompt: question.prompt.trim(),
+          required: question.required !== false,
+          type: question.type,
+          options: question.options,
+          multiple: question.multiple,
+        })),
       });
       return;
     }
@@ -484,12 +507,12 @@ function JobEditor({ job, onDone, onSuccess, onPreview }: { job: ClubJob | null;
             <div className={styles.formSection} key={question.key}>
               <div className={styles.formSectionHead}>
                 <label className={styles.promptField}>
-                  Question
+                  {question.type === 'choice' ? 'Choice question' : 'Question'}
                   <input
                     value={question.prompt}
                     onChange={(event) => updateQuestion(question.key, { prompt: event.target.value })}
                     maxLength={MAX_QUESTION_PROMPT}
-                    placeholder="e.g. Tell me about a project you want to build"
+                    placeholder={question.type === 'choice' ? 'e.g. What editing software do you have experience with?' : 'e.g. Tell me about a project you want to build'}
                     aria-required="true"
                   />
                 </label>
@@ -507,12 +530,72 @@ function JobEditor({ job, onDone, onSuccess, onPreview }: { job: ClubJob | null;
                   <button type="button" onClick={() => setQuestions((current) => current.filter((item) => item.key !== question.key))}>Remove</button>
                 </div>
               </div>
+              {question.type === 'choice' ? (
+                <div className={styles.choiceOptions}>
+                  <div className={styles.choiceToggle}>
+                    <button
+                      type="button"
+                      className={question.multiple ? styles.choiceToggleOff : styles.choiceToggleOn}
+                      onClick={() => updateQuestion(question.key, { multiple: false })}
+                    >
+                      Single
+                    </button>
+                    <button
+                      type="button"
+                      className={question.multiple ? styles.choiceToggleOn : styles.choiceToggleOff}
+                      onClick={() => updateQuestion(question.key, { multiple: true })}
+                    >
+                      Multiple
+                    </button>
+                  </div>
+                  {(question.options ?? []).map((option, optIndex) => (
+                    <div className={styles.optionRow} key={optIndex}>
+                      <input
+                        className={styles.optionInput}
+                        value={option}
+                        onChange={(event) => {
+                          const newOptions = [...(question.options ?? [])];
+                          newOptions[optIndex] = event.target.value;
+                          updateQuestion(question.key, { options: newOptions });
+                        }}
+                        placeholder={`Option ${optIndex + 1}`}
+                        maxLength={100}
+                      />
+                      <button
+                        type="button"
+                        className={styles.removeOption}
+                        onClick={() => {
+                          const newOptions = (question.options ?? []).filter((_, i) => i !== optIndex);
+                          updateQuestion(question.key, { options: newOptions });
+                        }}
+                        disabled={(question.options ?? []).length <= 2}
+                        aria-label="Remove option"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    className={styles.addOption}
+                    type="button"
+                    onClick={() => updateQuestion(question.key, { options: [...(question.options ?? []), ''] })}
+                  >
+                    + Add option
+                  </button>
+                </div>
+              ) : null}
             </div>
           ))}
-          <button className={styles.addSection} type="button" onClick={addQuestion}>
-            <span aria-hidden="true">+</span>
-            Add a question
-          </button>
+          <div className={styles.addQuestionRow}>
+            <button className={styles.addSection} type="button" onClick={() => addQuestion('text')}>
+              <span aria-hidden="true">+</span>
+              Text question
+            </button>
+            <button className={styles.addSection} type="button" onClick={() => addQuestion('choice')}>
+              <span aria-hidden="true">+</span>
+              Choice question
+            </button>
+          </div>
         </div>
       </div>
       {clientError || state.message ? <p className={clientError || !state.ok ? styles.error : styles.success} role="alert">{clientError || state.message}</p> : null}
@@ -686,8 +769,8 @@ function DeleteDialog({ target, onClose, onComplete }: { target: DeleteTarget; o
   );
 }
 
-function ApplicationPreview({ fields, questions }: { fields: ApplicationFields; questions: Array<{ prompt: string; required: boolean }> }) {
-  const rows: Array<{ label: string; required: boolean; wide?: boolean; long?: boolean; placeholder?: string }> = [
+function ApplicationPreview({ fields, questions }: { fields: ApplicationFields; questions: Array<{ prompt: string; required: boolean; type?: 'text' | 'choice'; options?: string[]; multiple?: boolean }> }) {
+  const baseRows: Array<{ label: string; required: boolean; wide?: boolean; long?: boolean; placeholder?: string }> = [
     { label: 'First name', required: fields.name },
     { label: 'Last name', required: fields.name },
     { label: 'Ontario Tech email', required: fields.email, wide: true, placeholder: 'first.last@ontariotechu.net' },
@@ -695,12 +778,11 @@ function ApplicationPreview({ fields, questions }: { fields: ApplicationFields; 
     { label: 'Year of study', required: fields.year, placeholder: 'Select year' },
     { label: 'Program of study', required: fields.program, wide: true, placeholder: 'e.g. Computer Science' },
     { label: 'Resume', required: fields.resume, wide: true, placeholder: 'PDF only, up to 5 MB' },
-    ...questions.map((question) => ({ label: question.prompt, required: question.required, wide: true, long: true })),
-    { label: 'Got ideas for us?', required: false, wide: true, long: true, placeholder: 'Tell us what you would love to see from the club...' },
   ];
+  const ideasRow = { label: 'Got ideas for us?', required: false, wide: true, long: true, placeholder: 'Tell us what you would love to see from the club...' };
   return (
     <div className={`${styles.formGrid} ${styles.previewForm}`}>
-      {rows.map((row, index) => (
+      {baseRows.map((row, index) => (
         <label className={row.wide ? styles.wide : undefined} key={`${row.label}-${index}`}>
           <span className={styles.labelLine}>
             {row.label}
@@ -709,6 +791,33 @@ function ApplicationPreview({ fields, questions }: { fields: ApplicationFields; 
           {row.long ? <textarea rows={3} disabled placeholder={row.placeholder} /> : <input disabled placeholder={row.placeholder} />}
         </label>
       ))}
+      {questions.map((question, index) => (
+        <fieldset className={`${styles.wide} ${styles.previewFieldset}`} key={`question-${index}`}>
+          <legend className={styles.previewLegend}>
+            {question.prompt}
+            {question.required ? null : <span className={styles.optional}>(optional)</span>}
+          </legend>
+          {question.type === 'choice' ? (
+            <div className={styles.previewChoices}>
+              {(question.options ?? []).filter((o) => o.trim()).map((option, optIndex) => (
+                <label key={optIndex} className={styles.previewChoiceLabel}>
+                  <input type={question.multiple ? 'checkbox' : 'radio'} disabled name={`preview-q-${index}`} />
+                  {option}
+                </label>
+              ))}
+            </div>
+          ) : (
+            <textarea rows={3} disabled />
+          )}
+        </fieldset>
+      ))}
+      <label className={ideasRow.wide ? styles.wide : undefined} key="ideas">
+        <span className={styles.labelLine}>
+          {ideasRow.label}
+          <span className={styles.optional}>(optional)</span>
+        </span>
+        <textarea rows={3} disabled placeholder={ideasRow.placeholder} />
+      </label>
     </div>
   );
 }
@@ -966,10 +1075,11 @@ function ResponsesDialog({
       key: question.id,
       label: question.prompt,
       value: answerForQuestion(selected, question)?.answer || 'Left blank',
+      isChoice: question.type === 'choice',
     })),
     ...selected.answers
       .filter((answer) => !(job.questions ?? []).some((question) => sameQuestion(answer, question)))
-      .map((answer) => ({ key: answer.id || answer.prompt, label: answer.prompt, value: answer.answer || 'Left blank' })),
+      .map((answer) => ({ key: answer.id || answer.prompt, label: answer.prompt, value: answer.answer || 'Left blank', isChoice: false })),
   ] : [];
 
   return (
@@ -1007,7 +1117,15 @@ function ResponsesDialog({
               {customAnswers.map((answer) => (
                 <div className={styles.answerBlock} key={answer.key}>
                   <span>{answer.label}</span>
-                  <p>{answer.value}</p>
+                  {answer.isChoice && answer.value !== 'Left blank' ? (
+                    <div className={styles.answerChips}>
+                      {answer.value.split(', ').map((chip, chipIndex) => (
+                        <span key={chipIndex} className={styles.answerChip}>{chip}</span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>{answer.value}</p>
+                  )}
                 </div>
               ))}
               <div className={styles.answerBlock}>
