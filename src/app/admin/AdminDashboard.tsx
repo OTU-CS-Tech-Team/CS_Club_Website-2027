@@ -22,6 +22,7 @@ import styles from './admin.module.css';
 import { APPLICATION_FIELD_IDS, APPLICATION_FIELD_LABELS, createQuestionId, createSectionId, DEFAULT_APPLICATION_FIELDS, MAX_CUSTOM_SECTIONS, MAX_JOB_QUESTIONS, MAX_QUESTION_PROMPT, MAX_SECTION_BODY, MAX_SECTION_TITLE } from '@/lib/jobSections';
 import type { ApplicationFields, JobContentBlock, JobQuestion } from '@/types/content';
 import { CategoryPicker, DatePicker, TimePicker } from './CustomPickers';
+import LinkifiedText from '@/components/LinkifiedText';
 
 const initialState: AdminActionState = { ok: false, message: '' };
 
@@ -845,7 +846,7 @@ function PreviewDialog({ preview, onClose }: { preview: ContentPreview; onClose:
           <>
             {preview.image ? <img className={styles.previewImage} src={preview.image} alt="" /> : <div className={styles.previewImagePlaceholder}>No image added</div>}
             <p className={styles.previewMeta}>{preview.date} · {preview.startTime}–{preview.endTime} · {preview.location}</p>
-            <p>{preview.description}</p>
+            <p><LinkifiedText text={preview.description} /></p>
             <span className={preview.published ? styles.statusLive : styles.statusDraft}>{preview.published ? 'Published' : 'Draft'}</span>
           </>
         ) : preview.kind === 'application' ? (

@@ -5,6 +5,7 @@ import type { ClubEvent } from '@/types/landing';
 import { isEventUpcoming } from '@/lib/eventSchedule';
 import EventSignupForm from './EventSignupForm';
 import DbEventRsvp from './DbEventRsvp';
+import LinkifiedText from '@/components/LinkifiedText';
 import styles from './landing.module.css';
 import formStyles from '../careers/careers.module.css';
 
@@ -106,7 +107,9 @@ export default function EventModal({ event, onClose }: EventModalProps) {
           <span>{event.time}</span>
           <span>{event.location}</span>
         </div>
-        <p className={formStyles.applyDescription}>{event.description}</p>
+        <p className={formStyles.applyDescription}>
+          <LinkifiedText text={event.description} />
+        </p>
         {event.images.length > 0 ? (
           <div className={styles.imageRow}>
             {event.images.map((src) => (
