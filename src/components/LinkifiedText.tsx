@@ -70,10 +70,14 @@ export default function LinkifiedText({ text, className }: LinkifiedTextProps) {
       <style>{`
         .linkified-link {
           text-decoration: underline;
-          color: inherit;
+          color: #2563eb;
         }
         .linkified-link:hover {
-          opacity: 0.8;
+          color: #1d4ed8;
+        }
+        .linkified-link:focus {
+          outline: 2px solid #2563eb;
+          outline-offset: 2px;
         }
       `}</style>
       <span className={className}>{parts}</span>
