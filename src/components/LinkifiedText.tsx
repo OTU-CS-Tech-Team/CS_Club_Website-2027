@@ -38,6 +38,7 @@ function parseLinks(text: string): ReactNode[] {
         target="_blank"
         rel="noopener noreferrer"
         className="linkified-link"
+        style={{ color: '#2563eb', textDecoration: 'underline' }}
         onClick={handleLinkClick}
       >
         {url}
@@ -68,14 +69,14 @@ export default function LinkifiedText({ text, className }: LinkifiedTextProps) {
   return (
     <>
       <style>{`
-        .linkified-link {
-          text-decoration: underline;
-          color: #2563eb;
-        }
-        .linkified-link:hover {
+        a.linkified-link:hover,
+        a.linkified-link:visited:hover {
           color: #1d4ed8;
         }
-        .linkified-link:focus {
+        a.linkified-link:visited {
+          color: #2563eb;
+        }
+        a.linkified-link:focus {
           outline: 2px solid #2563eb;
           outline-offset: 2px;
         }
